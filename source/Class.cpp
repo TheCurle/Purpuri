@@ -258,6 +258,37 @@ bool Class::ParseMethodCodePoints(int Method, CodePoint *Code) {
     return 0;
 }
 
+uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, Class *&Class) {
+    if(Methods == NULL) {
+        puts("GetMethodFromDescriptor called too early! Class not initialised yet!");
+        return false;
+    }
+
+    class Class* CurrentClass = this;
+    while(CurrentClass) {
+        printf("Searching class %s for %s%s\n", CurrentClass->GetClassName(), MethodName, Descriptor);
+        char* l_Name, *l_Descriptor;
+        for(int i = 0; i < CurrentClass->MethodCount; i++) {
+            CurrentClass->GetStringConstant(CurrentClass->Methods[i].Name, l_Name);
+            CurrentClass->GetStringConstant(CurrentClass->Methods[i].Descriptor, l_Descriptor);
+
+            if(!strcmp(MethodName, l_Name) && !strcmp(Descriptor, l_Descriptor)) {
+                if(Class) Class = CurrentClass;
+                
+                printf("Found at index %d\n", i);
+                return i;
+            }
+        }
+
+        if(Class != NULL)
+            CurrentClass = CurrentClass->GetSuper();
+        else
+            break;
+
+    }
+
+    return -1;
+}
 
 uint32_t Class::GetClassSize() {
     uint32_t Size = FieldsCount * sizeof(Variable);

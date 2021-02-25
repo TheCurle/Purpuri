@@ -4,7 +4,8 @@
  **************/
 
 #include <cstdio>
-#include "../headers/Class.hpp"
+#include <cstring>
+#include "../headers/Stack.hpp"
 
 int main(int argc, char* argv[]) {
     if(argc < 2) {
@@ -15,14 +16,40 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    bool Res;
-
     ClassHeap heap;
     Class* Object = new Class();
     Class* GivenClass = new Class();
 
-    Res = heap.LoadClass((char*)"java/lang/Object", Object);
-    Res = heap.LoadClass(argv[1], GivenClass);
+    heap.LoadClass((char*)"java/lang/Object", Object);
+    heap.LoadClass(argv[1], GivenClass);
 
-    return Res;
+    ObjectHeap objects;
+
+    StackFrame* Stack = new StackFrame[20];
+    StackFrame::FrameBase = Stack;
+    memset(Stack, 0, sizeof(StackFrame) * 20);
+
+    StackFrame::MemberStack = new Variable[100];
+    memset(StackFrame::MemberStack, 0, sizeof(Variable) * 100);
+
+    Engine Engine;
+
+    Engine.ClassHeap = &heap;
+    Engine.ObjectHeap = &objects;
+    int StartFrame = 0;
+
+    class Object object = objects.CreateObject(GivenClass);
+    Class* VirtualClass = GivenClass;
+
+    int EntryPoint = GivenClass->GetMethodFromDescriptor((char*) "EntryPoint", (char*) "()I", GivenClass);
+
+    Stack[StartFrame].Class = GivenClass;
+    Stack[StartFrame].Method = &GivenClass->Methods[EntryPoint];
+    Stack[StartFrame].Stack = StackFrame::MemberStack;
+    Stack[StartFrame].StackPointer = Stack[StartFrame].Method->Code->LocalsSize;
+    Stack[StartFrame].Stack[0].object = object;
+
+    Engine.Ignite(&Stack[StartFrame]);
+
+    return 1;
 }

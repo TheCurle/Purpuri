@@ -19,7 +19,6 @@ class ObjectHeap {
         bool CreateObjectArray(Class* Class, uint32_t Count, Object &Object);
 
     private:
-
         std::map<size_t, size_t> ObjectMap;
         uint32_t NextObjectID;
 };
