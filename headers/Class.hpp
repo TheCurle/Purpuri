@@ -37,11 +37,8 @@ struct ClassFile {
     struct AttributeData** Attributes;
 };
 
-// Forward definition to keep ClassHeap happy
-class Class; 
-
 class ClassHeap {
-    std::map<std::string, Class> ClassMap;
+    std::map<char*, Class*> ClassMap;
 
     public:
         ClassHeap();
@@ -57,15 +54,15 @@ class Class : public ClassFile {
         Class();
         virtual ~Class();
 
-        virtual bool LoadFromFile(char* Filename);
-        void SetCode(void* Code);
+        virtual bool LoadFromFile(const char* Filename);
+        void SetCode(const char* Code);
 
         bool ParseFullClass();
-        bool ParseInterface(char* &Code);
-        bool ParseField(char* &Code);
-        bool ParseMethod(char* &Code);
+        bool ParseInterfaces(const char* &Code);
+        bool ParseFields(const char* &Code);
+        bool ParseMethods(const char* &Code);
         bool ParseMethodCodePoints(int Method, CodePoint* Code);
-        bool ParseAttribs(char* &Code);
+        bool ParseAttribs(const char* &Code);
         
         bool GetConstants(uint16_t index, ConstantPoolEntry &Pool);
         bool GetStringConstant(uint32_t index, char* &String);
@@ -90,11 +87,13 @@ class Class : public ClassFile {
 
     private:
         size_t BytecodeLength;
-        void* Code;
+        const char* Code;
         struct ClassHeap* ClassHeap;
         uint16_t FieldsCount;
 
-        bool ParseConstants(char* &Code);
-        uint32_t GetConstantsCount(char* Constants);
+        bool ParseConstants(const char* &Code);
+        uint32_t GetConstantsCount(const char* Constants);
+
+        char* GetName(uint16_t ThisOrSuper);
 };
 

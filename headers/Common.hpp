@@ -5,6 +5,10 @@
 #pragma once
 #include <stdint.h>
 
+
+class Class;
+class ClassHeap;
+
 struct AttributeData {
     uint16_t AttributeName;
     uint32_t AttributeLength;

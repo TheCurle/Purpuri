@@ -4,7 +4,8 @@
  **************/
 
 #pragma once
-#include "Class.hpp"
+#include "Common.hpp"
+#include <map>
 
 class ObjectHeap {
     public:
