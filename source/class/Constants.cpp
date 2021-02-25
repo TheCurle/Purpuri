@@ -4,9 +4,12 @@
  **************/
 
 #include "../../headers/Class.hpp"
+#include <string>
 
 bool Class::ParseConstants(const char *&Code) {
     Constants = new ConstantPoolEntry* [ConstantCount - 1];
+
+    puts("Reading constants..");
 
     if(Constants == NULL) return false;
 
@@ -38,14 +41,16 @@ bool Class::GetStringConstant(uint32_t index, char *&String) {
     
     char* Entry = (char*)Constants[index];
 
-    uint16_t Length = (&Entry[1])[0] << 8 | (&Entry[1])[1];
+    uint16_t Length = ((&Entry[1])[0] & 0xFF) << 8 | (&Entry[1])[1] & 0xFF;
 
     char* Buffer = new char[Length + 1];
     Buffer[Length] = 0;
 
-    memcpy(Buffer, &Entry[3], Length);
+    memcpy(Buffer, &(Entry[3]), Length);
+
+    //printf("Retrieving constant %s from ID %d\n", Buffer, index);
+    
     String = Buffer;
-    delete[] Buffer;
     return true;
 }
 

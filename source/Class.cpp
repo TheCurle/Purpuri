@@ -137,8 +137,10 @@ bool Class::ParseFullClass() {
 
 bool Class::ParseAttribs(const char *&Code) {
     Attributes = new AttributeData* [AttributeCount];
-
+    puts("Reading class Attributes");
     if(Methods == NULL) return false;
+
+    char* Name;
 
     for(int j = 0; j < AttributeCount; j++) {
         printf("\tParsing attribute %d\n", j);
@@ -149,7 +151,10 @@ bool Class::ParseAttribs(const char *&Code) {
         size_t AttrLength = Code[0] << 24 | Code[1] << 16 | Code[2] << 8 | Code[3];
         Code += 4;
         Code += AttrLength;
-        printf("\tAttribute has name ind %d, length %zu\n", AttrName, AttrLength);
+
+        //GetStringConstant(AttrName, Name);
+        printf("\tAttribute has id %d, length %zu\n", AttrName, AttrLength);
+            
     }
 
     return true;
@@ -184,8 +189,9 @@ bool Class::ParseMethods(const char *&Code) {
                 size_t AttrLength = Code[0] << 24 | Code[1] << 16 | Code[2] << 8 | Code[3];
                 Code += 4;
                 Code += AttrLength;
+                GetStringConstant(AttrName, Name);
 
-                printf("\tAttribute has name ind %d, length %zu\n", AttrName, AttrLength);
+                printf("\tAttribute has name %s, length %zu\n", Name, AttrLength);
             }
 
             Methods[i].Code = new CodePoint;
