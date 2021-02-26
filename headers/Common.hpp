@@ -60,7 +60,7 @@ class Engine {
         void PutField(StackFrame* Stack);
         void GetField(StackFrame* Stack);
 
-        void GetConstant(Class* Class, uint8_t Index);
+        Variable GetConstant(Class* Class, uint8_t Index);
 
         uint16_t GetParameters(const char* Descriptor);
         uint16_t GetParametersStack(const char* Descriptor);
@@ -89,6 +89,13 @@ enum {
     lconst_0,           // 9
     lconst_1,           // 10
 
+    fconst_0,           // 11
+    fconst_1,           // 12
+    fconst_2,           // 13
+
+    dconst_0,           // 14
+    dconst_1,           // 15
+
     bipush = 16,        // 16
     sipush,             // 17
 
@@ -116,7 +123,12 @@ enum {
     fload_2,            // 36
     fload_3,            // 37
 
-    aload_0 = 42,       // 42
+    dload_0,            // 38
+    dload_1,            // 39
+    dload_2,            // 40
+    dload_3,            // 41
+
+    aload_0,            // 42
     aload_1,            // 43
     aload_2,            // 44
     aload_3,            // 45
@@ -142,7 +154,12 @@ enum {
     fstore_2,           // 69
     fstore_3,           // 70
 
-    astore_0 = 75,      // 75
+    dstore_0,           // 71
+    dstore_1,           // 72
+    dstore_2,           // 73
+    dstore_3,           // 74
+
+    astore_0,           // 75
     astore_1,           // 76
     astore_2,           // 77
     astore_3,           // 78
@@ -157,15 +174,42 @@ enum {
 
     iadd = 96,          // 96
     ladd,               // 97
+    fadd,               // 98
+    dadd,               // 99
 
-    isub = 100,         // 100
-    imul = 104,         // 104
+    isub,               // 100
+    lsub,               // 101
+    fsub,               // 102
+    dsub,               // 103
+    imul,               // 104
+    lmul,               // 105
+    fmul,               // 106
+    dmul,               // 107
 
-    ddiv = 111,         // 111
+    _idiv,               // 108
+    _ldiv,               // 109
+    fdiv,               // 110
+
+    ddiv,               // 111
+    irem,               // 112
+    lrem,               // 113
+    frem,               // 114
+    drem,               // 115
 
     iinc = 132,         // 132
 
-    i2d = 135,           //135
+    i2d = 135,          // 135
+    l2i,                // 136
+    l2f,                // 137
+    l2d,                // 138
+
+    f2i,                // 139
+    f2l,                // 140
+    f2d,                // 141
+    
+    d2i,                // 142
+    d2l,                // 143
+    d2f,                // 144
 
     ifeq = 153,         // 153
     ifne,               // 154
