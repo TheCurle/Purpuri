@@ -101,10 +101,8 @@ bool Class::ParseFullClass() {
 
     InterfaceCount = ReadShortFromStream(Code); Code += 2;
 
-    if(InterfaceCount > 0) {
-        puts("NYI: Interfaces");
-        return false;
-    }
+    if(InterfaceCount > 0)
+        ParseInterfaces(Code);
 
     FieldsCount = ReadShortFromStream(Code); Code += 2;
 
@@ -144,6 +142,20 @@ bool Class::ParseAttribs(const char *&Code) {
         //GetStringConstant(AttrName, Name);
         printf("\tAttribute has id %d, length %zu\n", AttrName, AttrLength);
             
+    }
+
+    return true;
+}
+
+bool Class::ParseInterfaces(const char* &Code) {
+    Interfaces = new uint16_t[InterfaceCount];
+    printf("Reading %d interfaces\n", InterfaceCount);
+
+    for(int i = 0; i < InterfaceCount; i++) {
+        Interfaces[i] = ReadShortFromStream(Code);
+        Code += 2;
+
+        printf("\tInterface %d parsed\n", i);
     }
 
     return true;
