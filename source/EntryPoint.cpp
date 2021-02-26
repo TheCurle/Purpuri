@@ -20,6 +20,11 @@ int main(int argc, char* argv[]) {
     Class* Object = new Class();
     Class* GivenClass = new Class();
 
+    std::string GivenPath(argv[1]);
+    size_t LastInd = GivenPath.find_last_of("/");
+    if(LastInd != GivenPath.size())
+        heap.ClassPrefix = GivenPath.substr(0, LastInd + 1);
+
     heap.LoadClass((char*)"java/lang/Object", Object);
     heap.LoadClass(argv[1], GivenClass);
 

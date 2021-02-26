@@ -38,10 +38,11 @@ struct ClassFile {
 };
 
 class ClassHeap {
-    std::map<char*, Class*> ClassMap;
+    std::map<std::string, Class*> ClassMap;
 
     public:
         ClassHeap();
+        std::string ClassPrefix;
 
         bool LoadClass(char* ClassName, Class* Class);
         bool AddClass(Class* Class);

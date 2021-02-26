@@ -12,14 +12,16 @@ bool ClassHeap::AddClass(Class *Class) {
     if(!Class) return false;
     char* Name = Class->GetClassName();
 
-    ClassMap.emplace(Name, Class);
+    std::string NameStr(Name);
+    ClassMap.emplace(NameStr, Class);
     return true;
 }
 
 Class* ClassHeap::GetClass(char *Name) {
 
-    std::map<char*, Class*>::iterator classIter;
-    classIter = ClassMap.find(Name);
+    std::map<std::string, Class*>::iterator classIter;
+    std::string NameStr(Name);
+    classIter = ClassMap.find(NameStr);
 
     if(classIter == ClassMap.end())
         return NULL;
@@ -39,8 +41,13 @@ bool ClassHeap::LoadClass(char *ClassName, Class *Class) {
     const char* Path, *RelativePath;
     if(!Class) return false;
 
-    std::string pathTemp(ClassName);
+    std::string pathTemp("");
+    std::string classTemp(ClassName);
+    if(classTemp.find("java/") != 0 && classTemp.find(ClassPrefix) != 0)
+        pathTemp.append(ClassPrefix);
+    pathTemp.append(ClassName);
     pathTemp.append(".class");
+    
     RelativePath = pathTemp.c_str();
 
     if(!Class->LoadFromFile(RelativePath))

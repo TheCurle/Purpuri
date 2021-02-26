@@ -65,7 +65,7 @@ class Engine {
         uint16_t GetParameters(const char* Descriptor);
         uint16_t GetParametersStack(const char* Descriptor);
 
-        void New(StackFrame* Stack);
+        int New(StackFrame* Stack);
         void NewArray(StackFrame* Stack);
         void ANewArray(StackFrame* Stack);
 

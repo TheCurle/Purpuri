@@ -29,6 +29,7 @@ bool Class::LoadFromFile(const char* Filename) {
 
     if(!File.is_open()) {
         printf("Unable to open class file: %s\n", Filename);
+        exit(1);
         return false;
     }
 
@@ -337,4 +338,24 @@ char* Class::GetName(uint16_t Obj) {
 
     GetStringConstant(Name, Ret);
     return Ret;
+}
+
+bool Class::CreateObject(uint16_t Index, ObjectHeap *ObjectHeap, Object &Object) {
+    uint8_t* Code = (uint8_t*) this->Constants[Index];
+
+    if(Code[0] != TypeClass)
+        return false;
+    
+    uint16_t Name = ReadShortFromStream(&Code[1]);
+    char* NameStr;
+    if(!this->GetStringConstant(Name, NameStr))
+        return false;
+    
+    printf("Creating new object from class %s\n", NameStr);
+
+    Class* NewClass = this->ClassHeap->GetClass(NameStr);
+    if(NewClass == NULL) return false;
+
+    Object = ObjectHeap->CreateObject(NewClass);
+    return true;
 }
