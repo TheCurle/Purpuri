@@ -47,3 +47,23 @@ Variable* ObjectHeap::GetObjectPtr(Object obj) {
 
     return (Variable*) objIter->second;
 }
+
+Object ObjectHeap::CreateString(char **String, ClassHeap *ClassHeap) {
+    Object obj;
+    obj.Heap = 0;
+    obj.Type = 0;
+
+    if(ClassHeap == NULL) return obj;
+    Class* Class = ClassHeap->GetClass((char*)"java/lang/String");
+
+    if(Class == NULL) return obj;
+    obj = CreateObject(Class);
+
+    Variable* Var = this->GetObjectPtr(obj);
+
+    if(Var == NULL) return obj;
+
+    Var[1].pointerVal = (size_t)String;
+
+    return obj;
+}
