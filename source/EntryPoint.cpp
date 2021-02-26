@@ -42,12 +42,21 @@ int main(int argc, char* argv[]) {
     Class* VirtualClass = GivenClass;
 
     int EntryPoint = GivenClass->GetMethodFromDescriptor((char*) "EntryPoint", (char*) "()I", GivenClass);
+    
+    if(EntryPoint < 0) {
+        printf("%s does not have an EntryPoint function, unable to execute.\n", argv[1]);
+        return 1;
+    }
 
     Stack[StartFrame].Class = GivenClass;
     Stack[StartFrame].Method = &GivenClass->Methods[EntryPoint];
     Stack[StartFrame].Stack = StackFrame::MemberStack;
     Stack[StartFrame].StackPointer = Stack[StartFrame].Method->Code->LocalsSize;
     Stack[StartFrame].Stack[0].object = object;
+
+    puts("*****************");
+    puts("\n\nStarting Execution\n\n");
+    puts("*****************");
 
     Engine.Ignite(&Stack[StartFrame]);
 

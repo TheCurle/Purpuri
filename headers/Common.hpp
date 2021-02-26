@@ -10,6 +10,17 @@ class ClassHeap;
 class StackFrame;
 class ObjectHeap;
 
+#define ReadLongFromStream(Stream) \
+        (size_t) ( ((size_t) ReadIntFromStream(Stream) << 32) & 0xFFFFFFFF00000000 | (size_t) ReadIntFromStream(Stream + 4) & 0x00000000FFFFFFFF)
+
+#define ReadIntFromStream(Stream) \
+        (uint32_t)( (uint32_t)((Stream)[0]) <<24 & 0xFF000000 | (uint32_t)((Stream)[1]) << 16 & 0x00FF0000 \
+        | (uint32_t)((Stream)[2]) << 8 & 0x0000FF00 | (uint32_t)((Stream)[3]) & 0x000000FF)
+
+#define ReadShortFromStream(Stream) \
+        (uint16_t) ( (uint16_t)((Stream)[0]) << 8 & 0xFF00 | ((uint16_t)(Stream)[1]) & 0x00FF )
+
+
 struct AttributeData {
     uint16_t AttributeName;
     uint32_t AttributeLength;
@@ -26,7 +37,8 @@ union Variable {
     uint8_t charVal;
     uint16_t shortVal;
     uint32_t intVal;
-    uint32_t floatVal;
+    float floatVal;
+    double doubleVal;
     size_t pointerVal;
     Object object;
 };
@@ -139,7 +151,7 @@ enum {
 
     aastore = 83,       // 83
 
-    bcdup = 89,           // 89
+    bcdup = 89,         // 89
     dup_x1,             // 90
     dup_x2,             // 91
 
@@ -149,7 +161,11 @@ enum {
     isub = 100,         // 100
     imul = 104,         // 104
 
+    ddiv = 111,         // 111
+
     iinc = 132,         // 132
+
+    i2d = 135,           //135
 
     ifeq = 153,         // 153
     ifne,               // 154
@@ -188,4 +204,20 @@ enum {
     instanceof,         // 193
     monitorenter,       // 194
     monitorexit,        // 195
+};
+
+enum {
+    NONE,
+    TypeUtf8,
+    NONE_,
+    TypeInteger,
+    TypeFloat,
+    TypeLong,
+    TypeDouble,
+    TypeClass,
+    TypeString,
+    TypeField,
+    TypeMethod,
+    TypeInterfaceMethod,
+    TypeNamed
 };

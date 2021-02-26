@@ -75,7 +75,7 @@ bool Class::ParseFullClass() {
 
     puts("New Class incoming..");
     
-    MagicNumber = (Code[0] & 0xFF) << 24 | (Code[1] & 0xFF) << 16 | (Code[2] & 0xFF) << 8 | Code[3] & 0xFF;
+    MagicNumber = ReadIntFromStream(Code);
     Code += 4;
 
     if(MagicNumber != 0xCAFEBABE) {
@@ -85,49 +85,40 @@ bool Class::ParseFullClass() {
 
     printf("Magic: 0x%x\n", MagicNumber);
 
-    BytecodeVersionMinor = Code[0] << 8 | Code[1];
-    Code += 2;
-    BytecodeVersionMajor = Code[0] << 8 | Code[1];
-    Code += 2;
+    BytecodeVersionMinor = ReadShortFromStream(Code); Code += 2;
+    BytecodeVersionMajor = ReadShortFromStream(Code); Code += 2;
 
     printf("Bytecode Version %d.%d\n", BytecodeVersionMajor, BytecodeVersionMinor);
 
-    ConstantCount = Code[0] << 8 | Code[1];
-    Code += 2;
+    ConstantCount = ReadShortFromStream(Code); Code += 2;
 
     if(ConstantCount > 0) 
         ParseConstants(Code);
 
-    ClassAccess = Code[0] << 8 | Code[1];
-    Code += 2;
-    This = Code[0] << 8 | Code[1];
-    Code += 2;
-    Super = Code[0] << 8 | Code[1];
-    Code += 2;
+    ClassAccess = ReadShortFromStream(Code); Code += 2;
+    This = ReadShortFromStream(Code); Code += 2;
+    Super = ReadShortFromStream(Code); Code += 2;
 
-    InterfaceCount = Code[0] << 8 | Code[1];
-    Code += 2;
+    InterfaceCount = ReadShortFromStream(Code); Code += 2;
 
     if(InterfaceCount > 0) {
         puts("NYI: Interfaces");
         return false;
     }
 
-    FieldsCount = Code[0] << 8 | Code[1];
-    Code += 2;
+    FieldsCount = ReadShortFromStream(Code); Code += 2;
 
     if(FieldsCount > 0) {
         puts("NYI: Fields");
         return false;
     }
 
-    MethodCount = Code[0] << 8 | Code[1];
-    Code += 2;
+    MethodCount = ReadShortFromStream(Code); Code += 2;
 
     if(MethodCount > 0) 
         ParseMethods(Code);
     
-    AttributeCount = Code[0] << 8 | Code[1];
+    AttributeCount = ReadShortFromStream(Code); Code += 2;
 
     if(AttributeCount > 0) 
         ParseAttribs(Code);
@@ -146,10 +137,8 @@ bool Class::ParseAttribs(const char *&Code) {
         printf("\tParsing attribute %d\n", j);
         Attributes[j] = (AttributeData*) Code;
 
-        uint16_t AttrName = Code[0] << 8 | Code[1];
-        Code += 2;
-        size_t AttrLength = Code[0] << 24 | Code[1] << 16 | Code[2] << 8 | Code[3];
-        Code += 4;
+        uint16_t AttrName = ReadShortFromStream(Code); Code += 2;
+        size_t AttrLength = ReadIntFromStream(Code); Code += 4;
         Code += AttrLength;
 
         //GetStringConstant(AttrName, Name);
@@ -167,10 +156,10 @@ bool Class::ParseMethods(const char *&Code) {
 
     for(int i = 0; i < MethodCount; i++) {
         Methods[i].Data = (MethodData*) Code;
-        Methods[i].Access = Code[0] << 8 | Code[1]; Code += 2;
-        Methods[i].Name = Code[0] << 8 | Code[1]; Code += 2;
-        Methods[i].Descriptor = Code[0] << 8 | Code[1]; Code += 2;
-        Methods[i].AttributeCount = Code[0] << 8 | Code[1]; Code += 2;
+        Methods[i].Access = ReadShortFromStream(Code); Code += 2;
+        Methods[i].Name = ReadShortFromStream(Code); Code += 2;
+        Methods[i].Descriptor = ReadShortFromStream(Code); Code += 2;
+        Methods[i].AttributeCount = ReadShortFromStream(Code); Code += 2;
 
         char* Name, *Descriptor;
         GetStringConstant(Methods[i].Name, Name);
@@ -183,11 +172,9 @@ bool Class::ParseMethods(const char *&Code) {
         if(Methods[i].AttributeCount > 0) {
             for(int j = 0; j < Methods[i].AttributeCount; j++) {
                 printf("\tParsing attribute %d\n", j);
-                uint16_t AttrName = Code[0] << 8 | Code[1];
-                Code += 2;
+                uint16_t AttrName = ReadShortFromStream(Code); Code += 2;
 
-                size_t AttrLength = Code[0] << 24 | Code[1] << 16 | Code[2] << 8 | Code[3];
-                Code += 4;
+                size_t AttrLength = ReadIntFromStream(Code); Code += 4;
                 Code += AttrLength;
                 GetStringConstant(AttrName, Name);
 
@@ -208,24 +195,22 @@ bool Class::ParseMethodCodePoints(int Method, CodePoint *Code) {
 
     char* CodeBase = (char*)Methods[Method].Data;
     CodeBase += 6; // Skip Access, Name, Descriptor
-    int AttribCount = CodeBase[0] << 8 | CodeBase[1];
-    CodeBase += 2;
+    int AttribCount = ReadShortFromStream(CodeBase); CodeBase += 2;
 
     if(AttribCount > 0) {
         for(int i = 0; i < AttribCount; i++) {
-            uint16_t NameInd = CodeBase[0] << 8 | CodeBase[1];
-            CodeBase += 2;
+            uint16_t NameInd = ReadShortFromStream(CodeBase); CodeBase += 2;
 
             char* AttribName;
             GetStringConstant(NameInd, AttribName);
 
-            if(strcmp(AttribName, "Code")) {
+            if(!strcmp(AttribName, "Code")) {
                 char* AttribCode = CodeBase;
                 Code->Name = NameInd;
-                Code->Length = AttribCode[0] << 24 | AttribCode[1] << 16 | AttribCode[2] << 8 | AttribCode[3]; AttribCode += 4;
-                Code->StackSize = AttribCode[0] << 8 | AttribCode[1]; AttribCode += 2;
-                Code->LocalsSize = AttribCode[0] << 8 | AttribCode[1]; AttribCode += 2;
-                Code->CodeLength = AttribCode[0] << 24 | AttribCode[1] << 16 | AttribCode[2] << 8 | AttribCode[3]; AttribCode += 4;
+                Code->Length = ReadIntFromStream(AttribCode); AttribCode += 4;
+                Code->StackSize = ReadShortFromStream(AttribCode); AttribCode += 2;
+                Code->LocalsSize = ReadShortFromStream(AttribCode); AttribCode += 2;
+                Code->CodeLength = ReadIntFromStream(AttribCode); AttribCode += 4;
 
                 if(Code->CodeLength > 0) {
                     Code->Code = new uint8_t[Code->CodeLength];
@@ -237,20 +222,20 @@ bool Class::ParseMethodCodePoints(int Method, CodePoint *Code) {
 
                 AttribCode += Code->CodeLength;
 
-                Code->ExceptionCount = AttribCode[0] << 8 | AttribCode[1];
+                Code->ExceptionCount = ReadShortFromStream(AttribCode);
                 if(Code->ExceptionCount > 0) {
                     Code->Exceptions = new Exception[Code->ExceptionCount];
 
                     for(int Exc = 0; Exc < Code->ExceptionCount; Exc++) {
-                        Code->Exceptions[Exc].PCStart = AttribCode[0] << 8 | AttribCode[1]; AttribCode += 2;
-                        Code->Exceptions[Exc].PCEnd = AttribCode[0] << 8 | AttribCode[1]; AttribCode += 2;
-                        Code->Exceptions[Exc].PCHandler = AttribCode[0] << 8 | AttribCode[1]; AttribCode += 2;
-                        Code->Exceptions[Exc].CatchType = AttribCode[0] << 8 | AttribCode[1]; AttribCode += 2;
+                        Code->Exceptions[Exc].PCStart = ReadShortFromStream(AttribCode); AttribCode += 2;
+                        Code->Exceptions[Exc].PCEnd = ReadShortFromStream(AttribCode); AttribCode += 2;
+                        Code->Exceptions[Exc].PCHandler = ReadShortFromStream(AttribCode); AttribCode += 2;
+                        Code->Exceptions[Exc].CatchType = ReadShortFromStream(AttribCode); AttribCode += 2;
                     }
                 }
             }
 
-            uint32_t Length = CodeBase[0] << 24 | CodeBase[1] << 16 | CodeBase[2] << 8 | CodeBase[3]; CodeBase += 4;
+            uint32_t Length = ReadIntFromStream(CodeBase); CodeBase += 4;
             CodeBase += Length;
         }
     }
@@ -274,7 +259,7 @@ uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, Clas
 
             if(!strcmp(MethodName, l_Name) && !strcmp(Descriptor, l_Descriptor)) {
                 if(Class) Class = CurrentClass;
-                
+
                 printf("Found at index %d\n", i);
                 return i;
             }
@@ -332,12 +317,11 @@ char* Class::GetName(uint16_t Obj) {
     char* Ret = new char[0];
     if(Obj < 1 || (Obj != Super && Obj != This)) return Ret;
 
-    // 7 = class
-    if(Constants[Obj]->Tag != 7)
+    if(Constants[Obj]->Tag != TypeClass)
         return Ret;
     
     char* Entry = (char*)Constants[Obj];
-    uint16_t Name = (&Entry[1])[0] << 8 | (&Entry[1])[1];
+    uint16_t Name = ReadShortFromStream(&Entry[1]);
 
     GetStringConstant(Name, Ret);
     return Ret;
