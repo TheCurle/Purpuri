@@ -72,7 +72,12 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 InvokeSpecial(CurrentFrame);
                 CurrentFrame->ProgramCounter += 3;
                 break;
-            
+
+            case invokeinterface:
+                InvokeInterface(CurrentFrame);
+                CurrentFrame->ProgramCounter += 5;
+                break;
+
             case iconst_0:
             case iconst_5:
                 CurrentFrame->StackPointer++;
@@ -94,11 +99,12 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Pulled int %d out of local 0 into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
                 break;
 
+            case fload_1:
             case fload_3:
                 CurrentFrame->StackPointer++;
                 CurrentFrame->Stack[CurrentFrame->StackPointer] = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - fload_0];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled float %.6f out of local 3 into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal);
+                printf("Pulled float %.6f out of local %d into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal, Code[CurrentFrame->ProgramCounter - 1] - fload_0);
                 break;
 
             case imul:
@@ -161,10 +167,11 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Pulled double %.6f out of the stack into 1\n", CurrentFrame->Stack[CurrentFrame->StackPointer + 1].doubleVal);
                 break;
             
+            case fstore_1:
             case fstore_3:
                 CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter] - fstore_0] = CurrentFrame->Stack[CurrentFrame->StackPointer--];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled float %.6f out of the stack into 3\n", CurrentFrame->Stack[CurrentFrame->StackPointer + 1].doubleVal);
+                printf("Pulled float %f out of the stack into local %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal, Code[CurrentFrame->ProgramCounter - 1] - fstore_0);
                 break;
             
 
@@ -174,6 +181,22 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                     CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - dload_0];
                 CurrentFrame->ProgramCounter++;
                 printf("Pulled %.6f out of local 1 into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
+                break;
+            
+            case aload_0:
+            case aload_1:
+                CurrentFrame->StackPointer++;
+                CurrentFrame->Stack[CurrentFrame->StackPointer] = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - aload_0];
+                CurrentFrame->ProgramCounter++;
+                printf("Pulled object %d out of local %d into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].object.Type, Code[CurrentFrame->ProgramCounter - 1] - aload_0);
+                break;
+
+            case astore_0:
+            case astore_1:
+                CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - astore_0] = 
+                    CurrentFrame->Stack[CurrentFrame->StackPointer--];
+                CurrentFrame->ProgramCounter++;
+                printf("Pulled the last object on the stack into local %d\n", Code[CurrentFrame->ProgramCounter - 1] - astore_0);
                 break;
 
             case drem: {
@@ -214,6 +237,15 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->ProgramCounter++;
 
                 printf("Converted float %.6f to double %.6f\n", val, doubleVal);
+                break;
+            }
+
+            case f2i: {
+                float val = CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal;
+                int32_t intVal = (int) val; //*reinterpret_cast<int32_t*>(&val);
+                CurrentFrame->Stack[CurrentFrame->StackPointer].intVal = intVal;
+                CurrentFrame->ProgramCounter++;
+                printf("Converted float %.6f to int %d\n", val, intVal);
                 break;
             }
 
@@ -262,6 +294,13 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->StackPointer++;
                 CurrentFrame->ProgramCounter++;
                 printf("Pushed 1.0D to the stack\n");
+                break;
+
+            case bipush:
+                CurrentFrame->StackPointer++;
+                CurrentFrame->Stack[CurrentFrame->StackPointer].charVal = (uint8_t) Code[CurrentFrame->ProgramCounter + 1];
+                CurrentFrame->ProgramCounter += 2;
+                printf("Pushed char %d to the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].charVal);
                 break;
 
             default: printf("\nUnhandled opcode %x\n", Code[CurrentFrame->ProgramCounter]); CurrentFrame->ProgramCounter++; return false;
@@ -336,9 +375,42 @@ void Engine::InvokeSpecial(StackFrame *Stack) {
     InvokeVirtual(Stack, invokespecial);
 }
 
+void Engine::InvokeInterface(StackFrame *Stack) {
+    size_t ProgramCounter = Stack[0].ProgramCounter;
+    uint8_t* Code = (uint8_t*) Stack[0].Method->Code->Code;
+    uint16_t MethodInd = ReadShortFromStream(&Code[ProgramCounter + 1]);
+
+    printf("Calculating invocation for method function.\n");
+    // Read method data
+    uint8_t* ClassConstants = (uint8_t*) Stack[0].Class->Constants[MethodInd];
+    uint16_t ClassNameLocationInd = ReadShortFromStream(&ClassConstants[1]);
+    uint16_t ClassNameTypeInd = ReadShortFromStream(&ClassConstants[3]);
+    // Read Class data
+    ClassConstants = (uint8_t*) Stack[0].Class->Constants[ClassNameLocationInd];
+    uint16_t ClassNameInd = ReadShortFromStream(&ClassConstants[1]);
+    char* ClassName;
+    Stack[0].Class->GetStringConstant(ClassNameInd, ClassName);
+
+    printf("\tInvocation is calling into class %s\n", ClassName);
+
+    Class* InvocationClass = ClassHeap->GetClass(ClassName);
+    ClassConstants = (uint8_t*) &InvocationClass->Constants[ClassNameTypeInd];
+
+    uint16_t MethodNameInd = ReadShortFromStream(&ClassConstants[1]);
+    uint16_t MethodDescriptorInd = ReadShortFromStream(&ClassConstants[3]);
+    char* MethodName, *MethodDescriptor;
+    InvocationClass->GetStringConstant(MethodNameInd, MethodName);
+    InvocationClass->GetStringConstant(MethodDescriptorInd, MethodDescriptor);
+
+    printf("\tInvocation resolves to method %s%s\n", MethodName, MethodDescriptor);
+    for(;;) {}
+
+}
+
 void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
     uint16_t MethodIndex = ReadShortFromStream(&Stack[0].Method->Code->Code[Stack[0].ProgramCounter + 1]);
 
+    printf("Calculating invocation for method function.\n");
     Variable ObjectRef = Stack[0].Stack[Stack[0].StackPointer];
 
     uint8_t* Constants = (uint8_t*) Stack[0].Class->Constants[MethodIndex];
@@ -350,6 +422,9 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
     uint16_t ClassName = ReadShortFromStream(&Constants[1]);
     char* ClassStr;
     Stack[0].Class->GetStringConstant(ClassName, ClassStr);
+
+    
+    printf("\tInvocation is calling into class %s\n", ClassStr);
 
     Class* Class = ClassHeap->GetClass(ClassStr);
 
@@ -364,7 +439,8 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
 
     Stack[0].Class->GetStringConstant(MethodToInvoke.Name, MethodName);
     Stack[0].Class->GetStringConstant(MethodToInvoke.Descriptor, MethodDescriptor);
-
+    
+    printf("\tInvocation resolves to method %s%s\n", MethodName, MethodDescriptor);
     class Class* VirtualClass = Class;
 
     int MethodInClassIndex = Class->GetMethodFromDescriptor(MethodName, MethodDescriptor, VirtualClass);
@@ -375,6 +451,8 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
 
     if(MethodToInvoke.Access & 0x20)
         Stack[1].Class = VirtualClass->GetSuper();
+    else if(MethodToInvoke.Access & 0x200)
+        Stack[1].Class = Stack[0].Class;
     else
         Stack[1].Class = VirtualClass;
 

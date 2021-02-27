@@ -64,7 +64,9 @@ class Class : public ClassFile {
         bool ParseMethods(const char* &Code);
         bool ParseMethodCodePoints(int Method, CodePoint* Code);
         bool ParseAttribs(const char* &Code);
-        
+
+        void ClassloadReferents(const char* &Code);
+
         bool GetConstants(uint16_t index, ConstantPoolEntry &Pool);
         bool GetStringConstant(uint32_t index, char* &String);
 

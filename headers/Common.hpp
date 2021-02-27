@@ -56,6 +56,7 @@ class Engine {
         void InvokeSpecial(StackFrame* Stack);
         void InvokeVirtual(StackFrame* Stack, uint16_t Type);
         void InvokeNative(StackFrame* Stack);
+        void InvokeInterface(StackFrame* Stack);
 
         void PutField(StackFrame* Stack);
         void GetField(StackFrame* Stack);
@@ -237,8 +238,10 @@ enum {
     invokevirtual,      // 182
     invokespecial,      // 183
     invokestatic,       // 184
+    invokeinterface,    // 185
+    invokedynamic,      // 186
 
-    _new = 187,         // 187
+    _new,               // 187
 
     newarray,           // 188
     anewarray,          // 189

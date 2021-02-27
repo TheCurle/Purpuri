@@ -19,6 +19,8 @@ int main(int argc, char* argv[]) {
     ClassHeap heap;
     Class* Object = new Class();
     Class* GivenClass = new Class();
+    GivenClass->SetClassHeap(&heap);
+    Object->SetClassHeap(&heap);
 
     std::string GivenPath(argv[1]);
     size_t LastInd = GivenPath.find_last_of("/");

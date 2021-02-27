@@ -29,7 +29,6 @@ bool Class::LoadFromFile(const char* Filename) {
 
     if(!File.is_open()) {
         printf("Unable to open class file: %s\n", Filename);
-        exit(1);
         return false;
     }
 
@@ -122,7 +121,34 @@ bool Class::ParseFullClass() {
     if(AttributeCount > 0) 
         ParseAttribs(Code);
 
+    ClassloadReferents(Code);
+
     return 0;
+}
+
+void Class::ClassloadReferents(const char* &Code) {
+
+    printf("Searching for unloaded classes referenced by the current.\n");
+    
+    for(int i = 1; i < ConstantCount; i++) {
+        if(Constants == NULL) return;
+        if(Constants[i] == NULL) continue;
+
+        if(Constants[i]->Tag == TypeClass) {
+            char* Temp = (char*)Constants[i];
+            uint16_t val = ReadShortFromStream(&Temp[1]);
+            GetStringConstant(val, Temp);
+            printf("\tName %s", Temp);
+
+            if(i != Super && i != This && this->ClassHeap->GetClass(Temp) == NULL) {
+                printf("\tClass is not loaded - invoking the classloader\n");
+                Class* Class = new class Class();
+                this->ClassHeap->LoadClass(Temp, Class);
+            } else {
+                printf(" - clear\n");
+            }
+        }
+    }
 }
 
 bool Class::ParseAttribs(const char *&Code) {
@@ -156,7 +182,12 @@ bool Class::ParseInterfaces(const char* &Code) {
         Interfaces[i] = ReadShortFromStream(Code);
         Code += 2;
 
-        printf("\tInterface %d parsed\n", i);
+        char* Stream;
+        Stream = (char*) Constants[Interfaces[i]];
+        uint16_t NameInd = ReadShortFromStream(&Stream[1]);
+        GetStringConstant(NameInd, Stream);
+
+        printf("\tThis class implements interface %s\n", Stream);
     }
 
     return true;

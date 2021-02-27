@@ -4,6 +4,7 @@
  **************/
 
 #include "../headers/Class.hpp"
+#include <fstream>
 #include <iterator>
 
 ClassHeap::ClassHeap() {}
@@ -26,8 +27,12 @@ Class* ClassHeap::GetClass(char *Name) {
     if(classIter == ClassMap.end())
         return NULL;
     
-    Class* Class = new class Class();
-    bool Res = this->LoadClass(Name, Class);
+    Class* Class = classIter->second;
+    //bool Res = this->LoadClass(Name, Class);
+
+    std::ifstream File(Name, std::ios::binary);
+
+    bool Res = File.is_open();
 
     if(!Res) {
         delete Class;
@@ -50,10 +55,9 @@ bool ClassHeap::LoadClass(char *ClassName, Class *Class) {
     
     RelativePath = pathTemp.c_str();
 
+    Class->SetClassHeap(this);
     if(!Class->LoadFromFile(RelativePath))
         return false;
-
-    Class->SetClassHeap(this);
 
     return AddClass(Class);
 }
