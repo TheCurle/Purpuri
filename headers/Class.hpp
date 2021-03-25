@@ -85,13 +85,13 @@ class Class : public ClassFile {
         bool CreateObjectArray(uint16_t Index, uint32_t Count, ObjectHeap* ObjectHeap, Object &Object);
 
         void SetClassHeap(ClassHeap* p_ClassHeap) {
-            this->ClassHeap = p_ClassHeap;
+            this->_ClassHeap = p_ClassHeap;
         }
 
     private:
         size_t BytecodeLength;
         const char* Code;
-        struct ClassHeap* ClassHeap;
+        struct ClassHeap* _ClassHeap;
         uint16_t FieldsCount;
 
         bool ParseConstants(const char* &Code);

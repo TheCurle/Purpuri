@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 
 Class::Class() {
-    ClassHeap = NULL;
+    _ClassHeap = NULL;
     Code = NULL;
     BytecodeLength = 0;
     FieldsCount = 0;
@@ -141,10 +141,10 @@ void Class::ClassloadReferents(const char* &Code) {
             GetStringConstant(val, Temp);
             printf("\tName %s", Temp);
 
-            if(i != Super && i != This && this->ClassHeap->GetClass(Temp) == NULL) {
+            if(i != Super && i != This && this->_ClassHeap->GetClass(Temp) == NULL) {
                 printf("\tClass is not loaded - invoking the classloader\n");
                 Class* Class = new class Class();
-                this->ClassHeap->LoadClass(Temp, Class);
+                this->_ClassHeap->LoadClass(Temp, Class);
             } else {
                 printf(" - clear\n");
             }
@@ -345,7 +345,7 @@ uint32_t Class::GetClassFieldCount() {
 }
 
 Class* Class::GetSuper() {
-    return ClassHeap->GetClass(GetSuperName());
+    return _ClassHeap->GetClass(GetSuperName());
 }
 
 char* Class::GetSuperName() {
@@ -383,7 +383,7 @@ bool Class::CreateObject(uint16_t Index, ObjectHeap *ObjectHeap, Object &Object)
     
     printf("Creating new object from class %s\n", NameStr);
 
-    Class* NewClass = this->ClassHeap->GetClass(NameStr);
+    Class* NewClass = this->_ClassHeap->GetClass(NameStr);
     if(NewClass == NULL) return false;
 
     Object = ObjectHeap->CreateObject(NewClass);

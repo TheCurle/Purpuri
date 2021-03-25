@@ -44,8 +44,8 @@ int main(int argc, char* argv[]) {
 
     Engine Engine;
 
-    Engine.ClassHeap = &heap;
-    Engine.ObjectHeap = &objects;
+    Engine._ClassHeap = &heap;
+    Engine._ObjectHeap = &objects;
     int StartFrame = 0;
 
     class Object object = objects.CreateObject(GivenClass);

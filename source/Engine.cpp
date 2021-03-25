@@ -12,8 +12,8 @@ Variable* StackFrame::MemberStack;
 StackFrame* StackFrame::FrameBase;
 
 Engine::Engine() {
-    ClassHeap = NULL;
-    ObjectHeap = NULL;
+    _ClassHeap = NULL;
+    _ObjectHeap = NULL;
 }
 
 Engine::~Engine() {}
@@ -334,7 +334,7 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
             shortTemp = ReadShortFromStream(&Code[1]);
             Class->GetStringConstant(shortTemp, StrTmp);
             Str = &StrTmp;
-            obj = ObjectHeap->CreateString(Str, ClassHeap);
+            obj = _ObjectHeap->CreateString(Str, _ClassHeap);
             temp.pointerVal = obj.Heap;
             break;
         
@@ -352,7 +352,7 @@ int Engine::New(StackFrame *Stack) {
     uint8_t* Code = Stack->Method->Code->Code;
     uint16_t Index = ReadShortFromStream(&Code[Stack->ProgramCounter + 1]);
 
-    if(!Stack->Class->CreateObject(Index, this->ObjectHeap, Stack->Stack[Stack->StackPointer].object))
+    if(!Stack->Class->CreateObject(Index, this->_ObjectHeap, Stack->Stack[Stack->StackPointer].object))
         return -1;
     return 0;
 }
@@ -366,7 +366,7 @@ void Engine::InvokeInterface(StackFrame *Stack) {
     uint8_t* Code = (uint8_t*) Stack[0].Method->Code->Code;
     uint16_t MethodInd = ReadShortFromStream(&Code[ProgramCounter + 1]);
 
-    printf("Calculating invocation for method function.\n");
+    printf("Calculating invocation for interface function.\n");
     // Read method data
     uint8_t* ClassConstants = (uint8_t*) Stack[0].Class->Constants[MethodInd];
     uint16_t ClassNameLocationInd = ReadShortFromStream(&ClassConstants[1]);
@@ -379,7 +379,7 @@ void Engine::InvokeInterface(StackFrame *Stack) {
 
     printf("\tInvocation is calling into class %s\n", ClassName);
 
-    Class* InvocationClass = ClassHeap->GetClass(ClassName);
+    Class* InvocationClass = _ClassHeap->GetClass(ClassName);
     ClassConstants = (uint8_t*) &InvocationClass->Constants[ClassNameTypeInd];
 
     uint16_t MethodNameInd = ReadShortFromStream(&ClassConstants[1]);
@@ -397,6 +397,7 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
     uint16_t MethodIndex = ReadShortFromStream(&Stack[0].Method->Code->Code[Stack[0].ProgramCounter + 1]);
 
     printf("Calculating invocation for method function.\n");
+    printf("Trying to invoke %x.\r\n", Stack[0].Class->This);
     //Variable ObjectRef = Stack[0].Stack[Stack[0].StackPointer];
 
     uint8_t* Constants = (uint8_t*) Stack[0].Class->Constants[MethodIndex];
@@ -412,7 +413,7 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
     
     printf("\tInvocation is calling into class %s\n", ClassStr);
 
-    Class* Class = ClassHeap->GetClass(ClassStr);
+    Class* Class = _ClassHeap->GetClass(ClassStr);
 
     Constants = (uint8_t*) Stack[0].Class->Constants[ClassNTIndex];
 

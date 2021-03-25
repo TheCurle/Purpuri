@@ -59,5 +59,6 @@ bool ClassHeap::LoadClass(char *ClassName, Class *Class) {
     if(!Class->LoadFromFile(RelativePath))
         return false;
 
+    printf("Loading class %s at 0x%x.\r\n", ClassName, (void*)(size_t*)Class);
     return AddClass(Class);
 }

@@ -47,8 +47,8 @@ union Variable {
 
 class Engine {
     public:
-        ClassHeap* ClassHeap;
-        ObjectHeap* ObjectHeap;
+        ClassHeap* _ClassHeap;
+        ObjectHeap* _ObjectHeap;
 
         Engine();
         virtual ~Engine();
