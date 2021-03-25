@@ -21,7 +21,7 @@ Engine::~Engine() {}
 uint32_t Engine::Ignite(StackFrame* Stack) {
     StackFrame* CurrentFrame = &Stack[0];
 
-    printf("Execution frame %zu, stack begins %zu\n", CurrentFrame - StackFrame::FrameBase, CurrentFrame->Stack - StackFrame::MemberStack);
+    printf("Execution frame %zd, stack begins %zd\n", CurrentFrame - StackFrame::FrameBase, CurrentFrame->Stack - StackFrame::MemberStack);
 
     // 0x100 = native
     if(CurrentFrame->_Method->Access & 0x100) {
@@ -127,7 +127,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->Stack[CurrentFrame->StackPointer + 1] = GetConstant(CurrentFrame->_Class, (uint8_t) Code[CurrentFrame->ProgramCounter + 1]);
                 CurrentFrame->StackPointer++;
                 CurrentFrame->ProgramCounter += 2;
-                printf("Pushed constant %d (0x%dx / %.6f) to the stack\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal);
+                printf("Pushed constant %zd (0x%zx / %.6f) to the stack\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal);
                 break;
             
             case ldc2_w:
@@ -136,7 +136,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal = ReadLongFromStream(&((char *)Class->Constants[Index])[1]);
                 CurrentFrame->ProgramCounter += 3;
 
-                printf("Pushed constant %d of type %d, value 0x%dx / %.6f onto the stack\n", Index, Class->Constants[Index]->Tag, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
+                printf("Pushed constant %d of type %d, value 0x%zx / %.6f onto the stack\n", Index, Class->Constants[Index]->Tag, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
                 break;
 
             case ddiv: {
@@ -457,7 +457,7 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
     Stack[1].Stack = &StackFrame::MemberStack[Stack->Stack - StackFrame::MemberStack + Stack[0].StackPointer - Parameters + 1];
     Stack[1].StackPointer = DiscardStack - 1;
 
-    printf("Invoking method %s%s - Last frame at %zu, new frame begins %zu\n", MethodName, MethodDescriptor,
+    printf("Invoking method %s%s - Last frame at %zd, new frame begins %zd\n", MethodName, MethodDescriptor,
         Stack[0].Stack - StackFrame::MemberStack + Stack[0].StackPointer, 
         Stack[1].Stack - StackFrame::MemberStack);
 
