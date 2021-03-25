@@ -176,27 +176,27 @@ enum {
 
     iadd = 96,          // 96
     ladd,               // 97
-    fadd,               // 98
+    _fadd,               // 98
     dadd,               // 99
 
     isub,               // 100
     lsub,               // 101
-    fsub,               // 102
+    _fsub,              // 102
     dsub,               // 103
     imul,               // 104
     lmul,               // 105
-    fmul,               // 106
+    _fmul,              // 106
     dmul,               // 107
 
-    _idiv,               // 108
-    _ldiv,               // 109
-    fdiv,               // 110
+    _idiv,              // 108
+    _ldiv,              // 109
+    _fdiv,              // 110
 
     ddiv,               // 111
     irem,               // 112
     lrem,               // 113
     frem,               // 114
-    drem,               // 115
+    _drem,              // 115
 
     iinc = 132,         // 132
 

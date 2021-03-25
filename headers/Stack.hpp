@@ -10,8 +10,8 @@ class StackFrame {
     public: 
         static Variable* MemberStack;
         static StackFrame* FrameBase;
-        Class* Class;
-        Method* Method;
+        Class* _Class;
+        Method* _Method;
         uint32_t ProgramCounter;
         int16_t StackPointer;
         Variable* Stack;
@@ -19,7 +19,7 @@ class StackFrame {
         StackFrame() {
             StackPointer = -1;
             ProgramCounter = 0;
-            Class = NULL;
+            _Class = NULL;
             Stack = NULL;
             FrameBase = NULL;
             MemberStack = NULL;
@@ -27,7 +27,7 @@ class StackFrame {
 
         StackFrame(int16_t StackPointer) {
             this->StackPointer = StackPointer;
-            Class = NULL;
+            _Class = NULL;
             Stack = NULL;
             ProgramCounter = 0;
         }

@@ -24,18 +24,18 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
     printf("Execution frame %lld, stack begins %lld\n", CurrentFrame - StackFrame::FrameBase, CurrentFrame->Stack - StackFrame::MemberStack);
 
     // 0x100 = native
-    if(CurrentFrame->Method->Access & 0x100) {
+    if(CurrentFrame->_Method->Access & 0x100) {
         puts("Executing native method");
         //InvokeNative(CurrentFrame);
         puts("Native method returned");
         return 0;
     }
 
-    uint8_t* Code = CurrentFrame->Method->Code->Code + CurrentFrame->ProgramCounter;
+    uint8_t* Code = CurrentFrame->_Method->Code->Code + CurrentFrame->ProgramCounter;
     int32_t Error = 0;
-    Class* Class = CurrentFrame->Class;
+    Class* Class = CurrentFrame->_Class;
     char* Name;
-    Class->GetStringConstant(CurrentFrame->Method->Name, Name);
+    Class->GetStringConstant(CurrentFrame->_Method->Name, Name);
 
     printf("Executing %s::%s\n", Class->GetClassName(), Name);
     int32_t Index;
@@ -124,7 +124,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
 
             case ldc:
-                CurrentFrame->Stack[CurrentFrame->StackPointer + 1] = GetConstant(CurrentFrame->Class, (uint8_t) Code[CurrentFrame->ProgramCounter + 1]);
+                CurrentFrame->Stack[CurrentFrame->StackPointer + 1] = GetConstant(CurrentFrame->_Class, (uint8_t) Code[CurrentFrame->ProgramCounter + 1]);
                 CurrentFrame->StackPointer++;
                 CurrentFrame->ProgramCounter += 2;
                 printf("Pushed constant %d (0x%llx / %.6f) to the stack\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal);
@@ -150,7 +150,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;            
             }
 
-            case fdiv: { 
+            case _fdiv: { 
                 float topVal = CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal;
                 float underVal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal;
                 float res = topVal / underVal;
@@ -199,7 +199,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Pulled the last object on the stack into local %d\n", Code[CurrentFrame->ProgramCounter - 1] - astore_0);
                 break;
 
-            case drem: {
+            case _drem: {
                 double topVal = CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal;
                 double underVal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].doubleVal;
 
@@ -249,7 +249,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
             }
 
-            case fmul: {
+            case _fmul: {
                 float val = CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal;
                 float underVal =  CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal;
                 float res = val * underVal;
@@ -349,10 +349,10 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
 
 int Engine::New(StackFrame *Stack) {
     Stack->StackPointer++;
-    uint8_t* Code = Stack->Method->Code->Code;
+    uint8_t* Code = Stack->_Method->Code->Code;
     uint16_t Index = ReadShortFromStream(&Code[Stack->ProgramCounter + 1]);
 
-    if(!Stack->Class->CreateObject(Index, this->_ObjectHeap, Stack->Stack[Stack->StackPointer].object))
+    if(!Stack->_Class->CreateObject(Index, this->_ObjectHeap, Stack->Stack[Stack->StackPointer].object))
         return -1;
     return 0;
 }
@@ -363,19 +363,19 @@ void Engine::InvokeSpecial(StackFrame *Stack) {
 
 void Engine::InvokeInterface(StackFrame *Stack) {
     size_t ProgramCounter = Stack[0].ProgramCounter;
-    uint8_t* Code = (uint8_t*) Stack[0].Method->Code->Code;
+    uint8_t* Code = (uint8_t*) Stack[0]._Method->Code->Code;
     uint16_t MethodInd = ReadShortFromStream(&Code[ProgramCounter + 1]);
 
     printf("Calculating invocation for interface function.\n");
     // Read method data
-    uint8_t* ClassConstants = (uint8_t*) Stack[0].Class->Constants[MethodInd];
+    uint8_t* ClassConstants = (uint8_t*) Stack[0]._Class->Constants[MethodInd];
     uint16_t ClassNameLocationInd = ReadShortFromStream(&ClassConstants[1]);
     uint16_t ClassNameTypeInd = ReadShortFromStream(&ClassConstants[3]);
     // Read Class data
-    ClassConstants = (uint8_t*) Stack[0].Class->Constants[ClassNameLocationInd];
+    ClassConstants = (uint8_t*) Stack[0]._Class->Constants[ClassNameLocationInd];
     uint16_t ClassNameInd = ReadShortFromStream(&ClassConstants[1]);
     char* ClassName;
-    Stack[0].Class->GetStringConstant(ClassNameInd, ClassName);
+    Stack[0]._Class->GetStringConstant(ClassNameInd, ClassName);
 
     printf("\tInvocation is calling into class %s\n", ClassName);
 
@@ -394,28 +394,28 @@ void Engine::InvokeInterface(StackFrame *Stack) {
 }
 
 void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
-    uint16_t MethodIndex = ReadShortFromStream(&Stack[0].Method->Code->Code[Stack[0].ProgramCounter + 1]);
+    uint16_t MethodIndex = ReadShortFromStream(&Stack[0]._Method->Code->Code[Stack[0].ProgramCounter + 1]);
 
     printf("Calculating invocation for method function.\n");
-    printf("Trying to invoke %x.\r\n", Stack[0].Class->This);
+    printf("Trying to invoke %x.\r\n", Stack[0]._Class->This);
     //Variable ObjectRef = Stack[0].Stack[Stack[0].StackPointer];
 
-    uint8_t* Constants = (uint8_t*) Stack[0].Class->Constants[MethodIndex];
+    uint8_t* Constants = (uint8_t*) Stack[0]._Class->Constants[MethodIndex];
 
     uint16_t ClassIndex = ReadShortFromStream(&Constants[1]);
     uint16_t ClassNTIndex = ReadShortFromStream(&Constants[3]);
 
-    Constants = (uint8_t*) Stack[0].Class->Constants[ClassIndex];
+    Constants = (uint8_t*) Stack[0]._Class->Constants[ClassIndex];
     uint16_t ClassName = ReadShortFromStream(&Constants[1]);
     char* ClassStr;
-    Stack[0].Class->GetStringConstant(ClassName, ClassStr);
+    Stack[0]._Class->GetStringConstant(ClassName, ClassStr);
 
     
     printf("\tInvocation is calling into class %s\n", ClassStr);
 
     Class* Class = _ClassHeap->GetClass(ClassStr);
 
-    Constants = (uint8_t*) Stack[0].Class->Constants[ClassNTIndex];
+    Constants = (uint8_t*) Stack[0]._Class->Constants[ClassNTIndex];
 
     Method MethodToInvoke;
     MethodToInvoke.Name = ReadShortFromStream(&Constants[1]);
@@ -424,8 +424,8 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
 
     char* MethodName, *MethodDescriptor;
 
-    Stack[0].Class->GetStringConstant(MethodToInvoke.Name, MethodName);
-    Stack[0].Class->GetStringConstant(MethodToInvoke.Descriptor, MethodDescriptor);
+    Stack[0]._Class->GetStringConstant(MethodToInvoke.Name, MethodName);
+    Stack[0]._Class->GetStringConstant(MethodToInvoke.Descriptor, MethodDescriptor);
     
     printf("\tInvocation resolves to method %s%s\n", MethodName, MethodDescriptor);
     class Class* VirtualClass = Class;
@@ -434,15 +434,15 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
 
     Stack[1] = (StackFrame) { 0 };
 
-    Stack[1].Method = &Class->Methods[MethodInClassIndex];
-    MethodToInvoke.Access = ReadShortFromStream((uint8_t*) Stack[1].Method);
+    Stack[1]._Method = &Class->Methods[MethodInClassIndex];
+    MethodToInvoke.Access = ReadShortFromStream((uint8_t*) Stack[1]._Method);
 
     if(MethodToInvoke.Access & 0x20)
-        Stack[1].Class = VirtualClass->GetSuper();
+        Stack[1]._Class = VirtualClass->GetSuper();
     else if(MethodToInvoke.Access & 0x200)
-        Stack[1].Class = Stack[0].Class;
+        Stack[1]._Class = Stack[0]._Class;
     else
-        Stack[1].Class = VirtualClass;
+        Stack[1]._Class = VirtualClass;
 
     int Parameters = GetParameters(MethodDescriptor) + 1;
 
@@ -451,8 +451,8 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
     
     int DiscardStack = Parameters;
     
-    if(!(Stack[1].Method->Access & 0x100))
-        DiscardStack += Stack[1].Method->Code->LocalsSize;
+    if(!(Stack[1]._Method->Access & 0x100))
+        DiscardStack += Stack[1]._Method->Code->LocalsSize;
     
     Stack[1].Stack = &StackFrame::MemberStack[Stack->Stack - StackFrame::MemberStack + Stack[0].StackPointer - Parameters + 1];
     Stack[1].StackPointer = DiscardStack - 1;

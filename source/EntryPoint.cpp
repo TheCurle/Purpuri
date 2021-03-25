@@ -58,10 +58,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    Stack[StartFrame].Class = GivenClass;
-    Stack[StartFrame].Method = &GivenClass->Methods[EntryPoint];
+    Stack[StartFrame]._Class = GivenClass;
+    Stack[StartFrame]._Method = &GivenClass->Methods[EntryPoint];
     Stack[StartFrame].Stack = StackFrame::MemberStack;
-    Stack[StartFrame].StackPointer = Stack[StartFrame].Method->Code->LocalsSize;
+    Stack[StartFrame].StackPointer = Stack[StartFrame]._Method->Code->LocalsSize;
     Stack[StartFrame].Stack[0].object = object;
 
     puts("*****************");
