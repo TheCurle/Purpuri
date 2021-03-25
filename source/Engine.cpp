@@ -322,23 +322,12 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
 
     char* Code = (char*) Class->Constants[Index];
     uint16_t shortTemp;
-    uint32_t intTemp;
-    float floatTemp;
-    double doubleTemp;
-    size_t longTemp;
     Object obj;
 
-    SHUTUPUNUSED(longTemp);
-    SHUTUPUNUSED(intTemp);
-
     switch(Code[0]) {
+        case TypeFloat:
         case TypeInteger:
             temp.intVal = ReadIntFromStream(&Code[1]);
-            break;
-        
-        case TypeFloat:
-            floatTemp = ReadIntFromStream(&Code[1]);
-            temp.floatVal = floatTemp;
             break;
         
         case TypeString:
@@ -350,10 +339,6 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
             break;
         
         case TypeDouble:
-            doubleTemp = ReadLongFromStream(&Code[1]);
-            temp.doubleVal = doubleTemp;
-            break;
-        
         case TypeLong:
             temp.pointerVal = ReadLongFromStream(&Code[1]);
             break;

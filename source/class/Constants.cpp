@@ -57,16 +57,16 @@ bool Class::ParseConstants(const char *&Code) {
 
             case TypeFloat: {
                 Temp = (char*)Constants[i];
-                float val = ReadIntFromStream(&Temp[1]);
+                Variable val = *(Variable*) &Temp[1];
             
-                printf("\tValue %.6f\n", val);
+                printf("\tValue %.6f\n", val.floatVal);
                 break;
             }
 
             case TypeDouble: {
                 Temp = (char*)Constants[i];
-                double val = ReadLongFromStream(&Temp[1]);
-                printf("\tValue %.6f\n", val);
+                Variable val = *(Variable*) &Temp[1];
+                printf("\tValue %.6f\n", val.doubleVal);
                 break;
             }
 
