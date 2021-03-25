@@ -38,7 +38,8 @@ Class* ClassHeap::GetClass(char *Name) {
         delete Class;
         Class = NULL;
     }
-
+    
+    File.close();
     return Class;
 }
 

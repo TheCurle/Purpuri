@@ -383,7 +383,7 @@ bool Class::CreateObject(uint16_t Index, ObjectHeap *ObjectHeap, Object &Object)
     
     printf("Creating new object from class %s\n", NameStr);
 
-    Class* NewClass = this->_ClassHeap->GetClass(NameStr);
+    Class* NewClass = this->_ClassHeap->GetClass((char*) this->_ClassHeap->ClassPrefix.append(NameStr).c_str());
     if(NewClass == NULL) return false;
 
     Object = ObjectHeap->CreateObject(NewClass);
