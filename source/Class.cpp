@@ -286,13 +286,13 @@ bool Class::ParseMethodCodePoints(int Method, CodePoint *Code) {
     return 0;
 }
 
-uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, Class *&Class) {
+uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, Class *&pClass) {
     if(Methods == NULL) {
         puts("GetMethodFromDescriptor called too early! Class not initialised yet!");
         return false;
     }
 
-    class Class* CurrentClass = this;
+    class Class* CurrentClass = pClass;
     while(CurrentClass) {
         printf("Searching class %s for %s%s\n", CurrentClass->GetClassName(), MethodName, Descriptor);
         char* l_Name, *l_Descriptor;
@@ -301,14 +301,14 @@ uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, Clas
             CurrentClass->GetStringConstant(CurrentClass->Methods[i].Descriptor, l_Descriptor);
 
             if(!strcmp(MethodName, l_Name) && !strcmp(Descriptor, l_Descriptor)) {
-                if(Class) Class = CurrentClass;
+                if(pClass) pClass = CurrentClass;
 
                 printf("Found at index %d\n", i);
                 return i;
             }
         }
 
-        if(Class != NULL)
+        if(pClass != NULL)
             CurrentClass = CurrentClass->GetSuper();
         else
             break;
@@ -383,7 +383,7 @@ bool Class::CreateObject(uint16_t Index, ObjectHeap *ObjectHeap, Object &Object)
     
     printf("Creating new object from class %s\n", NameStr);
 
-    Class* NewClass = this->_ClassHeap->GetClass((char*) this->_ClassHeap->ClassPrefix.append(NameStr).c_str());
+    Class* NewClass = this->_ClassHeap->GetClass(NameStr);
     if(NewClass == NULL) return false;
 
     Object = ObjectHeap->CreateObject(NewClass);

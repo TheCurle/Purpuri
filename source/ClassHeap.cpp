@@ -28,16 +28,8 @@ Class* ClassHeap::GetClass(char *Name) {
         return NULL;
     
     Class* Class = classIter->second;
-    //bool Res = this->LoadClass(Name, Class);
 
     std::ifstream File(Name, std::ios::binary);
-
-    bool Res = File.is_open();
-
-    if(!Res && Class != NULL) {
-        printf("File %s cannot be opened, but it is classloaded.\r\n", Name);
-        //Class = NULL;
-    }
 
     File.close();
     return Class;

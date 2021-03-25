@@ -42,7 +42,6 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
     size_t Long;
 
 
-
     while(true) {
         switch(Code[CurrentFrame->ProgramCounter]) {
             case noop: CurrentFrame->ProgramCounter++; break;
@@ -51,11 +50,14 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 puts("Function returns"); return 0;
 
             case ireturn:
-                printf("\n******************\n\nFunction returned value %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                printf("\n******************\n\nFunction returned value %d\n\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
                 return 0;
 
             case _new:
-                New(CurrentFrame);
+                if(!New(CurrentFrame)) {
+                    printf("Creating new object failed.\r\n");
+                    exit(5);
+                }
                 CurrentFrame->ProgramCounter += 3;
                 printf("Initialized new object\n");
                 break;
@@ -83,7 +85,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->StackPointer++;
                 CurrentFrame->Stack[CurrentFrame->StackPointer].intVal = (uint8_t) Code[CurrentFrame->ProgramCounter] - iconst_0;
                 CurrentFrame->ProgramCounter++;
-                printf("Pushed int constant %d to the stack\n", Code[CurrentFrame->ProgramCounter - 1] - iconst_0);
+                printf("Pushed int constant %d to the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
                 break;
 
             case istore_0:
@@ -93,10 +95,12 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
 
             case iload_0:
+            case iload_1:
+            case iload_2:
                 CurrentFrame->StackPointer++;
                 CurrentFrame->Stack[CurrentFrame->StackPointer] = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - iload_0];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled int %d out of local 0 into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                printf("Pulled int %d out of local %d into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, Code[CurrentFrame->ProgramCounter - 1] - iload_0);
                 break;
 
             case fload_1:
@@ -113,7 +117,25 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                     * CurrentFrame->Stack[CurrentFrame->StackPointer].intVal;
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
-                printf("Multiplied the last two values on the stack (result %d)\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                printf("Multiplied the last two integers on the stack (result %d)\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                break;
+
+            case iadd:
+                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal = 
+                    CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal
+                    + CurrentFrame->Stack[CurrentFrame->StackPointer].intVal;
+                CurrentFrame->StackPointer--;
+                CurrentFrame->ProgramCounter++;
+                printf("Added the last two integers on the stack (%d + %d = %d)\r\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer].intVal - CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                break;
+
+            case isub:
+                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal = 
+                    CurrentFrame->Stack[CurrentFrame->StackPointer].intVal
+                    - CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal;
+                CurrentFrame->StackPointer--;
+                CurrentFrame->ProgramCounter++;
+                printf("Subtracted the last two integers on the stack (%d - %d = %d)\r\n", CurrentFrame->Stack[CurrentFrame->StackPointer + 1].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
                 break;
 
             case i2d:
@@ -188,7 +210,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->StackPointer++;
                 CurrentFrame->Stack[CurrentFrame->StackPointer] = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - aload_0];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled object %d out of local %d into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].object.Type, Code[CurrentFrame->ProgramCounter - 1] - aload_0);
+                printf("Pulled object %zu out of local %d into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].object.Heap, Code[CurrentFrame->ProgramCounter - 1] - aload_0);
                 break;
 
             case astore_0:
@@ -354,7 +376,7 @@ int Engine::New(StackFrame *Stack) {
 
     if(!Stack->_Class->CreateObject(Index, this->_ObjectHeap, Stack->Stack[Stack->StackPointer].object))
         return -1;
-    return 0;
+    return 1;
 }
 
 void Engine::InvokeSpecial(StackFrame *Stack) {
@@ -362,34 +384,101 @@ void Engine::InvokeSpecial(StackFrame *Stack) {
 }
 
 void Engine::InvokeInterface(StackFrame *Stack) {
-    size_t ProgramCounter = Stack[0].ProgramCounter;
-    uint8_t* Code = (uint8_t*) Stack[0]._Method->Code->Code;
-    uint16_t MethodInd = ReadShortFromStream(&Code[ProgramCounter + 1]);
+    uint16_t MethodIndex = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
 
     printf("Calculating invocation for interface function.\n");
-    // Read method data
-    uint8_t* ClassConstants = (uint8_t*) Stack[0]._Class->Constants[MethodInd];
-    uint16_t ClassNameLocationInd = ReadShortFromStream(&ClassConstants[1]);
-    uint16_t ClassNameTypeInd = ReadShortFromStream(&ClassConstants[3]);
-    // Read Class data
-    ClassConstants = (uint8_t*) Stack[0]._Class->Constants[ClassNameLocationInd];
-    uint16_t ClassNameInd = ReadShortFromStream(&ClassConstants[1]);
-    char* ClassName;
-    Stack[0]._Class->GetStringConstant(ClassNameInd, ClassName);
 
-    printf("\tInvocation is calling into class %s\n", ClassName);
+    uint8_t* Constants = (uint8_t*) Stack->_Class->Constants[MethodIndex];
 
-    Class* InvocationClass = _ClassHeap->GetClass(ClassName);
-    ClassConstants = (uint8_t*) &InvocationClass->Constants[ClassNameTypeInd];
+    if(Constants[0] != TypeInterfaceMethod)
+        exit(4);
 
-    uint16_t MethodNameInd = ReadShortFromStream(&ClassConstants[1]);
-    uint16_t MethodDescriptorInd = ReadShortFromStream(&ClassConstants[3]);
+    uint16_t ClassIndex = ReadShortFromStream(&Constants[1]);
+    uint16_t ClassNTIndex = ReadShortFromStream(&Constants[3]);
+
+    Constants = (uint8_t*) Stack[0]._Class->Constants[ClassIndex];
+    uint16_t ClassName = ReadShortFromStream(&Constants[1]);
+    char* ClassStr;
+    Stack[0]._Class->GetStringConstant(ClassName, ClassStr);
+
+    
+    printf("\tInvocation is calling into interface %s\n", ClassStr);
+    Class* Class = _ClassHeap->GetClass(ClassStr);
+
+    Constants = (uint8_t*) Stack->_Class->Constants[ClassNTIndex];
+
+    Method MethodToInvoke;
+    MethodToInvoke.Name = ReadShortFromStream(&Constants[1]);
+    MethodToInvoke.Descriptor = ReadShortFromStream(&Constants[3]);
+    MethodToInvoke.Access = 0;
+
     char* MethodName, *MethodDescriptor;
-    InvocationClass->GetStringConstant(MethodNameInd, MethodName);
-    InvocationClass->GetStringConstant(MethodDescriptorInd, MethodDescriptor);
 
+    Stack->_Class->GetStringConstant(MethodToInvoke.Name, MethodName);
+    Stack->_Class->GetStringConstant(MethodToInvoke.Descriptor, MethodDescriptor);
+    
     printf("\tInvocation resolves to method %s%s\n", MethodName, MethodDescriptor);
-    for(;;) {}
+    size_t Parameters = GetParameters(MethodDescriptor);
+    printf("\tMethod has %zu parameters, skipping ahead..\r\n", Parameters);
+    Variable UnderStack = Stack->Stack[Stack->StackPointer - (Parameters + 1)];
+    
+    for(size_t i = 0; i < Parameters; i++) {
+        printf("\t\tParameter %zu = %zu\r\n", i, Stack->Stack[Stack->StackPointer - i].pointerVal);
+    }
+
+    Variable ClassInStack = Stack->Stack[Stack->StackPointer - Parameters];
+    printf("\tClass to invoke is object #%zu.\r\n", ClassInStack.object.Heap);
+    
+    Variable* ObjectFromHeap = _ObjectHeap->GetObjectPtr(ClassInStack.object);
+    printf("\tClass at 0x%zx.\r\n", (size_t) ObjectFromHeap);
+    class Class* VirtualClass = (class Class*) ObjectFromHeap[0].pointerVal;
+
+    int MethodInClassIndex = Class->GetMethodFromDescriptor(MethodName, MethodDescriptor, VirtualClass);
+
+    Stack[1] = (StackFrame) { 0 };
+
+    Stack[1]._Method = &VirtualClass->Methods[MethodInClassIndex];
+    printf("\tMethod has access 0x%x.\r\n", Stack[1]._Method->Access);
+    if(!(Stack[1]._Method->Access & 0x8))
+        Parameters++;
+
+    Stack[1]._Class = VirtualClass;
+
+    Stack[1].Stack = &StackFrame::MemberStack[Stack->Stack - StackFrame::MemberStack + Stack->StackPointer - Parameters];
+    size_t ParameterCount = 0;
+    printf("\tSetting locals..\r\n");
+    // If non static, set "this"
+    if(!(Stack[1]._Method->Access & 0x8)) {
+        printf("\tSetting \"this\"\r\n");
+        Stack[1].Stack[ParameterCount] = ObjectFromHeap[0];
+        ParameterCount++;
+    }
+
+    for(size_t i = ParameterCount; i < Parameters; i++) {
+        Stack[1].Stack[i] = Stack->Stack[Stack->StackPointer - (i - 1)];
+        printf("\tSetting local %zu to %zu.\r\n", i, Stack[1].Stack[i].pointerVal);
+    }
+
+    printf("\tFunction's parameters start at %zu.\r\n", Parameters);
+
+    Stack[1].StackPointer = Parameters;
+
+    printf("Invoking method %s%s - Last frame at %zd, new frame begins %zd\n", MethodName, MethodDescriptor,
+        Stack[0].Stack - StackFrame::MemberStack + Stack[0].StackPointer, 
+        Stack[1].Stack - StackFrame::MemberStack);
+
+    this->Ignite(&Stack[1]);
+    Variable ReturnValue = Stack[1].Stack[Stack[1].StackPointer];
+    std::string DescStr(MethodDescriptor);
+    if(DescStr.find(")V") != std::string::npos)
+        Parameters--;
+    
+    Stack->StackPointer -= Parameters;
+    printf("Shrinking the stack by %zu positions.\r\n", Parameters);
+    Stack->Stack[Stack->StackPointer] = ReturnValue;
+    printf("Pushing function return value..\r\n");
+    Stack->Stack[Stack->StackPointer - 1] = UnderStack;
+    printf("Restoring the value under the function, just in case.\r\n");
 
 }
 

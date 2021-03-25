@@ -31,7 +31,7 @@ Object ObjectHeap::CreateObject(Class *Class) {
 
     ClassObj[0].pointerVal = (size_t) Class;
 
-    ObjectMap.emplace((size_t) object.Heap, (size_t) &ClassObj);
+    ObjectMap.emplace((size_t) object.Heap, (size_t) ClassObj);
 
     return object;
 }
@@ -40,7 +40,7 @@ Variable* ObjectHeap::GetObjectPtr(Object obj) {
     //size_t Obj = 0;
 
     std::map<size_t, size_t>::iterator objIter;
-    objIter = ObjectMap.find((size_t) &obj);
+    objIter = ObjectMap.find(obj.Heap);
 
     if(objIter == ObjectMap.end())
         return NULL;
