@@ -34,11 +34,11 @@ Class* ClassHeap::GetClass(char *Name) {
 
     bool Res = File.is_open();
 
-    if(!Res) {
-        delete Class;
-        Class = NULL;
+    if(!Res && Class != NULL) {
+        printf("File %s cannot be opened, but it is classloaded.\r\n", Name);
+        //Class = NULL;
     }
-    
+
     File.close();
     return Class;
 }
