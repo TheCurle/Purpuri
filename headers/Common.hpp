@@ -4,6 +4,7 @@
  **************/
 #pragma once
 #include <stdint.h>
+#include <cstddef>
 
 class Class;
 class ClassHeap;

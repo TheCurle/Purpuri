@@ -7,7 +7,6 @@
 #include <map>
 #include <string>
 #include <cstring>
-#include <cstddef>
 
 #include "Constants.hpp"
 #include "Fields.hpp"
