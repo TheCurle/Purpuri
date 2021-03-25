@@ -5,6 +5,7 @@
 
 #pragma once
 #include <map>
+#include <string>
 
 #include "Constants.hpp"
 #include "Fields.hpp"
