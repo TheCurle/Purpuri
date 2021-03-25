@@ -127,7 +127,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->Stack[CurrentFrame->StackPointer + 1] = GetConstant(CurrentFrame->_Class, (uint8_t) Code[CurrentFrame->ProgramCounter + 1]);
                 CurrentFrame->StackPointer++;
                 CurrentFrame->ProgramCounter += 2;
-                printf("Pushed constant %d (0x%llx / %.6f) to the stack\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal);
+                printf("Pushed constant %d (0x%dx / %.6f) to the stack\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal);
                 break;
             
             case ldc2_w:
@@ -136,7 +136,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal = ReadLongFromStream(&((char *)Class->Constants[Index])[1]);
                 CurrentFrame->ProgramCounter += 3;
 
-                printf("Pushed constant %d of type %d, value 0x%llx / %.6f onto the stack\n", Index, Class->Constants[Index]->Tag, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
+                printf("Pushed constant %d of type %d, value 0x%dx / %.6f onto the stack\n", Index, Class->Constants[Index]->Tag, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
                 break;
 
             case ddiv: {
