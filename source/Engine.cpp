@@ -127,7 +127,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->Stack[CurrentFrame->StackPointer + 1] = GetConstant(CurrentFrame->_Class, (uint8_t) Code[CurrentFrame->ProgramCounter + 1]);
                 CurrentFrame->StackPointer++;
                 CurrentFrame->ProgramCounter += 2;
-                printf("Pushed constant %zd (0x%zx / %.6f) to the stack\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal);
+                printf("Pushed constant %d (0x%zx / %.6f) to the stack\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal);
                 break;
             
             case ldc2_w:
