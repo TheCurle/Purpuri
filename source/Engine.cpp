@@ -21,7 +21,7 @@ Engine::~Engine() {}
 uint32_t Engine::Ignite(StackFrame* Stack) {
     StackFrame* CurrentFrame = &Stack[0];
 
-    printf("Execution frame %lld, stack begins %lld\n", CurrentFrame - StackFrame::FrameBase, CurrentFrame->Stack - StackFrame::MemberStack);
+    printf("Execution frame %zu, stack begins %zu\n", CurrentFrame - StackFrame::FrameBase, CurrentFrame->Stack - StackFrame::MemberStack);
 
     // 0x100 = native
     if(CurrentFrame->_Method->Access & 0x100) {
@@ -457,7 +457,7 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
     Stack[1].Stack = &StackFrame::MemberStack[Stack->Stack - StackFrame::MemberStack + Stack[0].StackPointer - Parameters + 1];
     Stack[1].StackPointer = DiscardStack - 1;
 
-    printf("Invoking method %s%s - Last frame at %lld, new frame begins %lld\n", MethodName, MethodDescriptor,
+    printf("Invoking method %s%s - Last frame at %zu, new frame begins %zu\n", MethodName, MethodDescriptor,
         Stack[0].Stack - StackFrame::MemberStack + Stack[0].StackPointer, 
         Stack[1].Stack - StackFrame::MemberStack);
 
