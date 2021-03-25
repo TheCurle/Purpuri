@@ -22,7 +22,7 @@ Class::~Class() {
 
 bool Class::LoadFromFile(const char* Filename) {
     char* LocalCode;
-    size_t LengthRead, Length;
+    size_t Length;
     int Temp;
 
     std::ifstream File(Filename, std::ios::binary);
@@ -36,7 +36,7 @@ bool Class::LoadFromFile(const char* Filename) {
     Temp = stat(Filename, &statbuf);
     Length = Temp == 0 ? statbuf.st_size : -1;
 
-    if(Length < 0) {
+    if(Length == -1ULL) {
         puts("Class file is empty or corrupt");
         return false;
     }
@@ -127,6 +127,7 @@ bool Class::ParseFullClass() {
 }
 
 void Class::ClassloadReferents(const char* &Code) {
+    SHUTUPUNUSED(Code);
 
     printf("Searching for unloaded classes referenced by the current.\n");
     
@@ -155,8 +156,6 @@ bool Class::ParseAttribs(const char *&Code) {
     Attributes = new AttributeData* [AttributeCount];
     puts("Reading class Attributes");
     if(Methods == NULL) return false;
-
-    char* Name;
 
     for(int j = 0; j < AttributeCount; j++) {
         printf("\tParsing attribute %d\n", j);

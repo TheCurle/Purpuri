@@ -37,7 +37,7 @@ Object ObjectHeap::CreateObject(Class *Class) {
 }
 
 Variable* ObjectHeap::GetObjectPtr(Object obj) {
-    size_t Obj = 0;
+    //size_t Obj = 0;
 
     std::map<size_t, size_t>::iterator objIter;
     objIter = ObjectMap.find((size_t) &obj);

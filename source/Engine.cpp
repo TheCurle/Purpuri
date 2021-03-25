@@ -127,7 +127,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->Stack[CurrentFrame->StackPointer + 1] = GetConstant(CurrentFrame->Class, (uint8_t) Code[CurrentFrame->ProgramCounter + 1]);
                 CurrentFrame->StackPointer++;
                 CurrentFrame->ProgramCounter += 2;
-                printf("Pushed constant %d (%zd / %.6f) to the stack\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, *reinterpret_cast<float*>(&CurrentFrame->Stack[CurrentFrame->StackPointer]));
+                printf("Pushed constant %d (0x%llx / %.6f) to the stack\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal);
                 break;
             
             case ldc2_w:
@@ -136,7 +136,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal = ReadLongFromStream(&((char *)Class->Constants[Index])[1]);
                 CurrentFrame->ProgramCounter += 3;
 
-                printf("Pushed constant %d of type %d, value %llu / %.6f onto the stack\n", Index, Class->Constants[Index]->Tag, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, *reinterpret_cast<double*>(&CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal));
+                printf("Pushed constant %d of type %d, value 0x%llx / %.6f onto the stack\n", Index, Class->Constants[Index]->Tag, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
                 break;
 
             case ddiv: {
@@ -328,14 +328,16 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
     size_t longTemp;
     Object obj;
 
+    SHUTUPUNUSED(longTemp);
+    SHUTUPUNUSED(intTemp);
+
     switch(Code[0]) {
         case TypeInteger:
             temp.intVal = ReadIntFromStream(&Code[1]);
             break;
         
         case TypeFloat:
-            intTemp = ReadIntFromStream(&Code[1]);
-            floatTemp = *reinterpret_cast<float*>(&intTemp);
+            floatTemp = ReadIntFromStream(&Code[1]);
             temp.floatVal = floatTemp;
             break;
         
@@ -348,8 +350,7 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
             break;
         
         case TypeDouble:
-            longTemp = ReadLongFromStream(&Code[1]);
-            doubleTemp = *reinterpret_cast<double*>(&longTemp);
+            doubleTemp = ReadLongFromStream(&Code[1]);
             temp.doubleVal = doubleTemp;
             break;
         
@@ -366,7 +367,7 @@ int Engine::New(StackFrame *Stack) {
     uint8_t* Code = Stack->Method->Code->Code;
     uint16_t Index = ReadShortFromStream(&Code[Stack->ProgramCounter + 1]);
 
-    if(!Stack->Class->CreateObject(Index, this->ObjectHeap, Stack->Stack[Stack->StackPointer].object));
+    if(!Stack->Class->CreateObject(Index, this->ObjectHeap, Stack->Stack[Stack->StackPointer].object))
         return -1;
     return 0;
 }
@@ -411,7 +412,7 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
     uint16_t MethodIndex = ReadShortFromStream(&Stack[0].Method->Code->Code[Stack[0].ProgramCounter + 1]);
 
     printf("Calculating invocation for method function.\n");
-    Variable ObjectRef = Stack[0].Stack[Stack[0].StackPointer];
+    //Variable ObjectRef = Stack[0].Stack[Stack[0].StackPointer];
 
     uint8_t* Constants = (uint8_t*) Stack[0].Class->Constants[MethodIndex];
 
@@ -445,7 +446,8 @@ void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
 
     int MethodInClassIndex = Class->GetMethodFromDescriptor(MethodName, MethodDescriptor, VirtualClass);
 
-    memset(&Stack[1], 0, sizeof(Stack[1]));
+    Stack[1] = (StackFrame) { 0 };
+
     Stack[1].Method = &Class->Methods[MethodInClassIndex];
     MethodToInvoke.Access = ReadShortFromStream((uint8_t*) Stack[1].Method);
 
@@ -485,7 +487,7 @@ uint16_t Engine::GetParameters(const char *Descriptor) {
     uint16_t Count = 0;
     size_t Length = strlen(Descriptor);
 
-    for(int i = 1; i < Length; i++) {
+    for(size_t i = 1; i < Length; i++) {
         if(Descriptor[i] == 'L')
             while(Descriptor[i] != ';')
                 i++;

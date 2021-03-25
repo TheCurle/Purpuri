@@ -11,15 +11,16 @@ class StackFrame;
 class ObjectHeap;
 
 #define ReadLongFromStream(Stream) \
-        (size_t) ( ((size_t) ReadIntFromStream(Stream) << 32) & 0xFFFFFFFF00000000 | (size_t) ReadIntFromStream(Stream + 4) & 0x00000000FFFFFFFF)
+        (size_t) ( (((size_t) ReadIntFromStream(Stream) << 32) & 0xFFFFFFFF00000000) | ((size_t) ReadIntFromStream(Stream + 4) & 0x00000000FFFFFFFF))
 
 #define ReadIntFromStream(Stream) \
-        (uint32_t)( (uint32_t)((Stream)[0]) <<24 & 0xFF000000 | (uint32_t)((Stream)[1]) << 16 & 0x00FF0000 \
-        | (uint32_t)((Stream)[2]) << 8 & 0x0000FF00 | (uint32_t)((Stream)[3]) & 0x000000FF)
+        (uint32_t)( ((uint32_t)((Stream)[0]) <<24 & 0xFF000000) | ((uint32_t)((Stream)[1]) << 16 & 0x00FF0000) \
+        | ((uint32_t)((Stream)[2]) << 8 & 0x0000FF00) | ((uint32_t)((Stream)[3]) & 0x000000FF) )
 
 #define ReadShortFromStream(Stream) \
-        (uint16_t) ( (uint16_t)((Stream)[0]) << 8 & 0xFF00 | ((uint16_t)(Stream)[1]) & 0x00FF )
+        (uint16_t) ( ((uint16_t)((Stream)[0]) << 8 & 0xFF00) | (((uint16_t)(Stream)[1]) & 0x00FF) )
 
+#define SHUTUPUNUSED(X) ((void)X)
 
 struct AttributeData {
     uint16_t AttributeName;

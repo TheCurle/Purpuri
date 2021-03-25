@@ -44,29 +44,29 @@ bool Class::ParseConstants(const char *&Code) {
                 Temp = (char*)Constants[i];
                 uint32_t val = ReadIntFromStream(&Temp[1]);
             
-                //printf("\tValue %d\n", val);
+                printf("\tValue %d\n", val);
                 break;
             }
 
             case TypeLong: {
                 Temp = (char*)Constants[i];
                 size_t val = ReadLongFromStream(&Temp[1]);
-                //printf("\tValue %zd\n", val);
+                printf("\tValue %zd\n", val);
                 break;
             }
 
             case TypeFloat: {
                 Temp = (char*)Constants[i];
-                uint32_t val = ReadIntFromStream(&Temp[1]);
+                float val = ReadIntFromStream(&Temp[1]);
             
-                //printf("\tValue %.6f\n", *reinterpret_cast<float*>(&val));
+                printf("\tValue %.6f\n", val);
                 break;
             }
 
             case TypeDouble: {
                 Temp = (char*)Constants[i];
-                size_t val = ReadLongFromStream(&Temp[1]);
-                //printf("\tValue %.6f\n", *reinterpret_cast<double*>(&val));
+                double val = ReadLongFromStream(&Temp[1]);
+                printf("\tValue %.6f\n", val);
                 break;
             }
 
@@ -86,14 +86,17 @@ bool Class::ParseConstants(const char *&Code) {
                 Temp = (char*)Constants[classInd];
                 uint16_t val = ReadShortFromStream(&Temp[1]);
                 char* ClassName;
-                GetStringConstant(val, ClassName);
+                if(!GetStringConstant(val, ClassName)) exit(3);
 
                 Temp = (char*)Constants[nameAndDescInd];
                 uint16_t nameInd = ReadShortFromStream(&Temp[1]);
                 uint16_t descInd = ReadShortFromStream(&Temp[3]);
-                char* MethodName, *MethodDesc;
-                GetStringConstant(nameInd, MethodName);
-                GetStringConstant(descInd, MethodDesc);
+                char* MethodName = NULL, *MethodDesc = NULL;
+                if(!GetStringConstant(nameInd, MethodName)) exit(3);
+                if(!GetStringConstant(descInd, MethodDesc)) exit(3);
+
+                if(MethodName == NULL || MethodDesc == NULL)
+                    __builtin_unreachable();
                 printf("\tMethod %s%s belongs to class %s\n", MethodName, MethodDesc, ClassName);
                 break;
             }
@@ -103,8 +106,8 @@ bool Class::ParseConstants(const char *&Code) {
                 uint16_t nameInd = ReadShortFromStream(&Temp[1]);
                 uint16_t descInd = ReadShortFromStream(&Temp[3]);
                 char* MethodName, *MethodDesc;
-                GetStringConstant(nameInd, MethodName);
-                GetStringConstant(descInd, MethodDesc);
+                if(!GetStringConstant(nameInd, MethodName)) exit(3);
+                if(!GetStringConstant(descInd, MethodDesc)) exit(3);
                 printf("\tType %s%s\n", MethodName, MethodDesc);
                 break;
             }

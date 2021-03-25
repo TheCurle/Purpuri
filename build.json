@@ -1,0 +1,22 @@
+{
+    "name": "Purpuri",
+    "author": "Curle",
+    "target": "g++",
+
+    "source": {
+        "h": [
+            "$root/headers/"
+        ],
+        "s": [
+            "$root/source/*.cpp",
+            "$root/source/class/*.cpp"
+        ]
+    },
+
+    "build": {
+        "compile": [
+            "-I$h -g -Werror -Wall -Wextra -O3",
+            "$s"
+        ]
+    }
+}

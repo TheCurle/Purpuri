@@ -34,7 +34,10 @@ int main(int argc, char* argv[]) {
 
     StackFrame* Stack = new StackFrame[20];
     StackFrame::FrameBase = Stack;
-    memset(Stack, 0, sizeof(StackFrame) * 20);
+
+    for(size_t i = 0; i < 20; i++) {
+        Stack[i] = (StackFrame) {0};
+    }
 
     StackFrame::MemberStack = new Variable[100];
     memset(StackFrame::MemberStack, 0, sizeof(Variable) * 100);
@@ -46,7 +49,7 @@ int main(int argc, char* argv[]) {
     int StartFrame = 0;
 
     class Object object = objects.CreateObject(GivenClass);
-    Class* VirtualClass = GivenClass;
+    //Class* VirtualClass = GivenClass;
 
     int EntryPoint = GivenClass->GetMethodFromDescriptor((char*) "EntryPoint", (char*) "()I", GivenClass);
     

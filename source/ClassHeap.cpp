@@ -43,7 +43,7 @@ Class* ClassHeap::GetClass(char *Name) {
 }
 
 bool ClassHeap::LoadClass(char *ClassName, Class *Class) {
-    const char* Path, *RelativePath;
+    const char* RelativePath;
     if(!Class) return false;
 
     std::string pathTemp("");
