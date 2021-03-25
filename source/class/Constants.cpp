@@ -7,13 +7,13 @@
 #include <string>
 
 bool Class::ParseConstants(const char *&Code) {
-    Constants = new ConstantPoolEntry* [ConstantCount - 1];
+    Constants = new ConstantPoolEntry* [ConstantCount + 1];
 
     puts("Reading constants..");
 
     if(Constants == NULL) return false;
 
-    for(int i = 1; i < ConstantCount - 1; i++) {
+    for(int i = 1; i < ConstantCount; i++) {
         Constants[i] = (ConstantPoolEntry*) Code;
 
         int Size = GetConstantsCount(Code);
@@ -26,7 +26,7 @@ bool Class::ParseConstants(const char *&Code) {
         }
     }
 
-    for(int i = 1; i < ConstantCount - 1; i++) {
+    for(int i = 1; i < ConstantCount; i++) {
         
         if(Constants == NULL) return false;
         if(Constants[i] == NULL) continue;
