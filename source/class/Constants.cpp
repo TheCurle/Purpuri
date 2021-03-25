@@ -13,7 +13,7 @@ bool Class::ParseConstants(const char *&Code) {
 
     if(Constants == NULL) return false;
 
-    for(int i = 1; i < ConstantCount; i++) {
+    for(int i = 1; i < ConstantCount - 1; i++) {
         Constants[i] = (ConstantPoolEntry*) Code;
 
         int Size = GetConstantsCount(Code);
@@ -26,7 +26,7 @@ bool Class::ParseConstants(const char *&Code) {
         }
     }
 
-    for(int i = 1; i < ConstantCount; i++) {
+    for(int i = 1; i < ConstantCount - 1; i++) {
         
         if(Constants == NULL) return false;
         if(Constants[i] == NULL) continue;
