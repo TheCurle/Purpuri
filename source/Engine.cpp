@@ -405,23 +405,23 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
 
     uint8_t* Constants = (uint8_t*) Stack->_Class->Constants[MethodIndex];
 
-    const char* TypeName;
+    char* TypeName = NULL;
     switch(Type) {
         case invokeinterface:
             if(!(Constants[0] == TypeInterfaceMethod))
                 exit(4);
-            TypeName = "interface";
+            TypeName = (char*) "interface";
             break;
         case invokevirtual:
         case invokespecial:
             if(!(Constants[0] == TypeMethod))
                 exit(4);
-            TypeName = " instance";
+            TypeName = (char*) " instance";
             break;
         case invokestatic:
             if(!(Constants[0] == TypeMethod))
                 exit(4);
-            TypeName = "   static";
+            TypeName = (char*) "   static";
             break;
         default:
             printf("\tUnknown invocation: %d as %d\r\n", Constants[0], Type);
