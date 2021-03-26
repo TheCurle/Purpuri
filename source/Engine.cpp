@@ -92,7 +92,6 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
             
             case getfield:
-                CurrentFrame->StackPointer++;
                 GetField(CurrentFrame);
                 CurrentFrame->ProgramCounter += 3;
                 printf("Retrieved value %zu from field.\r\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
@@ -512,13 +511,13 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     
     Stack->StackPointer -= Parameters;
     
-    if(DescStr.find(")V") != std::string::npos) {
-        printf("Shrinking the stack by %zu positions.\r\n", Parameters);
-        Stack->Stack[Stack->StackPointer] = ReturnValue;
-        printf("Pushing function return value..\r\n");
-        Stack->Stack[Stack->StackPointer - 1] = UnderStack;
-        printf("Restoring the value under the function, just in case.\r\n");
-    }
+    
+    printf("Shrinking the stack by %zu positions.\r\n", Parameters);
+    Stack->Stack[Stack->StackPointer] = ReturnValue;
+    printf("Pushing function return value..\r\n");
+    Stack->Stack[Stack->StackPointer - 1] = UnderStack;
+    printf("Restoring the value under the function, just in case.\r\n");
+    
 }
 
 uint16_t Engine::GetParameters(const char *Descriptor) {
@@ -552,6 +551,8 @@ void Engine::PutField(StackFrame* Stack) {
     Class* FieldsClass = (Class*)VarList->pointerVal;
 
     char* Temp = (char*)FieldsClass->Constants[FieldIndex];
+    uint16_t NADInd = ReadShortFromStream(&Temp[3]);
+    Temp = (char*)FieldsClass->Constants[NADInd];
     uint16_t nameInd = ReadShortFromStream(&Temp[1]);
     char* FieldName = NULL;
     if(!FieldsClass->GetStringConstant(nameInd, FieldName)) exit(3);
@@ -561,20 +562,23 @@ void Engine::PutField(StackFrame* Stack) {
     VarList[FieldIndex + 1] = ValueToSet;
 }
 
-void Engine::GetField(StackFrame* Stack)
-{
+void Engine::GetField(StackFrame* Stack) {
     uint16_t FieldIndex = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
-    
-    Variable Obj = Stack->Stack[Stack->StackPointer];
-	
+    Variable Obj = Stack->Stack[Stack->StackPointer - 1];
+
     Variable* VarList = _ObjectHeap->GetObjectPtr(Obj.object);
 
 	Stack->Stack[Stack->StackPointer] = VarList[FieldIndex + 1];
     Class* FieldsClass = (Class*)VarList->pointerVal;
 
     char* Temp = (char*)FieldsClass->Constants[FieldIndex];
+    uint16_t NADInd = ReadShortFromStream(&Temp[3]);
+
+    Temp = (char*)FieldsClass->Constants[NADInd];
     uint16_t nameInd = ReadShortFromStream(&Temp[1]);
+
     char* FieldName = NULL;
     if(!FieldsClass->GetStringConstant(nameInd, FieldName)) exit(3);
+
     printf("Reading field %s of class %s\r\n", FieldName, FieldsClass->GetClassName());
 }
