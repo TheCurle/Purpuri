@@ -71,13 +71,31 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
 
             case invokespecial:
-                InvokeSpecial(CurrentFrame);
+                Invoke(CurrentFrame, invokespecial);
+                CurrentFrame->ProgramCounter += 3;
+                break;
+            
+            case invokevirtual:
+                Invoke(CurrentFrame, invokevirtual);
                 CurrentFrame->ProgramCounter += 3;
                 break;
 
             case invokeinterface:
-                InvokeInterface(CurrentFrame);
+                Invoke(CurrentFrame, invokeinterface);
                 CurrentFrame->ProgramCounter += 5;
+                break;
+
+            case putfield:
+                PutField(CurrentFrame);
+                CurrentFrame->StackPointer -= 2;
+                CurrentFrame->ProgramCounter += 3;
+                break;
+            
+            case getfield:
+                CurrentFrame->StackPointer++;
+                GetField(CurrentFrame);
+                CurrentFrame->ProgramCounter += 3;
+                printf("Retrieved value %zu from field.\r\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 break;
 
             case iconst_0:
@@ -379,19 +397,38 @@ int Engine::New(StackFrame *Stack) {
     return 1;
 }
 
-void Engine::InvokeSpecial(StackFrame *Stack) {
-    InvokeVirtual(Stack, invokespecial);
-}
+void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
 
-void Engine::InvokeInterface(StackFrame *Stack) {
     uint16_t MethodIndex = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
 
-    printf("Calculating invocation for interface function.\n");
+    printf("Invoking a function.. index is %d.\r\n", MethodIndex);
 
     uint8_t* Constants = (uint8_t*) Stack->_Class->Constants[MethodIndex];
 
-    if(Constants[0] != TypeInterfaceMethod)
-        exit(4);
+    const char* TypeName;
+    switch(Type) {
+        case invokeinterface:
+            if(!(Constants[0] == TypeInterfaceMethod))
+                exit(4);
+            TypeName = "interface";
+            break;
+        case invokevirtual:
+        case invokespecial:
+            if(!(Constants[0] == TypeMethod))
+                exit(4);
+            TypeName = " instance";
+            break;
+        case invokestatic:
+            if(!(Constants[0] == TypeMethod))
+                exit(4);
+            TypeName = "   static";
+            break;
+        default:
+            printf("\tUnknown invocation: %d as %d\r\n", Constants[0], Type);
+            break;
+    }
+
+    printf("\tCalculating invocation for %s function.\n", TypeName);
 
     uint16_t ClassIndex = ReadShortFromStream(&Constants[1]);
     uint16_t ClassNTIndex = ReadShortFromStream(&Constants[3]);
@@ -402,7 +439,7 @@ void Engine::InvokeInterface(StackFrame *Stack) {
     Stack[0]._Class->GetStringConstant(ClassName, ClassStr);
 
     
-    printf("\tInvocation is calling into interface %s\n", ClassStr);
+    printf("\tInvocation is calling into class %s\n", ClassStr);
     Class* Class = _ClassHeap->GetClass(ClassStr);
 
     Constants = (uint8_t*) Stack->_Class->Constants[ClassNTIndex];
@@ -430,7 +467,7 @@ void Engine::InvokeInterface(StackFrame *Stack) {
     printf("\tClass to invoke is object #%zu.\r\n", ClassInStack.object.Heap);
     
     Variable* ObjectFromHeap = _ObjectHeap->GetObjectPtr(ClassInStack.object);
-    printf("\tClass at 0x%zx.\r\n", (size_t) ObjectFromHeap);
+    printf("\tClass at 0x%zx.\r\n", ObjectFromHeap[0].pointerVal);
     class Class* VirtualClass = (class Class*) ObjectFromHeap[0].pointerVal;
 
     int MethodInClassIndex = Class->GetMethodFromDescriptor(MethodName, MethodDescriptor, VirtualClass);
@@ -449,8 +486,8 @@ void Engine::InvokeInterface(StackFrame *Stack) {
     printf("\tSetting locals..\r\n");
     // If non static, set "this"
     if(!(Stack[1]._Method->Access & 0x8)) {
-        printf("\tSetting \"this\"\r\n");
-        Stack[1].Stack[ParameterCount] = ObjectFromHeap[0];
+        printf("\tSetting \"this\" to %zu.\r\n", ClassInStack.object.Heap);
+        Stack[1].Stack[ParameterCount] = ClassInStack;
         ParameterCount++;
     }
 
@@ -474,88 +511,14 @@ void Engine::InvokeInterface(StackFrame *Stack) {
         Parameters--;
     
     Stack->StackPointer -= Parameters;
-    printf("Shrinking the stack by %zu positions.\r\n", Parameters);
-    Stack->Stack[Stack->StackPointer] = ReturnValue;
-    printf("Pushing function return value..\r\n");
-    Stack->Stack[Stack->StackPointer - 1] = UnderStack;
-    printf("Restoring the value under the function, just in case.\r\n");
-
-}
-
-void Engine::InvokeVirtual(StackFrame *Stack, uint16_t Type) {
-    uint16_t MethodIndex = ReadShortFromStream(&Stack[0]._Method->Code->Code[Stack[0].ProgramCounter + 1]);
-
-    printf("Calculating invocation for method function.\n");
-    printf("Trying to invoke %x.\r\n", Stack[0]._Class->This);
-    //Variable ObjectRef = Stack[0].Stack[Stack[0].StackPointer];
-
-    uint8_t* Constants = (uint8_t*) Stack[0]._Class->Constants[MethodIndex];
-
-    uint16_t ClassIndex = ReadShortFromStream(&Constants[1]);
-    uint16_t ClassNTIndex = ReadShortFromStream(&Constants[3]);
-
-    Constants = (uint8_t*) Stack[0]._Class->Constants[ClassIndex];
-    uint16_t ClassName = ReadShortFromStream(&Constants[1]);
-    char* ClassStr;
-    Stack[0]._Class->GetStringConstant(ClassName, ClassStr);
-
     
-    printf("\tInvocation is calling into class %s\n", ClassStr);
-
-    Class* Class = _ClassHeap->GetClass(ClassStr);
-
-    Constants = (uint8_t*) Stack[0]._Class->Constants[ClassNTIndex];
-
-    Method MethodToInvoke;
-    MethodToInvoke.Name = ReadShortFromStream(&Constants[1]);
-    MethodToInvoke.Descriptor = ReadShortFromStream(&Constants[3]);
-    MethodToInvoke.Access = 0;
-
-    char* MethodName, *MethodDescriptor;
-
-    Stack[0]._Class->GetStringConstant(MethodToInvoke.Name, MethodName);
-    Stack[0]._Class->GetStringConstant(MethodToInvoke.Descriptor, MethodDescriptor);
-    
-    printf("\tInvocation resolves to method %s%s\n", MethodName, MethodDescriptor);
-    class Class* VirtualClass = Class;
-
-    int MethodInClassIndex = Class->GetMethodFromDescriptor(MethodName, MethodDescriptor, VirtualClass);
-
-    Stack[1] = (StackFrame) { 0 };
-
-    Stack[1]._Method = &Class->Methods[MethodInClassIndex];
-    MethodToInvoke.Access = ReadShortFromStream((uint8_t*) Stack[1]._Method);
-
-    if(MethodToInvoke.Access & 0x20)
-        Stack[1]._Class = VirtualClass->GetSuper();
-    else if(MethodToInvoke.Access & 0x200)
-        Stack[1]._Class = Stack[0]._Class;
-    else
-        Stack[1]._Class = VirtualClass;
-
-    int Parameters = GetParameters(MethodDescriptor) + 1;
-
-    if(Type == invokestatic)
-        Parameters--;
-    
-    int DiscardStack = Parameters;
-    
-    if(!(Stack[1]._Method->Access & 0x100))
-        DiscardStack += Stack[1]._Method->Code->LocalsSize;
-    
-    Stack[1].Stack = &StackFrame::MemberStack[Stack->Stack - StackFrame::MemberStack + Stack[0].StackPointer - Parameters + 1];
-    Stack[1].StackPointer = DiscardStack - 1;
-
-    printf("Invoking method %s%s - Last frame at %zd, new frame begins %zd\n", MethodName, MethodDescriptor,
-        Stack[0].Stack - StackFrame::MemberStack + Stack[0].StackPointer, 
-        Stack[1].Stack - StackFrame::MemberStack);
-
-    this->Ignite(&Stack[1]);
-    std::string DescStr(MethodDescriptor);
-    if(DescStr.find(")V") != std::string::npos)
-        DiscardStack--;
-    
-    Stack[0].StackPointer -= DiscardStack;
+    if(DescStr.find(")V") != std::string::npos) {
+        printf("Shrinking the stack by %zu positions.\r\n", Parameters);
+        Stack->Stack[Stack->StackPointer] = ReturnValue;
+        printf("Pushing function return value..\r\n");
+        Stack->Stack[Stack->StackPointer - 1] = UnderStack;
+        printf("Restoring the value under the function, just in case.\r\n");
+    }
 }
 
 uint16_t Engine::GetParameters(const char *Descriptor) {
@@ -576,4 +539,42 @@ uint16_t Engine::GetParameters(const char *Descriptor) {
     }
 
     return Count;
+}
+
+void Engine::PutField(StackFrame* Stack) {
+    uint16_t FieldIndex = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
+
+    Variable Obj = Stack->Stack[Stack->StackPointer - 1];
+    Variable ValueToSet = Stack->Stack[Stack->StackPointer];
+
+    Variable* VarList = _ObjectHeap->GetObjectPtr(Obj.object);
+    
+    Class* FieldsClass = (Class*)VarList->pointerVal;
+
+    char* Temp = (char*)FieldsClass->Constants[FieldIndex];
+    uint16_t nameInd = ReadShortFromStream(&Temp[1]);
+    char* FieldName = NULL;
+    if(!FieldsClass->GetStringConstant(nameInd, FieldName)) exit(3);
+
+    printf("Setting field %s to %zu.\r\n", FieldName, ValueToSet.pointerVal);
+
+    VarList[FieldIndex + 1] = ValueToSet;
+}
+
+void Engine::GetField(StackFrame* Stack)
+{
+    uint16_t FieldIndex = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
+    
+    Variable Obj = Stack->Stack[Stack->StackPointer];
+	
+    Variable* VarList = _ObjectHeap->GetObjectPtr(Obj.object);
+
+	Stack->Stack[Stack->StackPointer] = VarList[FieldIndex + 1];
+    Class* FieldsClass = (Class*)VarList->pointerVal;
+
+    char* Temp = (char*)FieldsClass->Constants[FieldIndex];
+    uint16_t nameInd = ReadShortFromStream(&Temp[1]);
+    char* FieldName = NULL;
+    if(!FieldsClass->GetStringConstant(nameInd, FieldName)) exit(3);
+    printf("Reading field %s of class %s\r\n", FieldName, FieldsClass->GetClassName());
 }

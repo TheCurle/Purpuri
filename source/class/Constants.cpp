@@ -31,7 +31,7 @@ bool Class::ParseConstants(const char *&Code) {
         if(Constants == NULL) return false;
         if(Constants[i] == NULL) continue;
 
-        printf("Constant %d has type %d\n", i, Constants[i]->Tag);
+        //printf("Constant %d has type %d\n", i, Constants[i]->Tag);
         char* Temp;
         switch(Constants[i]->Tag) {
             case TypeUtf8: 
@@ -44,14 +44,14 @@ bool Class::ParseConstants(const char *&Code) {
                 Temp = (char*)Constants[i];
                 uint32_t val = ReadIntFromStream(&Temp[1]);
             
-                printf("\tValue %d\n", val);
+                printf("%d:\tValue %d\n", i, val);
                 break;
             }
 
             case TypeLong: {
                 Temp = (char*)Constants[i];
                 size_t val = ReadLongFromStream(&Temp[1]);
-                printf("\tValue %zd\n", val);
+                printf("%d:\tValue %zd\n", i, val);
                 break;
             }
 
@@ -59,14 +59,14 @@ bool Class::ParseConstants(const char *&Code) {
                 Temp = (char*)Constants[i];
                 Variable val = *(Variable*) &Temp[1];
             
-                printf("\tValue %.6f\n", val.floatVal);
+                printf("%d:\tValue %.6f\n", i, val.floatVal);
                 break;
             }
 
             case TypeDouble: {
                 Temp = (char*)Constants[i];
                 Variable val = *(Variable*) &Temp[1];
-                printf("\tValue %.6f\n", val.doubleVal);
+                printf("%d:\tValue %.6f\n", i, val.doubleVal);
                 break;
             }
 
@@ -74,7 +74,7 @@ bool Class::ParseConstants(const char *&Code) {
                 Temp = (char*)Constants[i];
                 uint16_t val = ReadShortFromStream(&Temp[1]);
                 GetStringConstant(val, Temp);
-                printf("\tName %s\n", Temp);
+                printf("%d:\tName %s\n", i, Temp);
                 break;
             }
 
@@ -97,7 +97,7 @@ bool Class::ParseConstants(const char *&Code) {
 
                 if(MethodName == NULL || MethodDesc == NULL)
                     __builtin_unreachable();
-                printf("\tMethod %s%s belongs to class %s\n", MethodName, MethodDesc, ClassName);
+                printf("%d:\tMethod %s%s belongs to class %s\n", i, MethodName, MethodDesc, ClassName);
                 break;
             }
 
@@ -108,16 +108,37 @@ bool Class::ParseConstants(const char *&Code) {
                 char* MethodName, *MethodDesc;
                 if(!GetStringConstant(nameInd, MethodName)) exit(3);
                 if(!GetStringConstant(descInd, MethodDesc)) exit(3);
-                printf("\tType %s%s\n", MethodName, MethodDesc);
+                printf("%d:\tType %s%s\n", i, MethodName, MethodDesc);
+                break;
+            }
+            
+            case TypeField: {
+                Temp = (char*)Constants[i];
+                uint16_t classInd = ReadShortFromStream(&Temp[1]);
+                uint16_t nameAndDescInd = ReadShortFromStream(&Temp[3]);
+                Temp = (char*)Constants[classInd];
+                uint16_t val = ReadShortFromStream(&Temp[1]);
+                char* ClassName;
+                if(!GetStringConstant(val, ClassName)) exit(3);
+
+                Temp = (char*)Constants[nameAndDescInd];
+                uint16_t nameInd = ReadShortFromStream(&Temp[1]);
+                uint16_t descInd = ReadShortFromStream(&Temp[3]);
+                char* FieldName = NULL, *FieldDesc = NULL;
+                if(!GetStringConstant(nameInd, FieldName)) exit(3);
+                if(!GetStringConstant(descInd, FieldDesc)) exit(3);
+
+                if(FieldName == NULL || FieldDesc == NULL)
+                    __builtin_unreachable();
+                printf("%d:\tField %s(%s) belongs to class %s\n", i, FieldName, FieldDesc, ClassName);
                 break;
             }
 
             case TypeString: 
-            case TypeField:
-                printf("\tValue unknown. Potential forward reference\n");
+                printf("%d:\tValue unknown. Potential forward reference\n", i);
                 break;
             default:
-                printf("\tValue unknown. Unrecognized type.\n");
+                printf("%d:\tValue unknown. Unrecognized type.\n", i);
         }
     }
     

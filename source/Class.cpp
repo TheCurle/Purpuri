@@ -107,8 +107,7 @@ bool Class::ParseFullClass() {
     FieldsCount = ReadShortFromStream(Code); Code += 2;
 
     if(FieldsCount > 0) {
-        puts("NYI: Fields");
-        return false;
+        ParseFields(Code);
     }
 
     MethodCount = ReadShortFromStream(Code); Code += 2;
@@ -284,6 +283,31 @@ bool Class::ParseMethodCodePoints(int Method, CodePoint *Code) {
     }
 
     return 0;
+}
+
+bool Class::ParseFields(const char* &Code) {
+    Fields = new FieldData*[FieldsCount];
+
+    if(Fields == NULL) return false;
+
+    for(size_t i = 0; i < FieldsCount; i++) {
+        Fields[i] = (FieldData*) Code;
+
+        Fields[i]->Access = ReadShortFromStream(Code); Code += 2;
+        Fields[i]->Name = ReadShortFromStream(Code); Code += 2;
+        Fields[i]->Descriptor = ReadShortFromStream(Code); Code += 2;
+        Fields[i]->AttributeCount = ReadShortFromStream(Code); Code += 2;
+
+        if(Fields[i]->AttributeCount > 0) {
+            for(int attr = 0; attr < Fields[i]->AttributeCount; attr++) {
+                Code += 2;
+                size_t Length = ReadIntFromStream(Code); Code += 4;
+                Code += Length;
+            }
+        }
+    }
+
+    return true;
 }
 
 uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, Class *&pClass) {

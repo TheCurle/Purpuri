@@ -55,10 +55,8 @@ class Engine {
         virtual ~Engine();
         virtual uint32_t Ignite(StackFrame* Stack);
 
-        void InvokeSpecial(StackFrame* Stack);
-        void InvokeVirtual(StackFrame* Stack, uint16_t Type);
+        void Invoke(StackFrame* Stack, uint16_t Type);
         void InvokeNative(StackFrame* Stack);
-        void InvokeInterface(StackFrame* Stack);
 
         void PutField(StackFrame* Stack);
         void GetField(StackFrame* Stack);
