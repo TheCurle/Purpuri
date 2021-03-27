@@ -5,6 +5,8 @@
 #pragma once
 #include <stdint.h>
 #include <cstddef>
+#include <list>
+#include <string>
 
 class Class;
 class ClassHeap;
@@ -22,6 +24,8 @@ class ObjectHeap;
         (uint16_t) ( ((uint16_t)((Stream)[0]) << 8 & 0xFF00) | (((uint16_t)(Stream)[1]) & 0x00FF) )
 
 #define SHUTUPUNUSED(X) ((void)X)
+
+void PrintList(std::list<std::string> &list);
 
 struct AttributeData {
     uint16_t AttributeName;
@@ -57,6 +61,8 @@ class Engine {
 
         void Invoke(StackFrame* Stack, uint16_t Type);
         void InvokeNative(StackFrame* Stack);
+
+        bool MethodClassMatches(uint16_t MethodInd, Class* pClass, const char* TestName);
 
         void PutField(StackFrame* Stack);
         void GetField(StackFrame* Stack);

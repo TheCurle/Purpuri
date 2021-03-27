@@ -437,9 +437,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     char* ClassStr;
     Stack[0]._Class->GetStringConstant(ClassName, ClassStr);
 
-    
     printf("\tInvocation is calling into class %s\n", ClassStr);
-    Class* Class = _ClassHeap->GetClass(ClassStr);
 
     Constants = (uint8_t*) Stack->_Class->Constants[ClassNTIndex];
 
@@ -466,10 +464,11 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     printf("\tClass to invoke is object #%zu.\r\n", ClassInStack.object.Heap);
     
     Variable* ObjectFromHeap = _ObjectHeap->GetObjectPtr(ClassInStack.object);
-    printf("\tClass at 0x%zx.\r\n", ObjectFromHeap[0].pointerVal);
-    class Class* VirtualClass = (class Class*) ObjectFromHeap[0].pointerVal;
+    printf("\tClass at 0x%zx.\r\n", ObjectFromHeap->pointerVal);
+    class Class* VirtualClass = (class Class*) ObjectFromHeap->pointerVal;
+ 
+    int MethodInClassIndex = VirtualClass->GetMethodFromDescriptor(MethodName, MethodDescriptor, ClassStr, VirtualClass);
 
-    int MethodInClassIndex = Class->GetMethodFromDescriptor(MethodName, MethodDescriptor, VirtualClass);
 
     Stack[1] = (StackFrame) { 0 };
 
@@ -510,7 +509,6 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
         Parameters--;
     
     Stack->StackPointer -= Parameters;
-    
     
     printf("Shrinking the stack by %zu positions.\r\n", Parameters);
     Stack->Stack[Stack->StackPointer] = ReturnValue;

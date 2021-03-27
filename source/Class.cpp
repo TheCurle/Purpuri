@@ -8,6 +8,9 @@
 #include <iostream>
 #include <fstream>
 #include <sys/stat.h>
+#include <list>
+#include <algorithm>
+#include <string>
 
 Class::Class() {
     _ClassHeap = NULL;
@@ -96,6 +99,8 @@ bool Class::ParseFullClass() {
         ParseConstants(Code);
 
     ClassAccess = ReadShortFromStream(Code); Code += 2;
+
+    printf("Class has access %d.\r\n", ClassAccess);
     This = ReadShortFromStream(Code); Code += 2;
     Super = ReadShortFromStream(Code); Code += 2;
 
@@ -310,21 +315,48 @@ bool Class::ParseFields(const char* &Code) {
     return true;
 }
 
-uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, Class *&pClass) {
+uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, char* ClassName, Class *&pClass) {
     if(Methods == NULL) {
         puts("GetMethodFromDescriptor called too early! Class not initialised yet!");
         return false;
     }
-
+    printf("GetMethodFromDescriptor: %s %s %s %s.\r\n", MethodName, Descriptor, ClassName, pClass->GetClassName());
     class Class* CurrentClass = pClass;
-    while(CurrentClass) {
-        printf("Searching class %s for %s%s\n", CurrentClass->GetClassName(), MethodName, Descriptor);
-        char* l_Name, *l_Descriptor;
-        for(int i = 0; i < CurrentClass->MethodCount; i++) {
-            CurrentClass->GetStringConstant(CurrentClass->Methods[i].Name, l_Name);
-            CurrentClass->GetStringConstant(CurrentClass->Methods[i].Descriptor, l_Descriptor);
+    std::string ClassNameStr(ClassName);
 
-            if(!strcmp(MethodName, l_Name) && !strcmp(Descriptor, l_Descriptor)) {
+    while(CurrentClass) {
+        char* name, *descriptor, *methodClass;
+        methodClass = CurrentClass->GetClassName();
+        printf("Searching class %s for %s%s\n", methodClass, MethodName, Descriptor);
+        std::list<std::string> InterfaceNames;
+
+        if(CurrentClass->InterfaceCount > 0) {
+            for(size_t iface = 0; iface < CurrentClass->InterfaceCount; iface++) {
+                uint16_t interface = CurrentClass->Interfaces[iface];
+                char* Stream;
+                Stream = (char*) CurrentClass->Constants[interface];
+                uint16_t NameInd = ReadShortFromStream(&Stream[1]);
+                if(!GetStringConstant(NameInd, Stream)) exit(3);
+                std::string IfaceName(Stream);
+                InterfaceNames.emplace_back(IfaceName);
+            }
+        }
+
+        printf("Class implements interfaces ");
+        PrintList(InterfaceNames);
+        printf("\n");
+
+
+        for(int i = 0; i < CurrentClass->MethodCount; i++) {
+            CurrentClass->GetStringConstant(CurrentClass->Methods[i].Name, name);
+            CurrentClass->GetStringConstant(CurrentClass->Methods[i].Descriptor, descriptor);
+
+            printf("\t\tExamining class %s for %s%s, access %d. Given access %d.\r\n", methodClass, name, descriptor, CurrentClass->ClassAccess, pClass->ClassAccess);
+
+            // if method and descriptor and class match,
+            // or method and descriptor match, and class is interface.
+            if(!strcmp(MethodName, name) && !strcmp(Descriptor, descriptor) && 
+            (!(strcmp(ClassName, methodClass)) || (std::find(InterfaceNames.begin(), InterfaceNames.end(), ClassNameStr) != InterfaceNames.end()) ) ) {
                 if(pClass) pClass = CurrentClass;
 
                 printf("Found at index %d\n", i);
@@ -412,4 +444,10 @@ bool Class::CreateObject(uint16_t Index, ObjectHeap *ObjectHeap, Object &Object)
 
     Object = ObjectHeap->CreateObject(NewClass);
     return true;
+}
+
+void PrintList(std::list<std::string> &list) {
+    for (auto const& i: list) {
+        std::cout << i << " ";
+    }
 }

@@ -80,7 +80,7 @@ class Class : public ClassFile {
 
         Class* GetSuper();
 
-        uint32_t GetMethodFromDescriptor(char* MethodName, char* Descriptor, Class* &Class);
+        uint32_t GetMethodFromDescriptor(char* MethodName, char* Descriptor, char* ClassName, Class* &Class);
         uint32_t GetFieldFromDescriptor(char* FieldName, char* &FieldDescriptor);
 
         bool CreateObject(uint16_t Index, ObjectHeap* ObjectHeap, Object &Object);

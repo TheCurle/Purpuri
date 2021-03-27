@@ -187,3 +187,16 @@ uint32_t Class::GetConstantsCount(const char* Code) {
 
     return 0;
 }
+
+bool Engine::MethodClassMatches(uint16_t MethodInd, Class* pClass, const char* TestName) {
+    char* Data = (char*) pClass->Constants[MethodInd];
+    uint16_t classInd = ReadShortFromStream(&Data[1]);
+
+    Data = (char*) pClass->Constants[classInd];
+    uint16_t val = ReadShortFromStream(&Data[1]);
+
+    char* ClassName;
+    if(!pClass->GetStringConstant(val, ClassName)) exit(3);
+
+    return !strcmp(ClassName, TestName);
+}

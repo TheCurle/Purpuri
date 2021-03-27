@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     class Object object = objects.CreateObject(GivenClass);
     //Class* VirtualClass = GivenClass;
 
-    int EntryPoint = GivenClass->GetMethodFromDescriptor((char*) "EntryPoint", (char*) "()I", GivenClass);
+    int EntryPoint = GivenClass->GetMethodFromDescriptor((char*) "EntryPoint", (char*) "()I", GivenClass->GetClassName(), GivenClass);
     
     if(EntryPoint < 0) {
         printf("%s does not have an EntryPoint function, unable to execute.\n", argv[1]);
