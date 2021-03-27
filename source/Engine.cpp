@@ -84,6 +84,10 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 Invoke(CurrentFrame, invokeinterface);
                 CurrentFrame->ProgramCounter += 5;
                 break;
+            case invokestatic:
+                Invoke(CurrentFrame, invokestatic);
+                CurrentFrame->ProgramCounter += 3;
+                break;
 
             case putfield:
                 PutField(CurrentFrame);
@@ -98,6 +102,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
 
             case iconst_0:
+            case iconst_2:
             case iconst_5:
                 CurrentFrame->StackPointer++;
                 CurrentFrame->Stack[CurrentFrame->StackPointer].intVal = (uint8_t) Code[CurrentFrame->ProgramCounter] - iconst_0;
