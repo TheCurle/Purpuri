@@ -145,7 +145,7 @@ void Class::ClassloadReferents(const char* &Code) {
             GetStringConstant(val, Temp);
             printf("\tName %s", Temp);
 
-            if(i != Super && i != This && this->_ClassHeap->GetClass(Temp) == NULL) {
+            if(i != Super && i != This && (this->_ClassHeap->GetClass(Temp) == NULL && !this->_ClassHeap->ClassExists(Temp))) {
                 printf("\tClass is not loaded - invoking the classloader\n");
                 Class* Class = new class Class();
                 this->_ClassHeap->LoadClass(Temp, Class);
@@ -320,7 +320,7 @@ uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, char
         puts("GetMethodFromDescriptor called too early! Class not initialised yet!");
         return false;
     }
-    printf("GetMethodFromDescriptor: %s %s %s %s.\r\n", MethodName, Descriptor, ClassName, pClass->GetClassName());
+    
     class Class* CurrentClass = pClass;
     std::string ClassNameStr(ClassName);
 
@@ -351,7 +351,7 @@ uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, char
             CurrentClass->GetStringConstant(CurrentClass->Methods[i].Name, name);
             CurrentClass->GetStringConstant(CurrentClass->Methods[i].Descriptor, descriptor);
 
-            printf("\t\tExamining class %s for %s%s, access %d. Given access %d.\r\n", methodClass, name, descriptor, CurrentClass->ClassAccess, pClass->ClassAccess);
+            printf("\t\tExamining class %s for %s%s, access %d\r\n", methodClass, name, descriptor, CurrentClass->ClassAccess);
 
             // if method and descriptor and class match,
             // or method and descriptor match, and class is interface.

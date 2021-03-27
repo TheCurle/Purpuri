@@ -6,6 +6,9 @@
 #include "../headers/Class.hpp"
 #include <fstream>
 #include <iterator>
+#include <string>
+#include <list>
+#include <algorithm>
 
 ClassHeap::ClassHeap() {}
 
@@ -16,6 +19,12 @@ bool ClassHeap::AddClass(Class *Class) {
     std::string NameStr(Name);
     ClassMap.emplace(NameStr, Class);
     return true;
+}
+
+bool ClassHeap::ClassExists(char* Name) {
+    std::string NameStr(Name);
+    
+    return std::find(ClassCache.begin(), ClassCache.end(), NameStr) != ClassCache.end();
 }
 
 Class* ClassHeap::GetClass(char *Name) {
@@ -49,6 +58,8 @@ bool ClassHeap::LoadClass(char *ClassName, Class *Class) {
     RelativePath = pathTemp.c_str();
 
     Class->SetClassHeap(this);
+    ClassCache.emplace_back(ClassName);
+
     if(!Class->LoadFromFile(RelativePath))
         return false;
 

@@ -7,6 +7,7 @@
 #include <map>
 #include <string>
 #include <cstring>
+#include <list>
 
 #include "Constants.hpp"
 #include "Fields.hpp"
@@ -40,6 +41,7 @@ struct ClassFile {
 };
 
 class ClassHeap {
+    std::list<std::string> ClassCache;
     std::map<std::string, Class*> ClassMap;
 
     public:
@@ -48,6 +50,7 @@ class ClassHeap {
 
         bool LoadClass(char* ClassName, Class* Class);
         bool AddClass(Class* Class);
+        bool ClassExists(char* Name);
         Class* GetClass(char* Name);
         
 };
