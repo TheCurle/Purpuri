@@ -14,7 +14,7 @@ class ObjectHeap {
 
         virtual Variable* GetObjectPtr(Object obj);
         Object CreateObject(Class* Class);
-        Object CreateString(char** String, ClassHeap* ClassHeap);
+        Object CreateString(std::string String, ClassHeap* ClassHeap);
         Object CreateArray(uint8_t type, int16_t Count);
         bool CreateObjectArray(Class* Class, uint32_t Count, Object &Object);
 

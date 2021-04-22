@@ -16,6 +16,15 @@ bool Class::ParseConstants(const char *&Code) {
     for(int i = 1; i < ConstantCount; i++) {
         Constants[i] = (ConstantPoolEntry*) Code;
 
+        if(Constants[i] == NULL) continue;
+
+        if(Constants[i]->Tag == TypeString) {
+            // Convert to std::string
+            std::string NewString(&Code[3]);
+            // Save into the vector for easy searching.
+            StringConstants.insert(StringConstants.begin() + i, NewString);
+        }
+            
         int Size = GetConstantsCount(Code);
         Code += Size;
 
@@ -26,19 +35,35 @@ bool Class::ParseConstants(const char *&Code) {
         }
     }
 
+    // NameAndDesc has to be parsed after Strings but before Methods, so it has its own little loop.
+    for(int i = 1; i < ConstantCount; i++) {
+        if(Constants[i] == NULL) continue;
+
+        if(Constants[i]->Tag == TypeNamed) {
+            char* Temp = (char*)Constants[i];
+            uint16_t nameInd = ReadShortFromStream(&Temp[1]);
+            uint16_t descInd = ReadShortFromStream(&Temp[3]);
+            std::string Name = GetStringConstant(nameInd);
+            std::string Desc = GetStringConstant(descInd);
+
+            std::string NameAndDesc = Name;
+            NameAndDesc.append(Desc);
+
+            StringConstants.insert(StringConstants.begin() + i, NameAndDesc);
+            printf("%d:\tType %s\n", i, NameAndDesc.c_str());
+            break;
+        }
+    }
+
     for(int i = 1; i < ConstantCount; i++) {
         
-        if(Constants == NULL) return false;
         if(Constants[i] == NULL) continue;
 
         //printf("Constant %d has type %d\n", i, Constants[i]->Tag);
         char* Temp;
         switch(Constants[i]->Tag) {
             case TypeUtf8: 
-                GetStringConstant(i, Temp);
-                //printf("\tValue %s\n", Temp);
                 break;
-            
             
             case TypeInteger: {
                 Temp = (char*)Constants[i];
@@ -73,8 +98,11 @@ bool Class::ParseConstants(const char *&Code) {
             case TypeClass: {
                 Temp = (char*)Constants[i];
                 uint16_t val = ReadShortFromStream(&Temp[1]);
-                GetStringConstant(val, Temp);
-                printf("%d:\tName %s\n", i, Temp);
+                std::string name = GetStringConstant(val);
+
+                StringConstants.insert(StringConstants.begin() + i, name);
+
+                printf("%d:\tName %s\n", i, name.c_str());
                 break;
             }
 
@@ -83,60 +111,31 @@ bool Class::ParseConstants(const char *&Code) {
                 Temp = (char*)Constants[i];
                 uint16_t classInd = ReadShortFromStream(&Temp[1]);
                 uint16_t nameAndDescInd = ReadShortFromStream(&Temp[3]);
-                Temp = (char*)Constants[classInd];
-                uint16_t val = ReadShortFromStream(&Temp[1]);
-                char* ClassName;
-                if(!GetStringConstant(val, ClassName)) exit(3);
 
-                Temp = (char*)Constants[nameAndDescInd];
-                uint16_t nameInd = ReadShortFromStream(&Temp[1]);
-                uint16_t descInd = ReadShortFromStream(&Temp[3]);
-                char* MethodName = NULL, *MethodDesc = NULL;
-                if(!GetStringConstant(nameInd, MethodName)) exit(3);
-                if(!GetStringConstant(descInd, MethodDesc)) exit(3);
+                std::string ClassName = GetStringConstant(classInd);
+                std::string NameAndDesc = GetStringConstant(nameAndDescInd);
 
-                if(MethodName == NULL || MethodDesc == NULL)
-                    __builtin_unreachable();
-                printf("%d:\tMethod %s%s belongs to class %s\n", i, MethodName, MethodDesc, ClassName);
+                StringConstants.insert(StringConstants.begin() + i, NameAndDesc);
+
+                printf("%d:\tMethod %s belongs to class %s\n", i, NameAndDesc.c_str(), ClassName.c_str());
                 break;
             }
 
-            case TypeNamed: {
-                Temp = (char*)Constants[i];
-                uint16_t nameInd = ReadShortFromStream(&Temp[1]);
-                uint16_t descInd = ReadShortFromStream(&Temp[3]);
-                char* MethodName, *MethodDesc;
-                if(!GetStringConstant(nameInd, MethodName)) exit(3);
-                if(!GetStringConstant(descInd, MethodDesc)) exit(3);
-                printf("%d:\tType %s%s\n", i, MethodName, MethodDesc);
-                break;
-            }
             
             case TypeField: {
                 Temp = (char*)Constants[i];
                 uint16_t classInd = ReadShortFromStream(&Temp[1]);
                 uint16_t nameAndDescInd = ReadShortFromStream(&Temp[3]);
-                Temp = (char*)Constants[classInd];
-                uint16_t val = ReadShortFromStream(&Temp[1]);
-                char* ClassName;
-                if(!GetStringConstant(val, ClassName)) exit(3);
 
-                Temp = (char*)Constants[nameAndDescInd];
-                uint16_t nameInd = ReadShortFromStream(&Temp[1]);
-                uint16_t descInd = ReadShortFromStream(&Temp[3]);
-                char* FieldName = NULL, *FieldDesc = NULL;
-                if(!GetStringConstant(nameInd, FieldName)) exit(3);
-                if(!GetStringConstant(descInd, FieldDesc)) exit(3);
+                std::string ClassName = GetStringConstant(classInd);
+                std::string FieldDesc = GetStringConstant(nameAndDescInd);
 
-                if(FieldName == NULL || FieldDesc == NULL)
-                    __builtin_unreachable();
-                printf("%d:\tField %s(%s) belongs to class %s\n", i, FieldName, FieldDesc, ClassName);
+                StringConstants.insert(StringConstants.begin() + i, FieldDesc);
+
+                printf("%d:\tField %s belongs to class %s\n", i, FieldDesc.c_str(), ClassName.c_str());
                 break;
             }
 
-            case TypeString: 
-                printf("%d:\tValue unknown. Potential forward reference\n", i);
-                break;
             default:
                 printf("%d:\tValue unknown. Unrecognized type.\n", i);
         }
@@ -145,26 +144,11 @@ bool Class::ParseConstants(const char *&Code) {
     return true;
 }
 
-bool Class::GetStringConstant(uint32_t index, char *&String) {
+std::string Class::GetStringConstant(uint32_t index) {
     if(index < 1 || index >= ConstantCount)
-        return false;
-
-    if(Constants[index]->Tag != TypeUtf8)
-        return false;
+        return Unknown;
     
-    char* Entry = (char*)Constants[index];
-
-    uint16_t Length = ReadShortFromStream(&Entry[1]);
-
-    char* Buffer = new char[Length + 1];
-    Buffer[Length] = 0;
-
-    memcpy(Buffer, &(Entry[3]), Length);
-
-    //printf("Retrieving constant %s from ID %d\n", Buffer, index);
-    
-    String = Buffer;
-    return true;
+    return StringConstants.at(index);
 }
 
 uint32_t Class::GetConstantsCount(const char* Code) {
@@ -192,11 +176,7 @@ bool Engine::MethodClassMatches(uint16_t MethodInd, Class* pClass, const char* T
     char* Data = (char*) pClass->Constants[MethodInd];
     uint16_t classInd = ReadShortFromStream(&Data[1]);
 
-    Data = (char*) pClass->Constants[classInd];
-    uint16_t val = ReadShortFromStream(&Data[1]);
+    std::string ClassName = pClass->GetStringConstant(classInd);
 
-    char* ClassName;
-    if(!pClass->GetStringConstant(val, ClassName)) exit(3);
-
-    return !strcmp(ClassName, TestName);
+    return ClassName.compare(TestName) == COMPARE_MATCH;
 }

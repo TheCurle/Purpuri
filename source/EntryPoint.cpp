@@ -27,8 +27,15 @@ int main(int argc, char* argv[]) {
     if(LastInd != GivenPath.size())
         heap.ClassPrefix = GivenPath.substr(0, LastInd + 1);
 
-    heap.LoadClass((char*)"java/lang/Object", Object);
-    heap.LoadClass(argv[1], GivenClass);
+    if(!heap.LoadClass((char*)"java/lang/Object", Object)) {
+        printf("Unable to load Object class. Fatal error.\n");
+        exit(6);
+    }
+
+    if(!heap.LoadClass(argv[1], GivenClass)) {
+        printf("Loading given class failed. Fatal error.\n");
+        exit(6);
+    }
 
     ObjectHeap objects;
 
@@ -51,7 +58,7 @@ int main(int argc, char* argv[]) {
     class Object object = objects.CreateObject(GivenClass);
     //Class* VirtualClass = GivenClass;
 
-    int EntryPoint = GivenClass->GetMethodFromDescriptor((char*) "EntryPoint", (char*) "()I", GivenClass->GetClassName(), GivenClass);
+    int EntryPoint = GivenClass->GetMethodFromDescriptor("EntryPoint", "()I", GivenClass->GetClassName().c_str(), GivenClass);
     
     if(EntryPoint < 0) {
         printf("%s does not have an EntryPoint function, unable to execute.\n", argv[1]);

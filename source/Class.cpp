@@ -17,6 +17,8 @@ Class::Class() {
     Code = NULL;
     BytecodeLength = 0;
     FieldsCount = 0;
+
+    Unknown.append("Unknown Value");
 }
 
 // TODO: Delete EVERYTHING
@@ -45,24 +47,20 @@ bool Class::LoadFromFile(const char* Filename) {
     }
 
     LocalCode = (char*) new char[Length + 2];
-    if(LocalCode) {
-
+    bool hasSize = (LocalCode != nullptr);
+    if(hasSize) {
         File.read(&LocalCode[0], Length);
-    } else {
-
-        File.close();
-        return false;
     }
 
     File.close();
 
-    if(LocalCode) {
+    if(hasSize) {
         LocalCode[Length] = 0;
         BytecodeLength = Length;
         SetCode(LocalCode);
     }
 
-    return LocalCode != NULL;
+    return hasSize;
 }
 
 void Class::SetCode(const char* p_Code) {
@@ -141,14 +139,18 @@ void Class::ClassloadReferents(const char* &Code) {
 
         if(Constants[i]->Tag == TypeClass) {
             char* Temp = (char*)Constants[i];
-            uint16_t val = ReadShortFromStream(&Temp[1]);
-            GetStringConstant(val, Temp);
-            printf("\tName %s", Temp);
+            uint16_t ClassInd = ReadShortFromStream(&Temp[1]);
+            std::string ClassName = GetStringConstant(ClassInd);
+            printf("\tName %s", ClassName.c_str());
 
-            if(i != Super && i != This && (this->_ClassHeap->GetClass(Temp) == NULL && !this->_ClassHeap->ClassExists(Temp))) {
+            if(i != Super && i != This && (this->_ClassHeap->GetClass(ClassName) == NULL && !this->_ClassHeap->ClassExists(ClassName))) {
                 printf("\tClass is not loaded - invoking the classloader\n");
                 Class* Class = new class Class();
-                this->_ClassHeap->LoadClass(Temp, Class);
+                
+                if(!this->_ClassHeap->LoadClass(ClassName.c_str(), Class)) {
+                    printf("Classloading referenced class %s failed. Fatal error.\n", ClassName.c_str());
+                    exit(6);
+                }
             } else {
                 printf(" - clear\n");
             }
@@ -188,9 +190,8 @@ bool Class::ParseInterfaces(const char* &Code) {
         char* Stream;
         Stream = (char*) Constants[Interfaces[i]];
         uint16_t NameInd = ReadShortFromStream(&Stream[1]);
-        GetStringConstant(NameInd, Stream);
 
-        printf("\tThis class implements interface %s\n", Stream);
+        printf("\tThis class implements interface %s\n", GetStringConstant(NameInd).c_str());
     }
 
     return true;
@@ -208,24 +209,24 @@ bool Class::ParseMethods(const char *&Code) {
         Methods[i].Descriptor = ReadShortFromStream(Code); Code += 2;
         Methods[i].AttributeCount = ReadShortFromStream(Code); Code += 2;
 
-        char* Name, *Descriptor;
-        GetStringConstant(Methods[i].Name, Name);
-        GetStringConstant(Methods[i].Descriptor, Descriptor);
+        std::string Name = GetStringConstant(Methods[i].Name);
+        std::string Descriptor = GetStringConstant(Methods[i].Descriptor);
 
-        printf("Parsing method %s%s with access %d, %d attributes\n", Name, Descriptor, Methods[i].Access, Methods[i].AttributeCount);
+        printf("Parsing method %s%s with access %d, %d attributes\n", Name.c_str(), Descriptor.c_str(), Methods[i].Access, Methods[i].AttributeCount);
 
         Methods[i].Code = NULL;
 
         if(Methods[i].AttributeCount > 0) {
             for(int j = 0; j < Methods[i].AttributeCount; j++) {
                 printf("\tParsing attribute %d\n", j);
-                uint16_t AttrName = ReadShortFromStream(Code); Code += 2;
+                uint16_t AttrNameInd = ReadShortFromStream(Code); Code += 2;
 
                 size_t AttrLength = ReadIntFromStream(Code); Code += 4;
                 Code += AttrLength;
-                GetStringConstant(AttrName, Name);
+                
+                std::string AttrName = GetStringConstant(AttrNameInd);
 
-                printf("\tAttribute has name %s, length %zu\n", Name, AttrLength);
+                printf("\tAttribute has name %s, length %zu\n", AttrName.c_str(), AttrLength);
             }
 
             Methods[i].Code = new CodePoint;
@@ -248,10 +249,9 @@ bool Class::ParseMethodCodePoints(int Method, CodePoint *Code) {
         for(int i = 0; i < AttribCount; i++) {
             uint16_t NameInd = ReadShortFromStream(CodeBase); CodeBase += 2;
 
-            char* AttribName;
-            GetStringConstant(NameInd, AttribName);
+            std::string AttribName = GetStringConstant(NameInd);
 
-            if(!strcmp(AttribName, "Code")) {
+            if(AttribName.compare("Code") == COMPARE_MATCH) {
                 char* AttribCode = CodeBase;
                 Code->Name = NameInd;
                 Code->Length = ReadIntFromStream(AttribCode); AttribCode += 4;
@@ -315,7 +315,7 @@ bool Class::ParseFields(const char* &Code) {
     return true;
 }
 
-uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, char* ClassName, Class *&pClass) {
+uint32_t Class::GetMethodFromDescriptor(const char *MethodName, const char *Descriptor, const char* ClassName, Class *&pClass) {
     if(Methods == NULL) {
         puts("GetMethodFromDescriptor called too early! Class not initialised yet!");
         return false;
@@ -325,19 +325,19 @@ uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, char
     std::string ClassNameStr(ClassName);
 
     while(CurrentClass) {
-        char* name, *descriptor, *methodClass;
-        methodClass = CurrentClass->GetClassName();
-        printf("Searching class %s for %s%s\n", methodClass, MethodName, Descriptor);
+        std::string MethodClass = CurrentClass->GetClassName();
+
+        printf("Searching class %s for %s%s\n", MethodClass.c_str(), MethodName, Descriptor);
         std::list<std::string> InterfaceNames;
 
         if(CurrentClass->InterfaceCount > 0) {
             for(size_t iface = 0; iface < CurrentClass->InterfaceCount; iface++) {
                 uint16_t interface = CurrentClass->Interfaces[iface];
-                char* Stream;
-                Stream = (char*) CurrentClass->Constants[interface];
+
+                char* Stream = (char*) CurrentClass->Constants[interface];
                 uint16_t NameInd = ReadShortFromStream(&Stream[1]);
-                if(!GetStringConstant(NameInd, Stream)) exit(3);
-                std::string IfaceName(Stream);
+
+                std::string IfaceName = GetStringConstant(NameInd);
                 InterfaceNames.emplace_back(IfaceName);
             }
         }
@@ -348,15 +348,15 @@ uint32_t Class::GetMethodFromDescriptor(char *MethodName, char *Descriptor, char
 
 
         for(int i = 0; i < CurrentClass->MethodCount; i++) {
-            CurrentClass->GetStringConstant(CurrentClass->Methods[i].Name, name);
-            CurrentClass->GetStringConstant(CurrentClass->Methods[i].Descriptor, descriptor);
+            std::string CurrentName = CurrentClass->GetStringConstant(CurrentClass->Methods[i].Name);
+            std::string CurrentDescriptor = CurrentClass->GetStringConstant(CurrentClass->Methods[i].Descriptor);
 
-            printf("\t\tExamining class %s for %s%s, access %d\r\n", methodClass, name, descriptor, CurrentClass->ClassAccess);
+            printf("\t\tExamining class %s for %s%s, access %d\r\n", MethodClass.c_str(), CurrentName.c_str(), CurrentDescriptor.c_str(), CurrentClass->ClassAccess);
 
             // if method and descriptor and class match,
             // or method and descriptor match, and class is interface.
-            if(!strcmp(MethodName, name) && !strcmp(Descriptor, descriptor) && 
-            (!(strcmp(ClassName, methodClass)) || (std::find(InterfaceNames.begin(), InterfaceNames.end(), ClassNameStr) != InterfaceNames.end()) ) ) {
+            if(((CurrentName.compare(MethodName) == 0) && (CurrentDescriptor.compare(Descriptor)) == 0) && 
+            ((MethodClass.compare(ClassName) == 0) || (std::find(InterfaceNames.begin(), InterfaceNames.end(), ClassNameStr) != InterfaceNames.end()) )) {
                 if(pClass) pClass = CurrentClass;
 
                 printf("Found at index %d\n", i);
@@ -404,26 +404,21 @@ Class* Class::GetSuper() {
     return _ClassHeap->GetClass(GetSuperName());
 }
 
-char* Class::GetSuperName() {
+std::string Class::GetSuperName() {
     return this->GetName(Super);
 }
 
-char* Class::GetClassName() {
+std::string Class::GetClassName() {
     return this->GetName(This);
 }
 
-char* Class::GetName(uint16_t Obj) {
-    char* Ret = new char[0];
-    if(Obj < 1 || (Obj != Super && Obj != This)) return Ret;
+std::string Class::GetName(uint16_t Obj) {
+    if(Obj < 1 || (Obj != Super && Obj != This)) return Unknown;
 
-    if(Constants[Obj]->Tag != TypeClass)
-        return Ret;
-    
     char* Entry = (char*)Constants[Obj];
-    uint16_t Name = ReadShortFromStream(&Entry[1]);
+    uint16_t NameInd = ReadShortFromStream(&Entry[1]);
 
-    GetStringConstant(Name, Ret);
-    return Ret;
+    return GetStringConstant(NameInd);
 }
 
 bool Class::CreateObject(uint16_t Index, ObjectHeap *ObjectHeap, Object &Object) {
@@ -432,14 +427,12 @@ bool Class::CreateObject(uint16_t Index, ObjectHeap *ObjectHeap, Object &Object)
     if(Code[0] != TypeClass)
         return false;
     
-    uint16_t Name = ReadShortFromStream(&Code[1]);
-    char* NameStr;
-    if(!this->GetStringConstant(Name, NameStr))
-        return false;
-    
-    printf("Creating new object from class %s\n", NameStr);
+    uint16_t NameInd = ReadShortFromStream(&Code[1]);
+    std::string Name = GetStringConstant(NameInd);
 
-    Class* NewClass = this->_ClassHeap->GetClass(NameStr);
+    printf("Creating new object from class %s\n", Name.c_str());
+
+    Class* NewClass = this->_ClassHeap->GetClass(Name);
     if(NewClass == NULL) return false;
 
     Object = ObjectHeap->CreateObject(NewClass);

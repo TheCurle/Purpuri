@@ -15,19 +15,20 @@ ObjectHeap::ObjectHeap() {
 ObjectHeap::~ObjectHeap() {}
 
 Object ObjectHeap::CreateObject(Class *Class) {
-    Object object;
-    object.Heap = 0;
-    object.Type = 0;
 
-    if(Class == NULL) return object;
+    if(Class == NULL) return (Object) {0, 0};
 
     size_t ObjectSize = Class->GetClassFieldCount() + 1;
     Variable* ClassObj = new Variable[ObjectSize];
-    if(!ClassObj) return object;
+    
+    if(!ClassObj) return (Object) {0, 0};
 
     memset(ClassObj, 0, sizeof(Variable) * ObjectSize);
 
-    object.Heap = NextObjectID++;
+    Object object = (Object) {
+        .Heap = NextObjectID++,
+        .Type = 0
+    };
 
     ClassObj[0].pointerVal = (size_t) Class;
 
@@ -48,13 +49,13 @@ Variable* ObjectHeap::GetObjectPtr(Object obj) {
     return (Variable*) objIter->second;
 }
 
-Object ObjectHeap::CreateString(char **String, ClassHeap *ClassHeap) {
+Object ObjectHeap::CreateString(std::string String, ClassHeap *ClassHeap) {
     Object obj;
     obj.Heap = 0;
     obj.Type = 0;
 
     if(ClassHeap == NULL) return obj;
-    Class* Class = ClassHeap->GetClass((char*)"java/lang/String");
+    Class* Class = ClassHeap->GetClass("java/lang/String");
 
     if(Class == NULL) return obj;
     obj = CreateObject(Class);
@@ -63,7 +64,9 @@ Object ObjectHeap::CreateString(char **String, ClassHeap *ClassHeap) {
 
     if(Var == NULL) return obj;
 
-    Var[1].pointerVal = (size_t)String;
+    // Java dictates we need a pointer to this str.
+    const char* Str = String.c_str();
+    Var[1].pointerVal = (size_t)(&Str);
 
     return obj;
 }

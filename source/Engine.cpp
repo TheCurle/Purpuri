@@ -34,10 +34,9 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
     uint8_t* Code = CurrentFrame->_Method->Code->Code + CurrentFrame->ProgramCounter;
     int32_t Error = 0;
     Class* Class = CurrentFrame->_Class;
-    char* Name;
-    Class->GetStringConstant(CurrentFrame->_Method->Name, Name);
+    std::string Name = Class->GetStringConstant(CurrentFrame->_Method->Name);
 
-    printf("Executing %s::%s\n", Class->GetClassName(), Name);
+    printf("Executing %s::%s\n", Class->GetClassName().c_str(), Name.c_str());
     int32_t Index;
     size_t Long;
 
@@ -361,9 +360,6 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
     Variable temp;
     temp.pointerVal = 0;
 
-
-    char** Str = NULL, *StrTmp;
-
     char* Code = (char*) Class->Constants[Index];
     uint16_t shortTemp;
     Object obj;
@@ -376,9 +372,7 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
         
         case TypeString:
             shortTemp = ReadShortFromStream(&Code[1]);
-            Class->GetStringConstant(shortTemp, StrTmp);
-            Str = &StrTmp;
-            obj = _ObjectHeap->CreateString(Str, _ClassHeap);
+            obj = _ObjectHeap->CreateString(Class->GetStringConstant(shortTemp).c_str(), _ClassHeap);
             temp.pointerVal = obj.Heap;
             break;
         
@@ -437,12 +431,10 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     uint16_t ClassIndex = ReadShortFromStream(&Constants[1]);
     uint16_t ClassNTIndex = ReadShortFromStream(&Constants[3]);
 
-    Constants = (uint8_t*) Stack[0]._Class->Constants[ClassIndex];
-    uint16_t ClassName = ReadShortFromStream(&Constants[1]);
-    char* ClassStr;
-    Stack[0]._Class->GetStringConstant(ClassName, ClassStr);
+    Constants = (uint8_t*) Stack->_Class->Constants[ClassIndex];
+    std::string ClassName = Stack->_Class->GetStringConstant(ClassIndex);
 
-    printf("\tInvocation is calling into class %s\n", ClassStr);
+    printf("\tInvocation is calling into class %s\n", ClassName.c_str());
 
     Constants = (uint8_t*) Stack->_Class->Constants[ClassNTIndex];
 
@@ -451,13 +443,12 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     MethodToInvoke.Descriptor = ReadShortFromStream(&Constants[3]);
     MethodToInvoke.Access = 0;
 
-    char* MethodName, *MethodDescriptor;
-
-    Stack->_Class->GetStringConstant(MethodToInvoke.Name, MethodName);
-    Stack->_Class->GetStringConstant(MethodToInvoke.Descriptor, MethodDescriptor);
+    std::string MethodName = Stack->_Class->GetStringConstant(MethodToInvoke.Name);
+    std::string MethodDesc = Stack->_Class->GetStringConstant(MethodToInvoke.Descriptor);
     
-    printf("\tInvocation resolves to method %s%s\n", MethodName, MethodDescriptor);
-    size_t Parameters = GetParameters(MethodDescriptor);
+    printf("\tInvocation resolves to method %s%s\n", MethodName.c_str(), MethodDesc.c_str());
+    size_t Parameters = GetParameters(MethodDesc.c_str());
+
     printf("\tMethod has %zu parameters, skipping ahead..\r\n", Parameters);
     Variable UnderStack = Stack->Stack[Stack->StackPointer - (Parameters + 1)];
     
@@ -472,7 +463,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     printf("\tClass at 0x%zx.\r\n", ObjectFromHeap->pointerVal);
     class Class* VirtualClass = (class Class*) ObjectFromHeap->pointerVal;
  
-    int MethodInClassIndex = VirtualClass->GetMethodFromDescriptor(MethodName, MethodDescriptor, ClassStr, VirtualClass);
+    int MethodInClassIndex = VirtualClass->GetMethodFromDescriptor(MethodName.c_str(), MethodDesc.c_str(), ClassName.c_str(), VirtualClass);
 
 
     Stack[1] = (StackFrame) { 0 };
@@ -503,14 +494,14 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
 
     Stack[1].StackPointer = Parameters;
 
-    printf("Invoking method %s%s - Last frame at %zd, new frame begins %zd\n", MethodName, MethodDescriptor,
+    printf("Invoking method %s%s - Last frame at %zd, new frame begins %zd\n", MethodName.c_str(), MethodDesc.c_str(),
         Stack[0].Stack - StackFrame::MemberStack + Stack[0].StackPointer, 
         Stack[1].Stack - StackFrame::MemberStack);
 
     this->Ignite(&Stack[1]);
     Variable ReturnValue = Stack[1].Stack[Stack[1].StackPointer];
-    std::string DescStr(MethodDescriptor);
-    if(DescStr.find(")V") != std::string::npos)
+
+    if(MethodDesc.find(")V") != std::string::npos)
         Parameters--;
     
     Stack->StackPointer -= Parameters;
@@ -553,35 +544,25 @@ void Engine::PutField(StackFrame* Stack) {
     
     Class* FieldsClass = (Class*)VarList->pointerVal;
 
-    char* Temp = (char*)FieldsClass->Constants[FieldIndex];
-    uint16_t NADInd = ReadShortFromStream(&Temp[3]);
-    Temp = (char*)FieldsClass->Constants[NADInd];
-    uint16_t nameInd = ReadShortFromStream(&Temp[1]);
-    char* FieldName = NULL;
-    if(!FieldsClass->GetStringConstant(nameInd, FieldName)) exit(3);
+    std::string FieldName = FieldsClass->GetStringConstant(FieldIndex);
 
-    printf("Setting field %s to %zu.\r\n", FieldName, ValueToSet.pointerVal);
+    printf("Setting field %s to %zu.\r\n", FieldName.c_str(), ValueToSet.pointerVal);
 
     VarList[FieldIndex + 1] = ValueToSet;
 }
 
 void Engine::GetField(StackFrame* Stack) {
     uint16_t FieldIndex = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
-    Variable Obj = Stack->Stack[Stack->StackPointer - 1];
-
+    printf("Reading field %d.\n", FieldIndex);
+    Variable Obj = Stack->Stack[Stack->StackPointer];
+    printf("\tFound object %zu.\r\n", Obj.pointerVal);
     Variable* VarList = _ObjectHeap->GetObjectPtr(Obj.object);
-
-	Stack->Stack[Stack->StackPointer] = VarList[FieldIndex + 1];
     Class* FieldsClass = (Class*)VarList->pointerVal;
 
-    char* Temp = (char*)FieldsClass->Constants[FieldIndex];
-    uint16_t NADInd = ReadShortFromStream(&Temp[3]);
+    printf("\tFound class %s.\r\n", FieldsClass->GetClassName().c_str());
 
-    Temp = (char*)FieldsClass->Constants[NADInd];
-    uint16_t nameInd = ReadShortFromStream(&Temp[1]);
+    std::string FieldName = FieldsClass->GetStringConstant(FieldIndex);
 
-    char* FieldName = NULL;
-    if(!FieldsClass->GetStringConstant(nameInd, FieldName)) exit(3);
-
-    printf("Reading field %s of class %s\r\n", FieldName, FieldsClass->GetClassName());
+	Stack->Stack[Stack->StackPointer] = VarList[FieldIndex + 1];
+    printf("Reading value %zu from field %s of class %s\r\n", Stack->Stack[Stack->StackPointer].pointerVal, FieldName.c_str(), FieldsClass->GetClassName().c_str());
 }

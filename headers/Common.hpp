@@ -25,6 +25,8 @@ class ObjectHeap;
 
 #define SHUTUPUNUSED(X) ((void)X)
 
+#define COMPARE_MATCH 0
+
 void PrintList(std::list<std::string> &list);
 
 struct AttributeData {

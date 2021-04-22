@@ -8,6 +8,7 @@
 #include <string>
 #include <cstring>
 #include <list>
+#include <vector>
 
 #include "Constants.hpp"
 #include "Fields.hpp"
@@ -48,10 +49,10 @@ class ClassHeap {
         ClassHeap();
         std::string ClassPrefix;
 
-        bool LoadClass(char* ClassName, Class* Class);
+        bool LoadClass(const char* ClassName, Class* Class);
         bool AddClass(Class* Class);
-        bool ClassExists(char* Name);
-        Class* GetClass(char* Name);
+        bool ClassExists(std::string Name);
+        Class* GetClass(std::string Name);
         
 };
 
@@ -73,18 +74,18 @@ class Class : public ClassFile {
         void ClassloadReferents(const char* &Code);
 
         bool GetConstants(uint16_t index, ConstantPoolEntry &Pool);
-        bool GetStringConstant(uint32_t index, char* &String);
+        std::string GetStringConstant(uint32_t index);
 
-        char* GetClassName();
-        char* GetSuperName();
+        std::string GetClassName();
+        std::string GetSuperName();
 
         virtual uint32_t GetClassSize();
         virtual uint32_t GetClassFieldCount();
 
         Class* GetSuper();
 
-        uint32_t GetMethodFromDescriptor(char* MethodName, char* Descriptor, char* ClassName, Class* &Class);
-        uint32_t GetFieldFromDescriptor(char* FieldName, char* &FieldDescriptor);
+        uint32_t GetMethodFromDescriptor(const char* MethodName, const char* Descriptor, const char* ClassName, Class* &Class);
+        uint32_t GetFieldFromDescriptor(const char* FieldName, const char* FieldDescriptor);
 
         bool CreateObject(uint16_t Index, ObjectHeap* ObjectHeap, Object &Object);
         bool CreateObjectArray(uint16_t Index, uint32_t Count, ObjectHeap* ObjectHeap, Object &Object);
@@ -98,10 +99,12 @@ class Class : public ClassFile {
         const char* Code;
         struct ClassHeap* _ClassHeap;
         uint16_t FieldsCount;
+        std::vector<std::string> StringConstants;
+        std::string Unknown;
 
         bool ParseConstants(const char* &Code);
         uint32_t GetConstantsCount(const char* Constants);
 
-        char* GetName(uint16_t ThisOrSuper);
+        std::string GetName(uint16_t ThisOrSuper);
 };
 

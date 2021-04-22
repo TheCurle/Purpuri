@@ -14,37 +14,34 @@ ClassHeap::ClassHeap() {}
 
 bool ClassHeap::AddClass(Class *Class) {
     if(!Class) return false;
-    char* Name = Class->GetClassName();
+    std::string Name = Class->GetClassName();
 
-    std::string NameStr(Name);
-    ClassMap.emplace(NameStr, Class);
+    ClassMap.emplace(Name, Class);
     return true;
 }
 
-bool ClassHeap::ClassExists(char* Name) {
-    std::string NameStr(Name);
-    
-    return std::find(ClassCache.begin(), ClassCache.end(), NameStr) != ClassCache.end();
+bool ClassHeap::ClassExists(std::string Name) {
+    return std::find(ClassCache.begin(), ClassCache.end(), Name) != ClassCache.end();
 }
 
-Class* ClassHeap::GetClass(char *Name) {
+Class* ClassHeap::GetClass(std::string Name) {
 
     std::map<std::string, Class*>::iterator classIter;
-    std::string NameStr(Name);
-    classIter = ClassMap.find(NameStr);
+
+    classIter = ClassMap.find(Name);
 
     if(classIter == ClassMap.end())
         return NULL;
     
     Class* Class = classIter->second;
 
-    std::ifstream File(Name, std::ios::binary);
+    std::ifstream File(Name.c_str(), std::ios::binary);
 
     File.close();
     return Class;
 }
 
-bool ClassHeap::LoadClass(char *ClassName, Class *Class) {
+bool ClassHeap::LoadClass(const char *ClassName, Class *Class) {
     const char* RelativePath;
     if(!Class) return false;
 
