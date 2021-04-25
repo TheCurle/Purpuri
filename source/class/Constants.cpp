@@ -54,13 +54,6 @@ bool Class::ParseConstants(const char *&Code) {
 
             StringConstants[i] = NameAndDesc;
             printf("%d:\tType %s\n", i, NameAndDesc.c_str());
-
-            // Hi me!
-            // We're working on resolving method names from these constants
-            // Everything seems to resolve to TestCaseMutableField.
-            // See the terminal log below.
-            // For some reason the Named types is also missing EntryPoint(I)V,
-            // and the attribute names are blended.
         }
     }
 
