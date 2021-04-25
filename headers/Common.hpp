@@ -50,39 +50,6 @@ union Variable {
     size_t pointerVal;
     Object object;
 };
- 
-
-class Engine {
-    public:
-        ClassHeap* _ClassHeap;
-        ObjectHeap* _ObjectHeap;
-
-        Engine();
-        virtual ~Engine();
-        virtual uint32_t Ignite(StackFrame* Stack);
-
-        void Invoke(StackFrame* Stack, uint16_t Type);
-        void InvokeNative(StackFrame* Stack);
-
-        bool MethodClassMatches(uint16_t MethodInd, Class* pClass, const char* TestName);
-
-        void PutField(StackFrame* Stack);
-        void GetField(StackFrame* Stack);
-
-        Variable GetConstant(Class* Class, uint8_t Index);
-
-        uint16_t GetParameters(const char* Descriptor);
-        uint16_t GetParametersStack(const char* Descriptor);
-
-        int New(StackFrame* Stack);
-        void NewArray(StackFrame* Stack);
-        void ANewArray(StackFrame* Stack);
-
-        Variable CreateObject(Class* Class);
-        Variable* CreateArray(uint8_t Type, int32_t Count);
-        
-        void DumpObject(Object Object);
-};
 
 enum {
     noop,               // 0

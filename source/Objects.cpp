@@ -10,20 +10,20 @@
 
 ObjectHeap::ObjectHeap() {
     NextObjectID = 1;
+    ObjectMap = std::map<size_t, size_t>();
 }
 
 ObjectHeap::~ObjectHeap() {}
 
 Object ObjectHeap::CreateObject(Class *Class) {
+    Object Empty = (Object) {0, 0};
 
-    if(Class == NULL) return (Object) {0, 0};
+    if(Class == NULL) return Empty;
 
     size_t ObjectSize = Class->GetClassFieldCount() + 1;
     Variable* ClassObj = new Variable[ObjectSize];
     
-    if(!ClassObj) return (Object) {0, 0};
-
-    memset(ClassObj, 0, sizeof(Variable) * ObjectSize);
+    if(!ClassObj) return Empty;
 
     Object object = (Object) {
         .Heap = NextObjectID++,
@@ -31,7 +31,7 @@ Object ObjectHeap::CreateObject(Class *Class) {
     };
 
     ClassObj[0].pointerVal = (size_t) Class;
-
+    
     ObjectMap.emplace((size_t) object.Heap, (size_t) ClassObj);
 
     return object;

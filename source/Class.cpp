@@ -342,10 +342,11 @@ uint32_t Class::GetMethodFromDescriptor(const char *MethodName, const char *Desc
             }
         }
 
-        printf("Class implements interfaces ");
-        PrintList(InterfaceNames);
-        printf("\n");
-
+        if(InterfaceNames.size() > 0) {
+            printf("Class implements interfaces ");
+            PrintList(InterfaceNames);
+            printf("\n");
+        }
 
         for(int i = 0; i < CurrentClass->MethodCount; i++) {
             std::string CurrentName = CurrentClass->GetStringConstant(CurrentClass->Methods[i].Name);
@@ -421,7 +422,7 @@ std::string Class::GetName(uint16_t Obj) {
     return GetStringConstant(NameInd);
 }
 
-bool Class::CreateObject(uint16_t Index, ObjectHeap *ObjectHeap, Object &Object) {
+bool Class::CreateObject(uint16_t Index, ObjectHeap* ObjectHeap, Object &Object) {
     uint8_t* Code = (uint8_t*) this->Constants[Index];
 
     if(Code[0] != TypeClass)

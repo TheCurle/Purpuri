@@ -49,11 +49,7 @@ int main(int argc, char* argv[]) {
     StackFrame::MemberStack = new Variable[100];
     memset(StackFrame::MemberStack, 0, sizeof(Variable) * 100);
 
-    Engine Engine;
-
-    Engine._ClassHeap = &heap;
-    Engine._ObjectHeap = &objects;
-    int StartFrame = 0;
+    Engine engine;
 
     class Object object = objects.CreateObject(GivenClass);
     //Class* VirtualClass = GivenClass;
@@ -65,6 +61,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    int StartFrame = 0;
+    
     Stack[StartFrame]._Class = GivenClass;
     Stack[StartFrame]._Method = &GivenClass->Methods[EntryPoint];
     Stack[StartFrame].Stack = StackFrame::MemberStack;
@@ -75,7 +73,11 @@ int main(int argc, char* argv[]) {
     puts("\n\nStarting Execution\n\n");
     puts("*****************");
 
-    Engine.Ignite(&Stack[StartFrame]);
+
+    engine._ClassHeap = &heap;
+    engine._ObjectHeap = objects;
+
+    engine.Ignite(&Stack[StartFrame]);
 
     return 1;
 }

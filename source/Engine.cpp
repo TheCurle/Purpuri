@@ -4,6 +4,7 @@
  **************/
 
 #include "../headers/Stack.hpp"
+#include "../headers/Class.hpp"
 #include <math.h>
 #include <stdio.h>
 #include <cstring>
@@ -13,7 +14,6 @@ StackFrame* StackFrame::FrameBase;
 
 Engine::Engine() {
     _ClassHeap = NULL;
-    _ObjectHeap = NULL;
 }
 
 Engine::~Engine() {}
@@ -100,6 +100,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Retrieved value %zu from field.\r\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 break;
 
+            case iconst_m1:
             case iconst_0:
             case iconst_2:
             case iconst_5:
@@ -372,7 +373,7 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
         
         case TypeString:
             shortTemp = ReadShortFromStream(&Code[1]);
-            obj = _ObjectHeap->CreateString(Class->GetStringConstant(shortTemp).c_str(), _ClassHeap);
+            obj = _ObjectHeap.CreateString(Class->GetStringConstant(shortTemp).c_str(), _ClassHeap);
             temp.pointerVal = obj.Heap;
             break;
         
@@ -390,7 +391,7 @@ int Engine::New(StackFrame *Stack) {
     uint8_t* Code = Stack->_Method->Code->Code;
     uint16_t Index = ReadShortFromStream(&Code[Stack->ProgramCounter + 1]);
 
-    if(!Stack->_Class->CreateObject(Index, this->_ObjectHeap, Stack->Stack[Stack->StackPointer].object))
+    if(!Stack->_Class->CreateObject(Index, &_ObjectHeap, Stack->Stack[Stack->StackPointer].object))
         return -1;
     return 1;
 }
@@ -459,7 +460,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     Variable ClassInStack = Stack->Stack[Stack->StackPointer - Parameters];
     printf("\tClass to invoke is object #%zu.\r\n", ClassInStack.object.Heap);
     
-    Variable* ObjectFromHeap = _ObjectHeap->GetObjectPtr(ClassInStack.object);
+    Variable* ObjectFromHeap = _ObjectHeap.GetObjectPtr(ClassInStack.object);
     printf("\tClass at 0x%zx.\r\n", ObjectFromHeap->pointerVal);
     class Class* VirtualClass = (class Class*) ObjectFromHeap->pointerVal;
  
@@ -540,7 +541,7 @@ void Engine::PutField(StackFrame* Stack) {
     Variable Obj = Stack->Stack[Stack->StackPointer - 1];
     Variable ValueToSet = Stack->Stack[Stack->StackPointer];
 
-    Variable* VarList = _ObjectHeap->GetObjectPtr(Obj.object);
+    Variable* VarList = _ObjectHeap.GetObjectPtr(Obj.object);
     
     Class* FieldsClass = (Class*)VarList->pointerVal;
 
@@ -556,12 +557,15 @@ void Engine::GetField(StackFrame* Stack) {
     printf("Reading field %d.\n", FieldIndex);
     Variable Obj = Stack->Stack[Stack->StackPointer];
     printf("\tFound object %zu.\r\n", Obj.pointerVal);
-    Variable* VarList = _ObjectHeap->GetObjectPtr(Obj.object);
+    Variable* VarList = _ObjectHeap.GetObjectPtr(Obj.object);
     Class* FieldsClass = (Class*)VarList->pointerVal;
 
-    printf("\tFound class %s.\r\n", FieldsClass->GetClassName().c_str());
+    printf("\tFound class %s from list at 0x%zx.\r\n", FieldsClass->GetClassName().c_str(), (size_t) VarList);
 
     std::string FieldName = FieldsClass->GetStringConstant(FieldIndex);
+
+    size_t ClassSize = FieldsClass->GetClassSize(), Fields = FieldsClass->GetClassFieldCount();
+    printf("\tClass has %zu entries and %zu field(s), we want to read the %dth.\n", ClassSize, Fields, FieldIndex);
 
 	Stack->Stack[Stack->StackPointer] = VarList[FieldIndex + 1];
     printf("Reading value %zu from field %s of class %s\r\n", Stack->Stack[Stack->StackPointer].pointerVal, FieldName.c_str(), FieldsClass->GetClassName().c_str());
