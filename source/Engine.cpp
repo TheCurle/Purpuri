@@ -508,9 +508,14 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     Stack->StackPointer -= Parameters;
     
     printf("Shrinking the stack by %zu positions.\r\n", Parameters);
-    Stack->Stack[Stack->StackPointer] = ReturnValue;
-    printf("Pushing function return value..\r\n");
-    Stack->Stack[Stack->StackPointer - 1] = UnderStack;
+    
+    uint8_t Offset = 0;
+    if(MethodDesc.find(")V") == std::string::npos) {
+        Stack->Stack[Stack->StackPointer] = ReturnValue;
+        printf("Pushing function return value..\r\n");
+        Offset--; // Make Offset -1, so that the line below works with return.
+    }
+    Stack->Stack[Stack->StackPointer + Offset] = UnderStack;
     printf("Restoring the value under the function, just in case.\r\n");
     
 }
