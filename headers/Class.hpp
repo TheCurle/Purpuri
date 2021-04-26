@@ -117,7 +117,8 @@ class Class : public ClassFile {
         Class* GetSuper();
 
         uint32_t GetMethodFromDescriptor(const char* MethodName, const char* Descriptor, const char* ClassName, Class* &Class);
-        uint32_t GetFieldFromDescriptor(const char* FieldName, const char* FieldDescriptor);
+        uint32_t GetFieldFromDescriptor(std::string FieldAndDescriptor);
+
 
         bool CreateObject(uint16_t Index, ObjectHeap* ObjectHeap, Object &Object);
         bool CreateObjectArray(uint16_t Index, uint32_t Count, ObjectHeap ObjectHeap, Object &Object);

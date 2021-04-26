@@ -534,39 +534,3 @@ uint16_t Engine::GetParameters(const char *Descriptor) {
 
     return Count;
 }
-
-void Engine::PutField(StackFrame* Stack) {
-    uint16_t FieldIndex = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
-
-    Variable Obj = Stack->Stack[Stack->StackPointer - 1];
-    Variable ValueToSet = Stack->Stack[Stack->StackPointer];
-
-    Variable* VarList = _ObjectHeap.GetObjectPtr(Obj.object);
-    
-    Class* FieldsClass = (Class*)VarList->pointerVal;
-
-    std::string FieldName = FieldsClass->GetStringConstant(FieldIndex);
-
-    printf("Setting field %s to %zu.\r\n", FieldName.c_str(), ValueToSet.pointerVal);
-
-    VarList[FieldIndex + 1] = ValueToSet;
-}
-
-void Engine::GetField(StackFrame* Stack) {
-    uint16_t FieldIndex = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
-    printf("Reading field %d.\n", FieldIndex);
-    Variable Obj = Stack->Stack[Stack->StackPointer];
-    printf("\tFound object %zu.\r\n", Obj.pointerVal);
-    Variable* VarList = _ObjectHeap.GetObjectPtr(Obj.object);
-    Class* FieldsClass = (Class*)VarList->pointerVal;
-
-    printf("\tFound class %s from list at 0x%zx.\r\n", FieldsClass->GetClassName().c_str(), (size_t) VarList);
-
-    std::string FieldName = FieldsClass->GetStringConstant(FieldIndex);
-
-    size_t ClassSize = FieldsClass->GetClassSize(), Fields = FieldsClass->GetClassFieldCount();
-    printf("\tClass has %zu entries and %zu field(s), we want to read the %dth.\n", ClassSize, Fields, FieldIndex);
-
-	Stack->Stack[Stack->StackPointer] = VarList[FieldIndex + 1];
-    printf("Reading value %zu from field %s of class %s\r\n", Stack->Stack[Stack->StackPointer].pointerVal, FieldName.c_str(), FieldsClass->GetClassName().c_str());
-}
