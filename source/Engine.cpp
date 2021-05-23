@@ -112,6 +112,22 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Retrieved value %zu from field.\r\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 break;
 
+            case istore:
+            case lstore:
+			    CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter + 1]] =
+                    CurrentFrame->Stack[CurrentFrame->StackPointer--];
+                printf("Stored value %zu in local %d.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, Code[CurrentFrame->ProgramCounter + 1]);
+		    	CurrentFrame->ProgramCounter += 2;
+			    break;
+
+            case fstore:
+            case dstore:
+			    CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter + 1]] =
+                    CurrentFrame->Stack[CurrentFrame->StackPointer--];
+                printf("Stored value %.6f in local %d.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal, Code[CurrentFrame->ProgramCounter + 1]);
+		    	CurrentFrame->ProgramCounter += 2;
+			    break;
+
             case iconst_m1:
             case iconst_0:
             case iconst_1:

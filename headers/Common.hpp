@@ -113,6 +113,9 @@ enum {
 
     aaload = 50,        // 50
     istore = 54,        // 54
+    lstore = 55,        // 55
+    fstore = 56,        // 56
+    dstore = 57,        // 57
     astore = 58,        // 58
 
     istore_0,           // 59
