@@ -7,7 +7,7 @@
 #include "Class.hpp"
 
 class StackFrame {
-    public: 
+    public:
         static Variable* MemberStack;
         static StackFrame* FrameBase;
         Class* _Class;
@@ -19,16 +19,16 @@ class StackFrame {
         StackFrame() {
             StackPointer = -1;
             ProgramCounter = 0;
-            _Class = NULL;
-            Stack = NULL;
-            FrameBase = NULL;
-            MemberStack = NULL;
+            _Class = nullptr;
+            Stack = nullptr;
+            FrameBase = nullptr;
+            MemberStack = nullptr;
         }
 
         StackFrame(int16_t StackPointer) {
             this->StackPointer = StackPointer;
-            _Class = NULL;
-            Stack = NULL;
+            _Class = nullptr;
+            Stack = nullptr;
             ProgramCounter = 0;
         }
 };

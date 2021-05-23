@@ -427,7 +427,7 @@ bool Class::CreateObject(uint16_t Index, ObjectHeap* ObjectHeap, Object &Object)
 
     if(Code[0] != TypeClass)
         return false;
-    
+
     uint16_t NameInd = ReadShortFromStream(&Code[1]);
     std::string Name = GetStringConstant(NameInd);
 
@@ -438,6 +438,17 @@ bool Class::CreateObject(uint16_t Index, ObjectHeap* ObjectHeap, Object &Object)
 
     Object = ObjectHeap->CreateObject(NewClass);
     return true;
+}
+
+bool Class::CreateObjectArray(uint16_t Index, uint32_t Count, ObjectHeap ObjectHeap, Object &pObject) {
+    std::string ClassName = GetStringConstant(Index);
+
+    printf("Creating array of objects from class %s\n", ClassName.c_str());
+
+    Class* newClass = this->_ClassHeap->GetClass(ClassName.c_str());
+    if(newClass == NULL) return false;
+
+    return ObjectHeap.CreateObjectArray(newClass, Count, pObject);
 }
 
 void PrintList(std::list<std::string> &list) {

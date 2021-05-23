@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
     StackFrame::FrameBase = Stack;
 
     for(size_t i = 0; i < 20; i++) {
-        Stack[i] = (StackFrame) {0};
+        Stack[i] = StackFrame();
     }
 
     StackFrame::MemberStack = new Variable[100];
@@ -55,14 +55,14 @@ int main(int argc, char* argv[]) {
     //Class* VirtualClass = GivenClass;
 
     int EntryPoint = GivenClass->GetMethodFromDescriptor("EntryPoint", "()I", GivenClass->GetClassName().c_str(), GivenClass);
-    
+
     if(EntryPoint < 0) {
         printf("%s does not have an EntryPoint function, unable to execute.\n", argv[1]);
         return 1;
     }
 
     int StartFrame = 0;
-    
+
     Stack[StartFrame]._Class = GivenClass;
     Stack[StartFrame]._Method = &GivenClass->Methods[EntryPoint];
     Stack[StartFrame].Stack = StackFrame::MemberStack;

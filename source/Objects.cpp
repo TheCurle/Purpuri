@@ -22,16 +22,15 @@ Object ObjectHeap::CreateObject(Class *Class) {
 
     size_t ObjectSize = Class->GetClassFieldCount() + 1;
     Variable* ClassObj = new Variable[ObjectSize];
-    
+
     if(!ClassObj) return Empty;
 
-    Object object = (Object) {
-        .Heap = NextObjectID++,
-        .Type = 0
-    };
+    Object object;
+    object.Heap = NextObjectID++,
+    object.Type = 0;
 
     ClassObj[0].pointerVal = (size_t) Class;
-    
+
     ObjectMap.emplace((size_t) object.Heap, (size_t) ClassObj);
 
     return object;
@@ -64,9 +63,41 @@ Object ObjectHeap::CreateString(std::string String, ClassHeap *ClassHeap) {
 
     if(Var == NULL) return obj;
 
-    // Java dictates we need a pointer to this str.
     const char* Str = String.c_str();
     Var[1].pointerVal = (size_t)(&Str);
 
     return obj;
+}
+
+Object ObjectHeap::CreateArray(uint8_t Type, uint32_t Count) {
+    Variable* array = new Variable[Count + 1];
+    Object object;
+    object.Heap = 0;
+    object.Type = Type;
+
+    if(array) {
+        memset(array, 0, sizeof(Variable) * (Count + 1));
+        object.Heap = NextObjectID++;
+        array[0].intVal = Type;
+
+        ObjectMap.emplace((size_t) object.Heap, (size_t) array);
+    }
+
+    return object;
+}
+
+bool ObjectHeap::CreateObjectArray(Class* pClass, uint32_t Count, Object& pObject) {
+    Variable* array = new Variable[Count + 1];
+
+    if(array) {
+        memset(array, 0, sizeof(Variable) * (Count + 1));
+        array[0].pointerVal = (size_t) pClass;
+    } else {
+        return false;
+    }
+
+    pObject.Heap = NextObjectID++;
+
+    ObjectMap.emplace((size_t) pObject.Heap, (size_t) array);
+    return true;
 }

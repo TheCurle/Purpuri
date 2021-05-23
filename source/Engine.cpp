@@ -45,7 +45,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
         switch(Code[CurrentFrame->ProgramCounter]) {
             case noop: CurrentFrame->ProgramCounter++; break;
 
-            case _return: 
+            case _return:
                 puts("Function returns"); return 0;
 
             case ireturn:
@@ -61,6 +61,18 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Initialized new object\n");
                 break;
 
+            case newarray:
+                NewArray(CurrentFrame);
+                CurrentFrame->ProgramCounter += 2;
+                printf("Initialized new array\n");
+                break;
+
+            case anewarray:
+                ANewArray(CurrentFrame);
+                CurrentFrame->ProgramCounter += 2;
+                printf("Initialized new a-array\n");
+                break;
+
             case bcdup:
                 CurrentFrame->Stack[CurrentFrame->StackPointer + 1] =
                     CurrentFrame->Stack[CurrentFrame->StackPointer];
@@ -73,7 +85,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 Invoke(CurrentFrame, invokespecial);
                 CurrentFrame->ProgramCounter += 3;
                 break;
-            
+
             case invokevirtual:
                 Invoke(CurrentFrame, invokevirtual);
                 CurrentFrame->ProgramCounter += 3;
@@ -93,7 +105,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->StackPointer -= 2;
                 CurrentFrame->ProgramCounter += 3;
                 break;
-            
+
             case getfield:
                 GetField(CurrentFrame);
                 CurrentFrame->ProgramCounter += 3;
@@ -102,7 +114,10 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case iconst_m1:
             case iconst_0:
+            case iconst_1:
             case iconst_2:
+            case iconst_3:
+            case iconst_4:
             case iconst_5:
                 CurrentFrame->StackPointer++;
                 CurrentFrame->Stack[CurrentFrame->StackPointer].intVal = (uint8_t) Code[CurrentFrame->ProgramCounter] - iconst_0;
@@ -111,6 +126,9 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
 
             case istore_0:
+            case istore_1:
+            case istore_2:
+            case istore_3:
                 CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter] - istore_0] = CurrentFrame->Stack[CurrentFrame->StackPointer--];
                 CurrentFrame->ProgramCounter++;
                 printf("Pulled int %d out of the stack into 0\n", CurrentFrame->Stack[CurrentFrame->StackPointer + 1].intVal);
@@ -119,13 +137,26 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case iload_0:
             case iload_1:
             case iload_2:
+            case iload_3:
                 CurrentFrame->StackPointer++;
                 CurrentFrame->Stack[CurrentFrame->StackPointer] = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - iload_0];
                 CurrentFrame->ProgramCounter++;
                 printf("Pulled int %d out of local %d into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, Code[CurrentFrame->ProgramCounter - 1] - iload_0);
                 break;
 
+            case aaload:
+            case iaload:
+                CurrentFrame->Stack[CurrentFrame->StackPointer - 1] =
+                    _ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 1].object)
+                        [CurrentFrame->Stack[CurrentFrame->StackPointer].intVal + 1];
+                printf("Pulled value %d out of the %zuth entry of array object %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].object.Heap);
+			    CurrentFrame->StackPointer--;
+			    CurrentFrame->ProgramCounter++;
+			    break;
+
+            case fload_0:
             case fload_1:
+            case fload_2:
             case fload_3:
                 CurrentFrame->StackPointer++;
                 CurrentFrame->Stack[CurrentFrame->StackPointer] = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - fload_0];
@@ -173,7 +204,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->ProgramCounter += 2;
                 printf("Pushed constant %d (0x%zx / %.6f) to the stack\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal);
                 break;
-            
+
             case ldc2_w:
                 Index = ReadShortFromStream(&Code[CurrentFrame->ProgramCounter + 1]);
                 CurrentFrame->StackPointer++;
@@ -191,10 +222,10 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
                 printf("Divided the last two doubles on the stack (%.6f / %.6f = %.6f)\n", topVal, underVal, res);
-                break;            
+                break;
             }
 
-            case _fdiv: { 
+            case _fdiv: {
                 float topVal = CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal;
                 float underVal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal;
                 float res = topVal / underVal;
@@ -202,33 +233,42 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
                 printf("Divided the last two floats on the stack (%.6f / %.6f = %.6f)\n", topVal, underVal, res);
-                break; 
+                break;
             }
 
+            case dstore_0:
             case dstore_1:
+            case dstore_2:
+            case dstore_3:
                 CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter] - dstore_0] = CurrentFrame->Stack[CurrentFrame->StackPointer--];
                 CurrentFrame->ProgramCounter++;
                 printf("Pulled double %.6f out of the stack into 1\n", CurrentFrame->Stack[CurrentFrame->StackPointer + 1].doubleVal);
                 break;
-            
+
+            case fstore_0:
             case fstore_1:
+            case fstore_2:
             case fstore_3:
                 CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter] - fstore_0] = CurrentFrame->Stack[CurrentFrame->StackPointer--];
                 CurrentFrame->ProgramCounter++;
                 printf("Pulled float %f out of the stack into local %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal, Code[CurrentFrame->ProgramCounter - 1] - fstore_0);
                 break;
-            
 
+            case dload_0:
             case dload_1:
+            case dload_2:
+            case dload_3:
                 CurrentFrame->StackPointer++;
                 CurrentFrame->Stack[CurrentFrame->StackPointer] =
                     CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - dload_0];
                 CurrentFrame->ProgramCounter++;
                 printf("Pulled %.6f out of local 1 into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
                 break;
-            
+
             case aload_0:
             case aload_1:
+            case aload_2:
+            case aload_3:
                 CurrentFrame->StackPointer++;
                 CurrentFrame->Stack[CurrentFrame->StackPointer] = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - aload_0];
                 CurrentFrame->ProgramCounter++;
@@ -237,11 +277,24 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case astore_0:
             case astore_1:
+            case astore_2:
+            case astore_3:
                 CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - astore_0] = 
                     CurrentFrame->Stack[CurrentFrame->StackPointer--];
                 CurrentFrame->ProgramCounter++;
                 printf("Pulled the last object on the stack into local %d\n", Code[CurrentFrame->ProgramCounter - 1] - astore_0);
                 break;
+
+            case iastore:
+		    case aastore:
+			    _ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object)
+                    [CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1] =
+                        CurrentFrame->Stack[CurrentFrame->StackPointer];
+                printf("Stored object %d into the %zuth entry of array object %zu.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
+			    CurrentFrame->StackPointer -= 3;
+			    CurrentFrame->ProgramCounter++;
+			    break;
+
 
             case _drem: {
                 double topVal = CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal;
@@ -326,6 +379,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
             }
 
+            case fconst_0:
+            case fconst_1:
             case fconst_2:
                 CurrentFrame->Stack[CurrentFrame->StackPointer + 1].floatVal = (float) 2.0F;
                 CurrentFrame->StackPointer++;
@@ -333,6 +388,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Pushed 2.0F to the stack\n");
                 break;
 
+            case dconst_0:
             case dconst_1:
                 CurrentFrame->Stack[CurrentFrame->StackPointer + 1].doubleVal = (double) 1.0F;
                 CurrentFrame->StackPointer++;
@@ -354,7 +410,6 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
     }
 
     return 0;
-    
 }
 
 Variable Engine::GetConstant(Class *Class, uint8_t Index) {
@@ -370,13 +425,13 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
         case TypeInteger:
             temp.intVal = ReadIntFromStream(&Code[1]);
             break;
-        
+
         case TypeString:
             shortTemp = ReadShortFromStream(&Code[1]);
             obj = _ObjectHeap.CreateString(Class->GetStringConstant(shortTemp).c_str(), _ClassHeap);
             temp.pointerVal = obj.Heap;
             break;
-        
+
         case TypeDouble:
         case TypeLong:
             temp.pointerVal = ReadLongFromStream(&Code[1]);
@@ -394,6 +449,24 @@ int Engine::New(StackFrame *Stack) {
     if(!Stack->_Class->CreateObject(Index, &_ObjectHeap, Stack->Stack[Stack->StackPointer].object))
         return -1;
     return 1;
+}
+
+void Engine::NewArray(StackFrame* Stack) {
+    uint8_t Type = Stack->_Method->Code->Code[Stack->ProgramCounter + 1];
+    Stack->Stack[Stack->StackPointer + 1].object = _ObjectHeap.CreateArray(Type, Stack->Stack[Stack->StackPointer].intVal);
+    Stack->StackPointer++;
+    printf("Initialized a %d-wide array of type %d.\n", Stack->Stack[Stack->StackPointer - 1].intVal, Type);
+}
+
+void Engine::ANewArray(StackFrame* Stack) {
+    uint16_t Index = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
+    uint32_t Count = Stack->Stack[Stack->StackPointer].intVal;
+    Stack->StackPointer++;
+
+    if(!Stack->_Class->CreateObjectArray(Index, Count, _ObjectHeap, Stack->Stack[Stack->StackPointer].object))
+        // TODO: ERROR
+        printf("Intializing array failed.");
+    printf("Initialized a %d-wide array of objects.\n", Count);
 }
 
 void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
@@ -446,28 +519,28 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
 
     std::string MethodName = Stack->_Class->GetStringConstant(MethodToInvoke.Name);
     std::string MethodDesc = Stack->_Class->GetStringConstant(MethodToInvoke.Descriptor);
-    
+
     printf("\tInvocation resolves to method %s%s\n", MethodName.c_str(), MethodDesc.c_str());
     size_t Parameters = GetParameters(MethodDesc.c_str());
 
     printf("\tMethod has %zu parameters, skipping ahead..\r\n", Parameters);
     Variable UnderStack = Stack->Stack[Stack->StackPointer - (Parameters + 1)];
-    
+
     for(size_t i = 0; i < Parameters; i++) {
         printf("\t\tParameter %zu = %zu\r\n", i, Stack->Stack[Stack->StackPointer - i].pointerVal);
     }
 
     Variable ClassInStack = Stack->Stack[Stack->StackPointer - Parameters];
     printf("\tClass to invoke is object #%zu.\r\n", ClassInStack.object.Heap);
-    
+
     Variable* ObjectFromHeap = _ObjectHeap.GetObjectPtr(ClassInStack.object);
     printf("\tClass at 0x%zx.\r\n", ObjectFromHeap->pointerVal);
     class Class* VirtualClass = (class Class*) ObjectFromHeap->pointerVal;
- 
+
     int MethodInClassIndex = VirtualClass->GetMethodFromDescriptor(MethodName.c_str(), MethodDesc.c_str(), ClassName.c_str(), VirtualClass);
 
 
-    Stack[1] = (StackFrame) { 0 };
+    Stack[1] = StackFrame();
 
     Stack[1]._Method = &VirtualClass->Methods[MethodInClassIndex];
     printf("\tMethod has access 0x%x.\r\n", Stack[1]._Method->Access);
@@ -504,11 +577,11 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
 
     if(MethodDesc.find(")V") != std::string::npos)
         Parameters--;
-    
+
     Stack->StackPointer -= Parameters;
-    
+
     printf("Shrinking the stack by %zu positions.\r\n", Parameters);
-    
+
     int Offset = 0;
     if(MethodDesc.find(")V") == std::string::npos) {
         Stack->Stack[Stack->StackPointer] = ReturnValue;
@@ -517,7 +590,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     }
     Stack->Stack[Stack->StackPointer + Offset] = UnderStack;
     printf("Restoring the value %zu under the function, just in case.\r\n", UnderStack.pointerVal);
-    
+
 }
 
 uint16_t Engine::GetParameters(const char *Descriptor) {
@@ -528,10 +601,10 @@ uint16_t Engine::GetParameters(const char *Descriptor) {
         if(Descriptor[i] == 'L')
             while(Descriptor[i] != ';')
                 i++;
-        
+
         if(Descriptor[i] == ')')
             break;
-        
+
         if(Descriptor[i] == 'J' || Descriptor[i] == 'D')
             Count++;
         Count++;
