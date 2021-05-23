@@ -16,7 +16,9 @@ ObjectHeap::ObjectHeap() {
 ObjectHeap::~ObjectHeap() {}
 
 Object ObjectHeap::CreateObject(Class *Class) {
-    Object Empty = (Object) {0, 0};
+    Object Empty;
+    Empty.Heap = 0;
+    Empty.Type = 0;
 
     if(Class == NULL) return Empty;
 
