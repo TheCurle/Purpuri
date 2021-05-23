@@ -301,16 +301,38 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Pulled the last object on the stack into local %d\n", Code[CurrentFrame->ProgramCounter - 1] - astore_0);
                 break;
 
-            case iastore:
+
 		    case aastore:
 			    _ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object)
                     [CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1] =
                         CurrentFrame->Stack[CurrentFrame->StackPointer];
-                printf("Stored object %d into the %zuth entry of array object %zu.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
+                printf("Stored reference %d into the %zuth entry of array object %zu.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
 			    CurrentFrame->StackPointer -= 3;
 			    CurrentFrame->ProgramCounter++;
 			    break;
 
+            case iastore:
+            case lastore:
+            case sastore:
+            case bastore:
+            case castore:
+            	_ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object)
+                    [CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1] =
+                        CurrentFrame->Stack[CurrentFrame->StackPointer];
+                printf("Stored number %d into the %zuth entry of array object %zu.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
+			    CurrentFrame->StackPointer -= 3;
+			    CurrentFrame->ProgramCounter++;
+			    break;
+
+            case fastore:
+            case dastore:
+                _ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object)
+                    [CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1] =
+                        CurrentFrame->Stack[CurrentFrame->StackPointer];
+                printf("Stored number (%.6f) into the %zuth entry of array object %zu.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
+			    CurrentFrame->StackPointer -= 3;
+			    CurrentFrame->ProgramCounter++;
+			    break;
 
             case _drem: {
                 double topVal = CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal;
@@ -419,7 +441,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Pushed char %d to the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].charVal);
                 break;
 
-            default: printf("\nUnhandled opcode %x\n", Code[CurrentFrame->ProgramCounter]); CurrentFrame->ProgramCounter++; return false;
+            default: printf("\nUnhandled opcode 0x%x\n", Code[CurrentFrame->ProgramCounter]); CurrentFrame->ProgramCounter++; return false;
         }
 
         if(Error) break;

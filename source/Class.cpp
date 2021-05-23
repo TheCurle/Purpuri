@@ -75,7 +75,7 @@ bool Class::ParseFullClass() {
         return false;
 
     puts("New Class incoming..");
-    
+
     MagicNumber = ReadIntFromStream(Code);
     Code += 4;
 
@@ -93,7 +93,7 @@ bool Class::ParseFullClass() {
 
     ConstantCount = ReadShortFromStream(Code); Code += 2;
 
-    if(ConstantCount > 0) 
+    if(ConstantCount > 0)
         ParseConstants(Code);
 
     ClassAccess = ReadShortFromStream(Code); Code += 2;
@@ -115,12 +115,12 @@ bool Class::ParseFullClass() {
 
     MethodCount = ReadShortFromStream(Code); Code += 2;
 
-    if(MethodCount > 0) 
+    if(MethodCount > 0)
         ParseMethods(Code);
-    
+
     AttributeCount = ReadShortFromStream(Code); Code += 2;
 
-    if(AttributeCount > 0) 
+    if(AttributeCount > 0)
         ParseAttribs(Code);
 
     ClassloadReferents(Code);

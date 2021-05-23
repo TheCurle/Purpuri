@@ -144,8 +144,13 @@ enum {
     astore_3,           // 78
 
     iastore,            // 79
-
-    aastore = 83,       // 83
+    lastore,            // 80
+    fastore,            // 81
+    dastore,            // 82
+    aastore,            // 83
+    bastore,            // 84
+    castore,            // 85
+    sastore,            // 86
 
     bcdup = 89,         // 89
     dup_x1,             // 90
