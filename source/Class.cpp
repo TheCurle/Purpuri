@@ -132,7 +132,7 @@ void Class::ClassloadReferents(const char* &Code) {
     SHUTUPUNUSED(Code);
 
     printf("Searching for unloaded classes referenced by the current.\n");
-    
+
     for(int i = 1; i < ConstantCount; i++) {
         if(Constants == NULL) return;
         if(Constants[i] == NULL) continue;
@@ -141,12 +141,15 @@ void Class::ClassloadReferents(const char* &Code) {
             char* Temp = (char*)Constants[i];
             uint16_t ClassInd = ReadShortFromStream(&Temp[1]);
             std::string ClassName = GetStringConstant(ClassInd);
+
+            if(ClassName.find_first_of('[') == 0) continue;
+
             printf("\tName %s", ClassName.c_str());
 
             if(i != Super && i != This && (this->_ClassHeap->GetClass(ClassName) == NULL && !this->_ClassHeap->ClassExists(ClassName))) {
                 printf("\tClass is not loaded - invoking the classloader\n");
                 Class* Class = new class Class();
-                
+
                 if(!this->_ClassHeap->LoadClass(ClassName.c_str(), Class)) {
                     printf("Classloading referenced class %s failed. Fatal error.\n", ClassName.c_str());
                     exit(6);
