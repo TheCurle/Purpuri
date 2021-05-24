@@ -61,6 +61,12 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Initialized new object\n");
                 break;
 
+            case arraylength:
+                CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal
+                    = _ObjectHeap.GetArraySize(CurrentFrame->Stack[CurrentFrame->StackPointer].object);
+                CurrentFrame->ProgramCounter += 2;
+                break;
+
             case newarray:
                 NewArray(CurrentFrame);
                 CurrentFrame->ProgramCounter += 2;

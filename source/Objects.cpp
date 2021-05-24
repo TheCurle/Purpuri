@@ -83,6 +83,7 @@ Object ObjectHeap::CreateArray(uint8_t Type, uint32_t Count) {
         array[0].intVal = Type;
 
         ObjectMap.emplace((size_t) object.Heap, (size_t) array);
+        ArraySizeMap.emplace((size_t) object.Heap, (size_t) Count + 1);
     }
 
     return object;
@@ -101,5 +102,16 @@ bool ObjectHeap::CreateObjectArray(Class* pClass, uint32_t Count, Object& pObjec
     pObject.Heap = NextObjectID++;
 
     ObjectMap.emplace((size_t) pObject.Heap, (size_t) array);
+    ArraySizeMap.emplace((size_t) pObject.Heap, (size_t) Count + 1);
     return true;
+}
+
+size_t ObjectHeap::GetArraySize(Object obj) {
+    std::map<size_t, size_t>::iterator objIter;
+    objIter = ArraySizeMap.find(obj.Heap);
+
+    if(objIter == ArraySizeMap.end())
+        return 0;
+
+    return objIter->second;
 }

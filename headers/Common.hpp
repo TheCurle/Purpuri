@@ -229,7 +229,9 @@ enum {
     newarray,           // 188
     anewarray,          // 189
 
-    athrow = 191,       // 191
+    arraylength,        // 190
+
+    athrow,             // 191
     checkcast,          // 192
     instanceof,         // 193
     monitorenter,       // 194
