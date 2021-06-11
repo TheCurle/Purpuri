@@ -13,6 +13,8 @@ file(GLOB src_files
     "source/class/*.cpp"
 )
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+
 if(WIN32)
 
 else()
