@@ -17,5 +17,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CUSTOM_DOMAIN: purpuri.gemwire.uk
-          CONFIG_FILE: doc/mkdocs.yml
+          CONFIG_FILE: docs/mkdocs.yml
           EXTRA_PACKAGES: build-base
