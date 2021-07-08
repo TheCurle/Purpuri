@@ -1,0 +1,7 @@
+site_name: Purpuri
+site_url: https://purpuri.gemwire.uk/
+nav:
+    - Overview: index.md
+    - JVM Spec: spec.md
+theme: readthedocs
+
