@@ -1,4 +1,4 @@
-name: Build Chroma
+name: Build Purpuri Package
 
 on: 
   push:
