@@ -54,20 +54,22 @@ This means it does not support any features higher than Java 7:
 * ldc, ldc2_w
 * drem
 * bipush
+* if_icmpeq, if_icmpge, if_icmpgt, if_icmple, if_icmplt, if_icmpne
+* goto
 
 # TODO opcodes
 
 * dup, dup_x1, dup_x2
 * dup2, dup2_x1, dup2_x2
 * putstatic, getstatic
-* goto, goto_w, ret
+* goto_w, ret
 * pop, pop2
 * [fd]cmpg, [fd]cmpl, [fd]neg, dsub
 * frem, fadd, fsub
 * d2l, f2l, i2b, i2c, i2f, i2l, i2s, l2d, l2f, l2i
 * ladd, lcmp, ldiv, lmul, lneg, lor, lrem, lreturn, lshl, lshr, lsub, lushr, lxor
 * iand, idiv, iinc, ineg, ior, irem, ireturn, ishl, ishr, iushr, ixor
-* if_acmpeq, if_acmpne, if_icmpeq, if_icmpge, if_icmpgt, if_icmple, if_icmplt, if_icmpne, ifeq, ifge, ifgt, ifle, iflt, ifne, ifnonnul, ifnull
+* if_acmpeq, if_acmpne, ifeq, ifge, ifgt, ifle, iflt, ifne, ifnonnul, ifnull
 * sipush
 * impdep1, impdep2
 * jsr, jsr_w
