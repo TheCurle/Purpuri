@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <cstring>
 
+#define JUMP_TO(x) \
+    CurrentFrame->ProgramCounter = x;
+
 Variable* StackFrame::MemberStack;
 StackFrame* StackFrame::FrameBase;
 
@@ -21,7 +24,7 @@ Engine::~Engine() {}
 uint32_t Engine::Ignite(StackFrame* Stack) {
     StackFrame* CurrentFrame = &Stack[0];
 
-    printf("Execution frame %zd, stack begins %zd\n", CurrentFrame - StackFrame::FrameBase, CurrentFrame->Stack - StackFrame::MemberStack);
+    printf("New execution frame generated.\n");
 
     // 0x100 = native
     if(CurrentFrame->_Method->Access & 0x100) {
@@ -210,7 +213,10 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                     - CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal;
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
-                printf("Subtracted the last two integers on the stack (%d - %d = %d)\r\n", CurrentFrame->Stack[CurrentFrame->StackPointer + 1].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                printf("Subtracted the last two integers on the stack (%d - %d = %d)\r\n", 
+                    CurrentFrame->Stack[CurrentFrame->StackPointer + 1].intVal, 
+                    CurrentFrame->Stack[CurrentFrame->StackPointer + 1].intVal - CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, 
+                    CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
                 break;
 
             case i2d:
@@ -447,6 +453,114 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Pushed char %d to the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].charVal);
                 break;
 
+            case if_icmpeq: {
+                bool Equal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal == CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
+                printf("Comparing: %d == %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Integer equality comparison returned %s\n", Equal ? "true" : "false");
+
+                CurrentFrame->StackPointer -= 2;
+                CurrentFrame->ProgramCounter += 3;
+
+                if(Equal) {
+                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    CurrentFrame->ProgramCounter += Offset;
+                } else {
+                    CurrentFrame->ProgramCounter += 3;
+                }
+                break;
+            }
+
+            case if_icmpne: {
+                bool NotEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal != CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
+                printf("Comparing: %d != %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Integer inequality comparison returned %s\n", NotEqual ? "true" : "false");
+
+                CurrentFrame->StackPointer -= 2;
+                CurrentFrame->ProgramCounter += 3;
+
+                if(NotEqual) {
+                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    CurrentFrame->ProgramCounter += Offset;
+                } else {
+                    CurrentFrame->ProgramCounter += 3;
+                }
+                break;
+            }
+
+            case if_icmpgt: {
+                bool GreaterThan = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal > CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
+                printf("Comparing: %d > %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Integer greater-than comparison returned %s\n", GreaterThan ? "true" : "false");
+
+                CurrentFrame->StackPointer -= 2;
+                CurrentFrame->ProgramCounter += 3;
+
+                if(GreaterThan) {
+                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    CurrentFrame->ProgramCounter += Offset;
+                } else {
+                    CurrentFrame->ProgramCounter += 3;
+                }
+                break;
+            }
+
+            case if_icmplt: {
+                bool LessThan = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal < CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
+                printf("Comparing: %d < %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Integer less-than comparison returned %s\n", LessThan ? "true" : "false");
+
+                CurrentFrame->StackPointer -= 2;
+                CurrentFrame->ProgramCounter += 3;
+
+                if(LessThan) {
+                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    CurrentFrame->ProgramCounter += Offset;
+                } else {
+                    CurrentFrame->ProgramCounter += 3;
+                }
+                break;
+            }
+
+            case if_icmpge: {
+                bool GreaterEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal >= CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
+                printf("Comparing: %d >= %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Integer greater-than-or-equal comparison returned %s\n", GreaterEqual ? "true" : "false");
+
+                CurrentFrame->StackPointer -= 2;
+                CurrentFrame->ProgramCounter += 3;
+
+                if(GreaterEqual) {
+                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    CurrentFrame->ProgramCounter += Offset;
+                } else {
+                    CurrentFrame->ProgramCounter += 3;
+                }
+                break;
+            }
+
+            case if_icmple: {
+                bool LessEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal <= CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
+                printf("Comparing: %d <= %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Integer less-than-or-equal comparison returned %s\n", LessEqual ? "true" : "false");
+
+                CurrentFrame->StackPointer -= 2;
+
+                if(LessEqual) {
+                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    CurrentFrame->ProgramCounter += Offset;
+                } else {
+                    CurrentFrame->ProgramCounter += 3;
+                }
+                break;
+            }
+
+
             default: printf("\nUnhandled opcode 0x%x\n", Code[CurrentFrame->ProgramCounter]); CurrentFrame->ProgramCounter++; return false;
         }
 
@@ -612,9 +726,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
 
     Stack[1].StackPointer = Parameters;
 
-    printf("Invoking method %s%s - Last frame at %zd, new frame begins %zd\n", MethodName.c_str(), MethodDesc.c_str(),
-        Stack[0].Stack - StackFrame::MemberStack + Stack[0].StackPointer, 
-        Stack[1].Stack - StackFrame::MemberStack);
+    printf("Invoking method %s%s\n", MethodName.c_str(), MethodDesc.c_str());
 
     this->Ignite(&Stack[1]);
     Variable ReturnValue = Stack[1].Stack[Stack[1].StackPointer];
