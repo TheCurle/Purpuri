@@ -555,6 +555,24 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
             }
 
+            case iinc: {
+                char Index = Code[CurrentFrame->ProgramCounter + 1];
+                char Offset = Code[CurrentFrame->ProgramCounter + 2];
+
+                printf("Incrementing local %d by %d.\n", Index, Offset);
+                CurrentFrame->Stack[Index].pointerVal += Offset;
+                
+                CurrentFrame->ProgramCounter += 3;
+                break;
+            }
+
+            case _goto: {
+                short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                CurrentFrame->ProgramCounter += Offset;
+                break;
+            }
+
 
             default: printf("\nUnhandled opcode 0x%x\n", Code[CurrentFrame->ProgramCounter]); CurrentFrame->ProgramCounter++; return false;
         }
