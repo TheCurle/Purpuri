@@ -459,7 +459,6 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Integer equality comparison returned %s\n", Equal ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
-                CurrentFrame->ProgramCounter += 3;
 
                 if(Equal) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
@@ -477,7 +476,6 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Integer inequality comparison returned %s\n", NotEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
-                CurrentFrame->ProgramCounter += 3;
 
                 if(NotEqual) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
@@ -495,7 +493,6 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Integer greater-than comparison returned %s\n", GreaterThan ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
-                CurrentFrame->ProgramCounter += 3;
 
                 if(GreaterThan) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
@@ -513,7 +510,6 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Integer less-than comparison returned %s\n", LessThan ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
-                CurrentFrame->ProgramCounter += 3;
 
                 if(LessThan) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
@@ -531,7 +527,6 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Integer greater-than-or-equal comparison returned %s\n", GreaterEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
-                CurrentFrame->ProgramCounter += 3;
 
                 if(GreaterEqual) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
