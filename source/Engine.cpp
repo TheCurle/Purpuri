@@ -462,7 +462,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 if(Equal) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%u + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -556,8 +556,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case iinc: {
-                char Index = Code[CurrentFrame->ProgramCounter + 1];
-                char Offset = Code[CurrentFrame->ProgramCounter + 2];
+                uint8_t Index = Code[CurrentFrame->ProgramCounter + 1];
+                uint8_t Offset = Code[CurrentFrame->ProgramCounter + 2];
 
                 printf("Incrementing local %d by %d.\n", Index, Offset);
                 CurrentFrame->Stack[Index].pointerVal += Offset;
@@ -568,7 +568,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case _goto: {
                 short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                 CurrentFrame->ProgramCounter += Offset;
                 break;
             }
