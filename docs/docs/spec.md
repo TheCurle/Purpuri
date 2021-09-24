@@ -56,6 +56,7 @@ This means it does not support any features higher than Java 7:
 * bipush
 * if_icmpeq, if_icmpge, if_icmpgt, if_icmple, if_icmplt, if_icmpne
 * goto
+* sipush
 
 # TODO opcodes
 
@@ -70,7 +71,6 @@ This means it does not support any features higher than Java 7:
 * ladd, lcmp, ldiv, lmul, lneg, lor, lrem, lreturn, lshl, lshr, lsub, lushr, lxor
 * iand, idiv, iinc, ineg, ior, irem, ireturn, ishl, ishr, iushr, ixor
 * if_acmpeq, if_acmpne, ifeq, ifge, ifgt, ifle, iflt, ifne, ifnonnul, ifnull
-* sipush
 * impdep1, impdep2
 * jsr, jsr_w
 * [adf]return,
