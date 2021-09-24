@@ -455,14 +455,14 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case if_icmpeq: {
                 bool Equal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal == CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %d == %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: %zd == %zd\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer equality comparison returned %s\n", Equal ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
 
                 if(Equal) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%u + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -472,14 +472,14 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case if_icmpne: {
                 bool NotEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal != CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %d != %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: %zd != %zd\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer inequality comparison returned %s\n", NotEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
 
                 if(NotEqual) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -489,14 +489,14 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case if_icmpgt: {
                 bool GreaterThan = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal > CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %d > %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: %zu > %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer greater-than comparison returned %s\n", GreaterThan ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
 
                 if(GreaterThan) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -506,14 +506,14 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case if_icmplt: {
                 bool LessThan = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal < CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %d < %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: %zu < %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer less-than comparison returned %s\n", LessThan ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
 
                 if(LessThan) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -523,14 +523,14 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case if_icmpge: {
                 bool GreaterEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal >= CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %d >= %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: %zu >= %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer greater-than-or-equal comparison returned %s\n", GreaterEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
 
                 if(GreaterEqual) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -540,14 +540,14 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case if_icmple: {
                 bool LessEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal <= CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %d <= %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: %zu <= %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer less-than-or-equal comparison returned %s\n", LessEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
 
                 if(LessEqual) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%zu + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
