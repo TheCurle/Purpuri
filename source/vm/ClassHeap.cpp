@@ -3,7 +3,8 @@
  *    PURPURI *
  **************/
 
-#include "../headers/Class.hpp"
+#include <vm/Class.hpp>
+
 #include <fstream>
 #include <iterator>
 #include <string>

@@ -3,8 +3,8 @@
  *    PURPURI *
  **************/
 
-#include "../headers/Objects.hpp"
-#include "../headers/Class.hpp"
+#include <vm/Objects.hpp>
+#include <vm/Class.hpp>
 
 #include <cstring>
 

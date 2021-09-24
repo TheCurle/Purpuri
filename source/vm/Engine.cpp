@@ -3,8 +3,9 @@
  *    PURPURI *
  **************/
 
-#include "../headers/Stack.hpp"
-#include "../headers/Class.hpp"
+#include <vm/Stack.hpp>
+#include <vm/Class.hpp>
+
 #include <math.h>
 #include <stdio.h>
 #include <cstring>

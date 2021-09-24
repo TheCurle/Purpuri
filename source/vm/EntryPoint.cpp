@@ -5,7 +5,7 @@
 
 #include <cstdio>
 #include <cstring>
-#include "../headers/Stack.hpp"
+#include <vm/Stack.hpp>
 
 int main(int argc, char* argv[]) {
     if(argc < 2) {
