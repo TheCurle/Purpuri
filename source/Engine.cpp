@@ -453,6 +453,13 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Pushed char %d to the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].charVal);
                 break;
 
+            case sipush:
+                CurrentFrame->StackPointer++;
+                CurrentFrame->Stack[CurrentFrame->StackPointer].shortVal = ReadShortFromStream(Code + (CurrentFrame->ProgramCounter + 1));
+                CurrentFrame->ProgramCounter += 3;
+                printf("Pushed short %d to the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].shortVal);
+                break;
+
             case if_icmpeq: {
                 bool Equal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal == CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
                 printf("Comparing: %zd == %zd\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
