@@ -9,9 +9,7 @@
 #include <map>
 #include <native/Native.hpp>
 
-extern std::vector<Variable> NativeParameters;
-
-typedef void (*function_t)();
+typedef long long (*function_t)();
 
 class Native {
     public:
@@ -49,6 +47,8 @@ class Native {
      */
     static void CloseHandle(std::string LibraryName);
 
+    static std::vector<Variable> Parameters;
+    
     private:
     static std::map<std::string, void*> LibraryHandleMap;
 };

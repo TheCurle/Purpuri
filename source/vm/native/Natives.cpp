@@ -4,9 +4,17 @@
  **************/
 
 #include <vm/Native.hpp>
+#ifdef WIN32
+    #include <windows.h>
+    #include <libloaderapi.h>
+    #undef GetClassName
+    #undef LoadLibrary
+#endif
 #include <regex>
 
-std::vector<Variable> NativeParameters;
+std::map<std::string, void*> Native::LibraryHandleMap;
+
+std::vector<Variable> Native::Parameters;
 
 void VM::Return(Variable retVal) {
     NativeReturn Return;
@@ -16,7 +24,7 @@ void VM::Return(Variable retVal) {
 }
 
 std::vector<Variable> VM::GetParameters() {
-    return NativeParameters;
+    return Native::Parameters;
 }
 
 std::string Native::EncodeName(NativeContext Context) {
@@ -48,4 +56,18 @@ std::string Native::EncodeName(NativeContext Context) {
     // Java_uk_gemwire_purpuri_run_IIZ_Z_
 
     return MangledName;
+}
+
+void* Native::LoadLibrary(std::string LibraryName) {
+    #ifdef WIN32
+        void* Handle = LoadLibraryA(LibraryName.c_str());
+        LibraryHandleMap.emplace(LibraryName, Handle);
+        return Handle;
+    #endif
+}
+
+function_t Native::LoadSymbol(std::string LibraryName, std::string SymbolName) {
+    #ifdef WIN32
+        return GetProcAddress((HMODULE) LibraryHandleMap.at(LibraryName), SymbolName.c_str());
+    #endif
 }

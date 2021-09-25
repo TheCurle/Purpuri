@@ -10,9 +10,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <cstring>
-#include <windows.h>
-#include <libloaderapi.h>
-#undef GetClassName
 
 template<class T>
 using ptr = T *;
@@ -37,9 +34,10 @@ void Engine::InvokeNative(NativeContext Context) {
     std::string FunctionName = Native::EncodeName(Context);
     printf("Function %s%s from class %s wants to call to function %s.\n", Context.MethodName.c_str(), Context.MethodDescriptor.c_str(), Context.ClassName.c_str(), FunctionName.c_str());
 
-    auto handle = LoadLibraryA(NATIVES "\\libnative.dll");
-    auto addr = ptr<void>(GetProcAddress(handle, FunctionName.c_str()));
-    auto func = ptr<void()>(addr);
+    Native::Parameters = Context.Parameters;
+    Native::LoadLibrary(NATIVES "\\libnative.dll");
+    
+    auto func = Native::LoadSymbol(NATIVES "\\libnative.dll", FunctionName.c_str());
     printf("Jumping to native function.\n");
     func();
 }
@@ -745,10 +743,10 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
             //HandleNativeReturn(CurrentFrame, e);
             printf("Native: %s %d\n", e.what(), e.Value.pointerVal);
 
-            Stack->StackPointer -= ParamList.size() + 1;
+            Stack->StackPointer -= ParamList.size();
 
             // Don't set return value if the function returned void.
-            if(MethodDesc.find(")V") != std::string::npos)
+            if(MethodDesc.find(")V") == std::string::npos)
                 Stack->Stack[Stack->StackPointer] = e.Value;
 
             return;
