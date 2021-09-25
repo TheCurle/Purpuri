@@ -42,8 +42,6 @@ void Engine::InvokeNative(NativeContext Context) {
     auto func = ptr<void()>(addr);
     printf("Jumping to native function.\n");
     func();
-
-    for(;;);
 }
 
 uint32_t Engine::Ignite(StackFrame* Stack) {
