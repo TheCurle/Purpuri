@@ -38,6 +38,12 @@ void Engine::InvokeNative(NativeContext Context) {
     Native::LoadLibrary(NATIVES "\\libnative.dll");
     
     auto func = Native::LoadSymbol(NATIVES "\\libnative.dll", FunctionName.c_str());
+
+    if(func == nullptr) {
+        printf("\n\n*************\n*************\n*************\nFunction %s does not exist in any loaded library.\n*************\n*************\n*************\n", FunctionName.c_str());
+        exit(7);
+    }
+
     printf("Jumping to native function.\n");
     func();
 }

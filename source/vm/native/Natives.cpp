@@ -27,11 +27,21 @@ std::vector<Variable> VM::GetParameters() {
     return Native::Parameters;
 }
 
+// Find and replace all instances of a substring inside a std::string
+void ICantBelieveThisIsNeededWithModernCPP(std::string& subject, const std::string& search,
+                          const std::string& replace) {
+    size_t pos = 0;
+    while ((pos = subject.find(search, pos)) != std::string::npos) {
+         subject.replace(pos, search.length(), replace);
+         pos += replace.length();
+    }
+}
+
 std::string Native::EncodeName(NativeContext Context) {
     std::string MangledName("Java_");
     // Class name with every . replaced by _
     std::string ClassName(Context.ClassName);
-    std::regex_replace(ClassName, std::regex("/"), "_");
+    ICantBelieveThisIsNeededWithModernCPP(ClassName, "/", "_");
     MangledName.append(ClassName).append("_");
 
     // Function name
@@ -43,14 +53,14 @@ std::string Native::EncodeName(NativeContext Context) {
     
     // Replace / with _ (Lnet_company_Class;)
     // Replace ; with E (Lnet_company_ClassE)
-    std::regex_replace(Parameters, std::regex("/"), "_");
-    std::regex_replace(Parameters, std::regex(";"), "E");
+    ICantBelieveThisIsNeededWithModernCPP(Parameters, "/", "_");
+    ICantBelieveThisIsNeededWithModernCPP(Parameters, ";", "E");
     if(Parameters.size() == 0) Parameters = "V";
     MangledName.append(Parameters).append("_");
 
     std::string ReturnType = Descriptor.substr(Descriptor.find_first_of(")") + 1, Descriptor.size());
-    std::regex_replace(ReturnType, std::regex("/"), "_");
-    std::regex_replace(ReturnType, std::regex(";"), "E");
+    ICantBelieveThisIsNeededWithModernCPP(ReturnType, "/", "_");
+    ICantBelieveThisIsNeededWithModernCPP(ReturnType, ";", "E");
     MangledName.append(ReturnType).append("_");
 
     // Java_uk_gemwire_purpuri_run_IIZ_Z_
