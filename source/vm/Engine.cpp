@@ -741,7 +741,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
             InvokeNative(Context);
         } catch (NativeReturn& e) {
             //HandleNativeReturn(CurrentFrame, e);
-            printf("Native: %s %d\n", e.what(), e.Value.pointerVal);
+            printf("Native: %s %zu\n", e.what(), e.Value.pointerVal);
 
             Stack->StackPointer -= ParamList.size();
 
