@@ -1,7 +1,6 @@
 #project config
 
 cmake_minimum_required(VERSION 3.14)
-include(GenerateExportHeader)
 
 project(purpuri)
 
@@ -31,6 +30,5 @@ set_target_properties(purpuri PROPERTIES ENABLE_EXPORTS ON)
 target_compile_definitions(purpuri PRIVATE VM_BUILDING)
 
 add_library(native MODULE ${lib_src})
-target_compile_options(native PUBLIC -fpic)
 
 target_link_libraries(native PRIVATE purpuri)

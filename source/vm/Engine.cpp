@@ -10,9 +10,18 @@
 #include <math.h>
 #include <stdio.h>
 #include <cstring>
+#include <windows.h>
+#include <libloaderapi.h>
+#undef GetClassName
+
+template<class T>
+using ptr = T *;
 
 #define JUMP_TO(x) \
     CurrentFrame->ProgramCounter = x;
+
+#define NATIVES \
+    "./bin/"
 
 Variable* StackFrame::MemberStack;
 StackFrame* StackFrame::FrameBase;
@@ -28,7 +37,10 @@ void Engine::InvokeNative(NativeContext Context) {
     std::string FunctionName = Native::EncodeName(Context);
     printf("Function %s%s from class %s wants to call to function %s.\n", Context.MethodName.c_str(), Context.MethodDescriptor.c_str(), Context.ClassName.c_str(), FunctionName.c_str());
 
-
+    auto handle = LoadLibraryA(NATIVES "\\libnative.dll");
+    auto addr = ptr<void>(GetProcAddress(handle, FunctionName.c_str()));
+    auto func = ptr<void()>(addr);
+    func();
 
     for(;;);
 }

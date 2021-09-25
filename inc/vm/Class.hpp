@@ -132,7 +132,7 @@ class Class : public ClassFile {
         size_t BytecodeLength;
         size_t LoadedLocation;
         const char* Code;
-        struct ClassHeap* _ClassHeap;
+        ClassHeap* _ClassHeap;
         uint16_t FieldsCount;
         std::vector<std::string> StringConstants;
         std::string Unknown;
