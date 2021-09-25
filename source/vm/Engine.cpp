@@ -40,6 +40,7 @@ void Engine::InvokeNative(NativeContext Context) {
     auto handle = LoadLibraryA(NATIVES "\\libnative.dll");
     auto addr = ptr<void>(GetProcAddress(handle, FunctionName.c_str()));
     auto func = ptr<void()>(addr);
+    printf("Jumping to native function.\n");
     func();
 
     for(;;);
@@ -744,7 +745,14 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
             InvokeNative(Context);
         } catch (NativeReturn& e) {
             //HandleNativeReturn(CurrentFrame, e);
-            puts("Native method returned");
+            printf("Native: %s %d\n", e.what(), e.Value.pointerVal);
+
+            Stack->StackPointer -= ParamList.size() + 1;
+
+            // Don't set return value if the function returned void.
+            if(MethodDesc.find(")V") != std::string::npos)
+                Stack->Stack[Stack->StackPointer] = e.Value;
+
             return;
         }
 
