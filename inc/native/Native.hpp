@@ -9,6 +9,12 @@
 #include <string>
 #include <exception>
 
+#ifdef VM_BUILDING
+    #define EXPORT __declspec(dllexport)
+#else
+    #define EXPORT __declspec(dllimport)
+#endif
+
 #ifndef COMMON_SYMBOLS
 class Object {
     public:
@@ -56,7 +62,7 @@ struct NativeReturn : public std::exception {
  * This constitutes a substantial performance improvement over the JNI.
  */
 
-class VM {
+class EXPORT VM {
     public:
         /**
          * Emit a return value and return to the calling function.
