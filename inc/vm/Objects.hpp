@@ -14,6 +14,7 @@ class ObjectHeap {
 
         virtual Variable* GetObjectPtr(Object obj);
         virtual size_t GetArraySize(Object obj);
+
         Object CreateObject(Class* Class);
         Object CreateString(std::string String, ClassHeap* ClassHeap);
         Object CreateArray(uint8_t Type, uint32_t Count);

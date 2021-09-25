@@ -3,10 +3,16 @@
  *    PURPURI *
  **************/
 #pragma once
+
+#ifndef COMMON_SYMBOLS
+    #define COMMON_SYMBOLS 1
+#endif
+
 #include <stdint.h>
 #include <cstddef>
 #include <list>
 #include <string>
+#include <vector>
 
 class Class;
 class ClassHeap;
@@ -49,6 +55,17 @@ union Variable {
     double doubleVal;
     size_t pointerVal;
     Object object;
+};
+
+struct NativeContext {
+    int InvocationMethod;
+
+    std::string ClassName;
+    std::string MethodName;
+    std::string MethodDescriptor;
+
+    std::vector<Variable> Parameters;
+    Object* ClassInstance;
 };
 
 enum {

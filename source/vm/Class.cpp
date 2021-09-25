@@ -18,6 +18,8 @@ Class::Class() {
     BytecodeLength = 0;
     FieldsCount = 0;
 
+    LoadedLocation = (size_t)(size_t*) this;
+
     Unknown.append("Unknown Value");
 }
 

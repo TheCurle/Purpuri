@@ -15,7 +15,6 @@
 #include "Methods.hpp"
 #include "Objects.hpp"
 
-
 class Engine {
     public:
         ClassHeap* _ClassHeap;
@@ -26,7 +25,9 @@ class Engine {
         virtual uint32_t Ignite(StackFrame* Stack);
 
         void Invoke(StackFrame* Stack, uint16_t Type);
-        void InvokeNative(StackFrame* Stack);
+
+        void InvokeNative(NativeContext Context);
+        void HandleNativeReturn(NativeContext Context, Variable Value);
 
         bool MethodClassMatches(uint16_t MethodInd, Class* pClass, const char* TestName);
 
@@ -129,6 +130,7 @@ class Class : public ClassFile {
 
     private:
         size_t BytecodeLength;
+        size_t LoadedLocation;
         const char* Code;
         struct ClassHeap* _ClassHeap;
         uint16_t FieldsCount;

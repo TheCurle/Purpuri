@@ -5,6 +5,7 @@
 
 #include <vm/Stack.hpp>
 #include <vm/Class.hpp>
+#include <vm/Native.hpp>
 
 #include <math.h>
 #include <stdio.h>
@@ -22,18 +23,20 @@ Engine::Engine() {
 
 Engine::~Engine() {}
 
+void Engine::InvokeNative(NativeContext Context) {
+
+    std::string FunctionName = Native::EncodeName(Context);
+    printf("Function %s%s from class %s wants to call to function %s.\n", Context.MethodName.c_str(), Context.MethodDescriptor.c_str(), Context.ClassName.c_str(), FunctionName.c_str());
+
+
+
+    for(;;);
+}
+
 uint32_t Engine::Ignite(StackFrame* Stack) {
     StackFrame* CurrentFrame = &Stack[0];
 
     printf("New execution frame generated.\n");
-
-    // 0x100 = native
-    if(CurrentFrame->_Method->Access & 0x100) {
-        puts("Executing native method");
-        //InvokeNative(CurrentFrame);
-        puts("Native method returned");
-        return 0;
-    }
 
     uint8_t* Code = CurrentFrame->_Method->Code->Code + CurrentFrame->ProgramCounter;
     int32_t Error = 0;
@@ -705,8 +708,11 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     printf("\tMethod has %zu parameters, skipping ahead..\r\n", Parameters);
     Variable UnderStack = Stack->Stack[Stack->StackPointer - (Parameters + 1)];
 
+    std::vector<Variable> ParamList;
+
     for(size_t i = 0; i < Parameters; i++) {
         printf("\t\tParameter %zu = %zu\r\n", i, Stack->Stack[Stack->StackPointer - i].pointerVal);
+        ParamList.push_back(Stack->Stack[Stack->StackPointer - i]);
     }
 
     Variable ClassInStack = Stack->Stack[Stack->StackPointer - Parameters];
@@ -718,6 +724,21 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
 
     int MethodInClassIndex = VirtualClass->GetMethodFromDescriptor(MethodName.c_str(), MethodDesc.c_str(), ClassName.c_str(), VirtualClass);
 
+    // 0x100 = native
+    if(VirtualClass->Methods[MethodInClassIndex].Access & 0x100) {
+        try {
+            puts("Executing native method");
+            NativeContext Context = { .InvocationMethod = Type, .ClassName = ClassName, .MethodName = MethodName, .MethodDescriptor = MethodDesc, .Parameters = ParamList, .ClassInstance = &ClassInStack.object};
+            InvokeNative(Context);
+        } catch (NativeReturn& e) {
+            //HandleNativeReturn(CurrentFrame, e);
+            puts("Native method returned");
+            return;
+        }
+
+        puts("Impossible position. Investigate immediately.\n********************\n********************\n********************\n********************\n********************\n********************\n");
+        exit(5);
+    }
 
     Stack[1] = StackFrame();
 
