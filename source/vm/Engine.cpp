@@ -22,6 +22,7 @@ using ptr = T *;
 
 Variable* StackFrame::MemberStack;
 StackFrame* StackFrame::FrameBase;
+ObjectHeap Engine::_ObjectHeap;
 
 Engine::Engine() {
     _ClassHeap = NULL;
@@ -64,6 +65,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
 
     while(true) {
+        printf("%d: ", Code[CurrentFrame->ProgramCounter]);
+
         switch(Code[CurrentFrame->ProgramCounter]) {
             case noop: CurrentFrame->ProgramCounter++; break;
 
@@ -86,10 +89,12 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case arraylength:
                 CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal
                     = _ObjectHeap.GetArraySize(CurrentFrame->Stack[CurrentFrame->StackPointer].object);
-                CurrentFrame->ProgramCounter += 2;
+                printf("Got the size %zu from the array just pushed.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                CurrentFrame->ProgramCounter++;
                 break;
 
             case newarray:
+                printf("New array initializing:\n");
                 NewArray(CurrentFrame);
                 CurrentFrame->ProgramCounter += 2;
                 printf("Initialized new array\n");
@@ -123,6 +128,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 Invoke(CurrentFrame, invokeinterface);
                 CurrentFrame->ProgramCounter += 5;
                 break;
+
             case invokestatic:
                 Invoke(CurrentFrame, invokestatic);
                 CurrentFrame->ProgramCounter += 3;
@@ -189,11 +195,17 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
 
             case aaload:
+            case baload:
+            case caload:
+            case saload:
             case iaload:
+            case laload:
+            case faload:
+            case daload:
                 CurrentFrame->Stack[CurrentFrame->StackPointer - 1] =
                     _ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 1].object)
                         [CurrentFrame->Stack[CurrentFrame->StackPointer].intVal + 1];
-                printf("Pulled value %d out of the %zuth entry of array object %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].object.Heap);
+                printf("Pulled value %zu (%.6f) out of the %zuth entry of array object %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].object.Heap);
 			    CurrentFrame->StackPointer--;
 			    CurrentFrame->ProgramCounter++;
 			    break;
@@ -350,7 +362,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             	_ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object)
                     [CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1] =
                         CurrentFrame->Stack[CurrentFrame->StackPointer];
-                printf("Stored number %d into the %zuth entry of array object %zu.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
+                printf("Stored number %d into the %zuth entry of array object %zu.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
 			    CurrentFrame->StackPointer -= 3;
 			    CurrentFrame->ProgramCounter++;
 			    break;
@@ -649,10 +661,10 @@ int Engine::New(StackFrame *Stack) {
 }
 
 void Engine::NewArray(StackFrame* Stack) {
+    size_t ArrayLength = Stack->Stack[Stack->StackPointer].intVal;
     uint8_t Type = Stack->_Method->Code->Code[Stack->ProgramCounter + 1];
-    Stack->Stack[Stack->StackPointer + 1].object = _ObjectHeap.CreateArray(Type, Stack->Stack[Stack->StackPointer].intVal);
-    Stack->StackPointer++;
-    printf("Initialized a %d-wide array of type %d.\n", Stack->Stack[Stack->StackPointer - 1].intVal, Type);
+    Stack->Stack[Stack->StackPointer].object = _ObjectHeap.CreateArray(Type, ArrayLength);
+    printf("Initialized a %d-wide array of type %d.\n", ArrayLength, Type);
 }
 
 void Engine::ANewArray(StackFrame* Stack) {
@@ -722,6 +734,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
 
     printf("\tMethod has %zu parameters, skipping ahead..\r\n", Parameters);
     Variable UnderStack = Stack->Stack[Stack->StackPointer - (Parameters + 1)];
+    printf("\tSaved value %zu (object %zu) for restoration\r\n", UnderStack.pointerVal, UnderStack.object.Heap);
 
     std::vector<Variable> ParamList;
 

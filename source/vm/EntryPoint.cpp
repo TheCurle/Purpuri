@@ -37,8 +37,6 @@ int main(int argc, char* argv[]) {
         exit(6);
     }
 
-    ObjectHeap objects;
-
     StackFrame* Stack = new StackFrame[20];
     StackFrame::FrameBase = Stack;
 
@@ -51,7 +49,7 @@ int main(int argc, char* argv[]) {
 
     Engine engine;
 
-    class Object object = objects.CreateObject(GivenClass);
+    class Object object = Engine::_ObjectHeap.CreateObject(GivenClass);
     //Class* VirtualClass = GivenClass;
 
     int EntryPoint = GivenClass->GetMethodFromDescriptor("EntryPoint", "()I", GivenClass->GetClassName().c_str(), GivenClass);
@@ -73,9 +71,7 @@ int main(int argc, char* argv[]) {
     puts("\n\nStarting Execution\n\n");
     puts("*****************");
 
-
     engine._ClassHeap = &heap;
-    engine._ObjectHeap = objects;
 
     engine.Ignite(&Stack[StartFrame]);
 

@@ -31,9 +31,11 @@ Class* ClassHeap::GetClass(std::string Name) {
 
     classIter = ClassMap.find(Name);
 
-    if(classIter == ClassMap.end())
+    if(classIter == ClassMap.end()) {
+        fprintf(stderr, "*************\nClass %s does not exist!\n************\n", Name.c_str());
         return NULL;
-    
+    }
+        
     Class* Class = classIter->second;
 
     std::ifstream File(Name.c_str(), std::ios::binary);

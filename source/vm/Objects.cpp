@@ -44,8 +44,10 @@ Variable* ObjectHeap::GetObjectPtr(Object obj) {
     std::map<size_t, size_t>::iterator objIter;
     objIter = ObjectMap.find(obj.Heap);
 
-    if(objIter == ObjectMap.end())
+    if(objIter == ObjectMap.end()) {
+        fprintf(stderr, "**************\nObject Heap does not contain object %d. Highest object is %d.\n******************\n", obj.Heap, ObjectMap.size());
         return NULL;
+    }
 
     return (Variable*) objIter->second;
 }
@@ -56,6 +58,7 @@ Object ObjectHeap::CreateString(std::string String, ClassHeap *ClassHeap) {
     obj.Type = 0;
 
     if(ClassHeap == NULL) return obj;
+    
     Class* Class = ClassHeap->GetClass("java/lang/String");
 
     if(Class == NULL) return obj;

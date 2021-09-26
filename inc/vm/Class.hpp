@@ -17,8 +17,8 @@
 
 class Engine {
     public:
+        static ObjectHeap _ObjectHeap;
         ClassHeap* _ClassHeap;
-        ObjectHeap _ObjectHeap;
 
         Engine();
         virtual ~Engine();

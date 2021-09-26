@@ -89,17 +89,20 @@ enum {
     dconst_0,           // 14
     dconst_1,           // 15
 
-    bipush = 16,        // 16
+    bipush,             // 16
     sipush,             // 17
 
     ldc,                // 18
+    ldc_w,              // 19
 
-    ldc2_w = 20,        // 20
+    ldc2_w,             // 20
     
     iload,              // 21
     lload,              // 22
+    fload,              // 23
+    dload,              // 24
 
-    aload = 25,         // 25
+    aload,              // 25
 
     iload_0,            // 26
     iload_1,            // 27
@@ -127,13 +130,19 @@ enum {
     aload_3,            // 45
 
     iaload,             // 46
-
-    aaload = 50,        // 50
-    istore = 54,        // 54
-    lstore = 55,        // 55
-    fstore = 56,        // 56
-    dstore = 57,        // 57
-    astore = 58,        // 58
+    laload,             // 47
+    faload,             // 48
+    daload,             // 49
+    aaload,             // 50
+    baload,             // 51
+    caload,             // 52
+    saload,             // 53
+    
+    istore,             // 54
+    lstore,             // 55
+    fstore,             // 56
+    dstore,             // 57
+    astore,             // 58
 
     istore_0,           // 59
     istore_1,           // 60
@@ -169,7 +178,10 @@ enum {
     castore,            // 85
     sastore,            // 86
 
-    bcdup = 89,         // 89
+    pop,                // 87
+    pop2,               // 88
+
+    bcdup,              // 89
     dup_x1,             // 90
     dup_x2,             // 91
 

@@ -3,12 +3,14 @@
  *    PURPURI *
  **************/
 
+#include <vm/Class.hpp>
 #include <vm/Native.hpp>
 #ifdef WIN32
     #include <windows.h>
     #include <libloaderapi.h>
     #undef GetClassName
     #undef LoadLibrary
+    #undef GetObject
 #endif
 #include <regex>
 
@@ -25,6 +27,10 @@ void VM::Return(Variable retVal) {
 
 std::vector<Variable> VM::GetParameters() {
     return Native::Parameters;
+}
+
+Variable* VM::GetObject(Object ID) {
+    return Engine::_ObjectHeap.GetObjectPtr(ID);
 }
 
 // Find and replace all instances of a substring inside a std::string

@@ -139,6 +139,18 @@ bool Class::ParseConstants(const char *&Code) {
                 break;
             }
 
+            case TypeString: {
+                Temp = (char*)Constants[i];
+                uint16_t utf8Ind = ReadShortFromStream(Temp + 1);
+
+                std::string String = GetStringConstant(utf8Ind);
+
+                StringConstants[i] = String;
+
+                printf("%d:\tInterred String %s (%d).\n", i, String.c_str(), utf8Ind);
+                break;
+            }
+
             default:
                 if(Constants[i]->Tag != TypeUtf8 && Constants[i]->Tag != TypeNamed) // These are handled above.
                     printf("%d:\tValue unknown. Type %d\n", i, Constants[i]->Tag);

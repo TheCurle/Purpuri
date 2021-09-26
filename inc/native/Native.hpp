@@ -75,4 +75,12 @@ class EXPORT VM {
          * With this, you can access the fields of the class.
          */
         static std::vector<Variable> GetParameters();
+
+        /**
+         * Retrieve a specific object from the Object Heap by ID.
+         * NOTE: This is ridiculously insecure!
+         * TODO: Find a better solution!
+         */
+
+        static Variable* GetObject(Object ID);
 };
