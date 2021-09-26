@@ -4,6 +4,7 @@
  **************/
 
 #include <vm/debug/Debug.hpp>
+#include <vm/Stack.hpp>
 
 // imgui is very particular about not allowing you to use clang with msys?
 #if defined(__clang__)
@@ -21,14 +22,59 @@
 #include <vm/debug/SDL2/SDL_opengl.h>
 #endif
 
+/** Main Thread Variables **/
+
+// Synchronization
 bool Debugger::Enabled = false;
 std::thread Debugger::Thread;
+std::mutex Debugger::Locker;
+std::condition_variable Debugger::Notifier;
+size_t Debugger::Pipe;
 
+// Internal
+Debugger::TypeFlags flags;
+bool updated = false;
+StackFrame* stack = nullptr;
+size_t stackpointer = 0;
+
+/** Main Thread Functions **/
+
+void Synchronize(size_t Ptr, Debugger::TypeFlags Type) {
+    std::lock_guard<std::mutex> lock(Debugger::Locker);
+    Debugger::Pipe = Ptr;
+    flags = Type;
+    updated = true;
+    Debugger::Notifier.notify_all();
+}
+
+void Debugger::SetStack(StackFrame* Vars) {
+    TypeFlags flag;
+    flag.Stack = true;
+    Synchronize((size_t) Vars, flag);
+}
+
+void Debugger::SpinOff() {
+    Thread = std::thread([]() {
+        SetupWindow();
+        while(VerifyOpen()) {
+            RenderFrame();
+        }
+        ShutdownWindow();
+    });
+}
+
+void Debugger::Rejoin() {
+    Debugger::Thread.join();
+}
+
+/** Debugger Thread Variables **/
 SDL_WindowFlags window_flags;
 SDL_Window* window;
 SDL_GLContext gl_context;
 ImGuiIO* io;
 ImVec4 clear_color;
+
+/** Debugger Thread Functions **/
 
 void Debugger::SetupWindow() {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0) {
@@ -91,18 +137,32 @@ void Debugger::ShutdownWindow() {
     SDL_Quit();
 }
 
-void Debugger::SpinOff() {
-    Thread = std::thread([]() {
-        SetupWindow();
-        while(VerifyOpen()) {
-            RenderFrame();
-        }
-        ShutdownWindow();
-    });
-}
-
 void Debugger::CreateStack() {
+    std::unique_lock<std::mutex> lock(Locker);
+    
+    if(updated) {
+        if(flags.Stack)
+            stack = (StackFrame*) Pipe;
+        updated = false;
+    }
 
+    ImGui::Begin("Stack Viewer");
+
+    ImGui::BeginListBox("Stack View");
+
+    for (uint16_t i = 0; i < stack->StackPointer; i++) {
+        Variable item = stack->Stack[stack->StackPointer];
+        ImGui::Text("Stack Index %d", i);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Char: %d\nShort: %d\nInt: %d\nLong: %zu\nFloat: %.6f\nDouble: %.6f\nObject: %zu\n",
+                         item.charVal, item.shortVal, item.intVal, item.pointerVal, item.floatVal, item.doubleVal, item.object.Heap);
+    }
+
+    ImGui::EndListBox();
+    
+    lock.unlock();
+
+    ImGui::End();
 }
 
 bool Debugger::VerifyOpen() {
@@ -126,6 +186,8 @@ void Debugger::RenderFrame() {
 
     bool yes = true;
     ImGui::ShowDemoWindow(&yes);
+
+    CreateStack();
 
     ImGui::Render();
     glViewport(0, 0, (int) (*io).DisplaySize.x, (int) (*io).DisplaySize.y);

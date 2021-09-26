@@ -31,6 +31,20 @@ class ObjectHeap;
 
 #define SHUTUPUNUSED(X) ((void)X)
 
+#define printf(...) \
+    if(!Engine::QuietMode) printf(__VA_ARGS__)
+
+#define puts(x) \
+    if(!Engine::QuietMode) puts(x)
+
+#define DEBUG(x) \
+    if(Debugger::Enabled) \
+        x
+
+#define DEBUG_LOCKED(x) \
+    if(Debugger::Enabled) \
+        Debugger::Synchronize(x);
+
 #define COMPARE_MATCH 0
 
 void PrintList(std::list<std::string> &list);

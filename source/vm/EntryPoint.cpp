@@ -78,11 +78,13 @@ void StartVM(char* MainFile) {
     engine._ClassHeap = &heap;
 
     
-    if (Debugger::Enabled)  {
-        Debugger::SpinOff();
-    }
+    DEBUG(Debugger::SpinOff();)
 
     engine.Ignite(&Stack[StartFrame]);
+
+    
+    // Make sure the thread never dies.
+    DEBUG(Debugger::Rejoin();)
 
 }
 

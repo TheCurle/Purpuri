@@ -7,6 +7,8 @@
 #include <vm/Class.hpp>
 #include <vm/Native.hpp>
 
+#include <vm/debug/Debug.hpp>
+
 #include <math.h>
 #include <stdio.h>
 #include <cstring>
@@ -67,6 +69,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
 
     while(true) {
+        DEBUG(Debugger::SetStack(CurrentFrame));
+        
         printf("%d: ", Code[CurrentFrame->ProgramCounter]);
 
         switch(Code[CurrentFrame->ProgramCounter]) {
