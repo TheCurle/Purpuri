@@ -7,14 +7,18 @@
 #include <cstring>
 #include <vm/Stack.hpp>
 
-int main(int argc, char* argv[]) {
-    if(argc < 2) {
-        fprintf(stderr, "Purpuri VM v1 - Gemwire Institute\n");
-        fprintf(stderr, "***************************************\n");
-        fprintf(stderr, "Usage: %s <class file>\n", argv[0]);
-        fprintf(stderr, "\n16:50 25/02/21 Curle\n");
-        return 1;
-    }
+#include <vm/debug/Debug.hpp>
+
+void DisplayUsage(char* Name) {
+    fprintf(stderr, "Purpuri VM v1.6 - Gemwire Institute\n");
+    fprintf(stderr, "***************************************\n");
+    fprintf(stderr, "Usage: %s <class file>\n", Name);
+    fprintf(stderr, "          -d: Enable Visual Debugger\n");
+    fprintf(stderr, "          -q: Enable Quiet Mode\n");
+    fprintf(stderr, "\n16:50 25/02/21 Curle\n");
+}
+
+void StartVM(char* MainFile) {
 
     ClassHeap heap;
     Class* Object = new Class();
@@ -22,7 +26,7 @@ int main(int argc, char* argv[]) {
     GivenClass->SetClassHeap(&heap);
     Object->SetClassHeap(&heap);
 
-    std::string GivenPath(argv[1]);
+    std::string GivenPath(MainFile);
     size_t LastInd = GivenPath.find_last_of("/");
     if(LastInd != GivenPath.size())
         heap.ClassPrefix = GivenPath.substr(0, LastInd + 1);
@@ -32,7 +36,7 @@ int main(int argc, char* argv[]) {
         exit(6);
     }
 
-    if(!heap.LoadClass(argv[1], GivenClass)) {
+    if(!heap.LoadClass(MainFile, GivenClass)) {
         printf("Loading given class failed. Fatal error.\n");
         exit(6);
     }
@@ -55,8 +59,8 @@ int main(int argc, char* argv[]) {
     int EntryPoint = GivenClass->GetMethodFromDescriptor("EntryPoint", "()I", GivenClass->GetClassName().c_str(), GivenClass);
 
     if(EntryPoint < 0) {
-        printf("%s does not have an EntryPoint function, unable to execute.\n", argv[1]);
-        return 1;
+        printf("%s does not have an EntryPoint function, unable to execute.\n", MainFile);
+        return;
     }
 
     int StartFrame = 0;
@@ -73,7 +77,56 @@ int main(int argc, char* argv[]) {
 
     engine._ClassHeap = &heap;
 
+    
+    if (Debugger::Enabled)  {
+        Debugger::SpinOff();
+    }
+
     engine.Ignite(&Stack[StartFrame]);
+
+}
+
+int main(int argc, char* argv[]) {
+
+    // Parse command line arguments.
+    // Stolen from Greek Tools' Erythro Compiler.
+    int i;
+    for(i = 1/*skip 0*/; i < argc; i++) {
+        // If we're not a flag, we can skip.
+        // We only care about flags in rows.
+        // ie. erc >> -v -T -o << test.exe src/main.er
+        if(*argv[i] != '-')
+            break;
+        
+        // Once we identify a flag, we need to make sure it's not just a minus in-place.
+        for(int j = 1; (*argv[i] == '-') && argv[i][j]; j++) {
+            // Finally, identify what option is being invoked.
+            switch(argv[i][j]) {
+                case 'd':
+                    // Debug Stuff.
+                    Debugger::Enabled = true;
+                    break;
+
+                case 'q':
+                    // Quiet stuff!
+                    Engine::QuietMode = true;
+                    break;
+
+                default:
+                    DisplayUsage(argv[0]);
+                    return 0;
+            }
+        }
+    }
+
+    // If we didn't provide anything other than flags, we need to show how to use the program.
+    if(i >= argc) {
+        DisplayUsage(argv[0]);
+        return 0;
+    }
+
+    
+    StartVM(argv[i]);
 
     return 1;
 }

@@ -32,7 +32,7 @@ Class* ClassHeap::GetClass(std::string Name) {
     classIter = ClassMap.find(Name);
 
     if(classIter == ClassMap.end()) {
-        fprintf(stderr, "*************\nClass %s does not exist!\n************\n", Name.c_str());
+        printf("*************\nClass %s does not exist!\n************\n", Name.c_str());
         return NULL;
     }
         

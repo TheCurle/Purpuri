@@ -458,6 +458,6 @@ bool Class::CreateObjectArray(uint16_t Index, uint32_t Count, ObjectHeap ObjectH
 
 void PrintList(std::list<std::string> &list) {
     for (auto const& i: list) {
-        std::cout << i << " ";
+        puts(i.c_str());
     }
 }

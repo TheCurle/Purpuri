@@ -15,9 +15,16 @@
 #include "Methods.hpp"
 #include "Objects.hpp"
 
+#define printf(...) \
+    if(!Engine::QuietMode) printf(__VA_ARGS__)
+
+#define puts(x) \
+    if(!Engine::QuietMode) puts(x)
+
 class Engine {
     public:
         static ObjectHeap _ObjectHeap;
+        static bool QuietMode;
         ClassHeap* _ClassHeap;
 
         Engine();

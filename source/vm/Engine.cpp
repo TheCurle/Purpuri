@@ -20,9 +20,11 @@ using ptr = T *;
 #define NATIVES \
     "./bin/"
 
+
 Variable* StackFrame::MemberStack;
 StackFrame* StackFrame::FrameBase;
 ObjectHeap Engine::_ObjectHeap;
+bool Engine::QuietMode = false;
 
 Engine::Engine() {
     _ClassHeap = NULL;
@@ -74,7 +76,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 puts("Function returns"); return 0;
 
             case ireturn:
-                printf("\n******************\n\nFunction returned value %d\n\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                fprintf(stderr, "\n******************\n\nFunction returned value %d\n\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
                 return 0;
 
             case _new:
