@@ -26,12 +26,13 @@ bool ClassHeap::ClassExists(std::string Name) {
 }
 
 Class* ClassHeap::GetClass(std::string Name) {
+    if (Name.empty()) return nullptr;
 
     std::map<std::string, Class*>::iterator classIter;
 
     classIter = ClassMap.find(Name);
 
-    if(classIter == ClassMap.end()) {
+    if(classIter == ClassMap.end() && Name != UnknownClass) {
         printf("*************\nClass %s does not exist!\n************\n", Name.c_str());
         return NULL;
     }

@@ -121,6 +121,9 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::bcdup:
                 CurrentFrame->Stack[CurrentFrame->StackPointer + 1] =
                     CurrentFrame->Stack[CurrentFrame->StackPointer];
+                // pre-emptive strike on weirdness
+                CurrentFrame->Stack[CurrentFrame->StackPointer].object =
+                    CurrentFrame->Stack[CurrentFrame->StackPointer + 1].object;
                 CurrentFrame->StackPointer++;
                 CurrentFrame->ProgramCounter++;
                 printf("Duplicated the last item on the stack\n");
@@ -667,9 +670,13 @@ int Engine::New(StackFrame *Stack) {
     uint8_t* Code = Stack->_Method->Code->Code;
     uint16_t Index = ReadShortFromStream(&Code[Stack->ProgramCounter + 1]);
 
-    if(!Stack->_Class->CreateObject(Index, &_ObjectHeap, Stack->Stack[Stack->StackPointer].object))
-        return -1;
-    return 1;
+    Object newObj = Stack->_Class->CreateObject(Index, &_ObjectHeap);
+    if(newObj == ObjectHeap::Null)
+        return false;
+
+    printf("New object is in ObjectHeap position %zu.\n", newObj.Heap);
+    Stack->Stack[Stack->StackPointer].object = newObj;
+    return true;
 }
 
 void Engine::NewArray(StackFrame* Stack) {

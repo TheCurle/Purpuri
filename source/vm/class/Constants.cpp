@@ -162,7 +162,7 @@ bool Class::ParseConstants(const char *&Code) {
 
 std::string Class::GetStringConstant(uint32_t index) {
     if(index < 1 || index >= ConstantCount)
-        return Unknown;
+        return ClassHeap::UnknownClass;
     
     return StringConstants.at(index);
 }

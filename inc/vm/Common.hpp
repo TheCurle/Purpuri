@@ -60,6 +60,8 @@ class Object {
     public:
         size_t Heap;
         uint8_t Type;
+
+        bool operator==(const Object& other) { return other.Heap == this->Heap; }
 };
 
 union Variable {
