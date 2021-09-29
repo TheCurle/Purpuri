@@ -12,6 +12,8 @@ class ObjectHeap {
         ObjectHeap();
         virtual ~ObjectHeap();
 
+        static Object Null;
+
         virtual Variable* GetObjectPtr(Object obj);
         virtual size_t GetArraySize(Object obj);
 

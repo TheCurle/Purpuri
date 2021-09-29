@@ -8,6 +8,8 @@
 
 #include <cstring>
 
+Object ObjectHeap::Null;
+
 ObjectHeap::ObjectHeap() {
     NextObjectID = 1;
     ObjectMap = std::map<size_t, size_t>();

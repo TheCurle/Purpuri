@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <string>
 
+std::string ClassHeap::UnknownClass("Unknown Value");
+
 Class::Class() {
     _ClassHeap = NULL;
     Code = NULL;
@@ -19,8 +21,6 @@ Class::Class() {
     FieldsCount = 0;
 
     LoadedLocation = (size_t)(size_t*) this;
-
-    Unknown.append("Unknown Value");
 }
 
 // TODO: Delete EVERYTHING
@@ -394,6 +394,10 @@ uint32_t Class::GetClassSize() {
 }
 
 uint32_t Class::GetClassFieldCount() {
+    // The parent of all classes has no super.
+    if (GetStringConstant(This) == "java/lang/Object") 
+        return 0;
+
     uint32_t Count = FieldsCount;
 
     Class* Super = GetSuper();
@@ -419,7 +423,7 @@ std::string Class::GetClassName() {
 }
 
 std::string Class::GetName(uint16_t Obj) {
-    if(Obj < 1 || (Obj != Super && Obj != This)) return Unknown;
+    if(Obj < 1 || (Obj != Super && Obj != This)) return ClassHeap::UnknownClass;
 
     char* Entry = (char*)Constants[Obj];
     uint16_t NameInd = ReadShortFromStream(&Entry[1]);
@@ -427,22 +431,20 @@ std::string Class::GetName(uint16_t Obj) {
     return GetStringConstant(NameInd);
 }
 
-bool Class::CreateObject(uint16_t Index, ObjectHeap* ObjectHeap, Object &Object) {
+Object Class::CreateObject(uint16_t Index, ObjectHeap* ObjectHeap) {
     uint8_t* Code = (uint8_t*) this->Constants[Index];
 
     if(Code[0] != TypeClass)
-        return false;
+        return ObjectHeap::Null;
 
     uint16_t NameInd = ReadShortFromStream(&Code[1]);
     std::string Name = GetStringConstant(NameInd);
 
-    printf("Creating new object from class %s\n", Name.c_str());
-
     Class* NewClass = this->_ClassHeap->GetClass(Name);
-    if(NewClass == NULL) return false;
+    if(NewClass == NULL) return ObjectHeap::Null;
 
-    Object = ObjectHeap->CreateObject(NewClass);
-    return true;
+    printf("Creating new object from class %s\n", Name.c_str());
+    return ObjectHeap->CreateObject(NewClass);
 }
 
 bool Class::CreateObjectArray(uint16_t Index, uint32_t Count, ObjectHeap ObjectHeap, Object &pObject) {

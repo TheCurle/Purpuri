@@ -17,6 +17,7 @@
  * The Visual Debugger contains the following panels:
  * 
  *  - Stack; Shows a view of the Frame Stack and the Stack Members at any given time.
+ *  - Stepper; Allows you to step (or continue) bytecode.
  *  - Bytecode; Shows a view of the bytecode currently running, as well as what instruction is currently being executed.
  *  - Classes; Shows a list of all the classes loaded, and all the data about them.
  *  - Engine; Shows the state of the Execution engine and what is currently occuring.
@@ -126,6 +127,11 @@ class Debugger {
      * Create the Objects panel.
      */
     static void CreateObjects();
+
+    /**
+     * Create the Stepper panel.
+     */
+    static void CreateStepper();
 
     /*************************
      ******* Rendering *******

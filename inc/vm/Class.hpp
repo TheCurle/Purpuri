@@ -81,6 +81,8 @@ class ClassHeap {
 
     public:
         ClassHeap();
+        
+        static std::string UnknownClass;
         std::string ClassPrefix;
 
         bool LoadClass(const char* ClassName, Class* Class);
@@ -122,7 +124,7 @@ class Class : public ClassFile {
         uint32_t GetFieldFromDescriptor(std::string FieldAndDescriptor);
 
 
-        bool CreateObject(uint16_t Index, ObjectHeap* ObjectHeap, Object &Object);
+        Object CreateObject(uint16_t Index, ObjectHeap* ObjectHeap);
         bool CreateObjectArray(uint16_t Index, uint32_t Count, ObjectHeap ObjectHeap, Object &Object);
 
         void SetClassHeap(ClassHeap* p_ClassHeap) {
@@ -136,7 +138,6 @@ class Class : public ClassFile {
         ClassHeap* _ClassHeap;
         uint16_t FieldsCount;
         std::vector<std::string> StringConstants;
-        std::string Unknown;
 
         bool ParseConstants(const char* &Code);
         uint32_t GetConstantsCount(const char* Constants);
