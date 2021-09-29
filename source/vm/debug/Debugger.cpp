@@ -144,10 +144,10 @@ void Debugger::CreateBytecode() {
 
     ImGui::Begin("Bytecode Viewer");
 
-    static MemoryEditor editor;
+    static BytecodeListing listing;
 
     ImGui::Text("Function: %s", stack->_Class->GetStringConstant(stack->_Method->Name).c_str());
-    editor.DrawContents(stack->_Method->Code->Code, stack->_Method->Code->CodeLength);
+    listing.DrawContents(stack->_Method->Code->Code, stack->_Method->Code->CodeLength);
 
     ImGui::End();
 
@@ -166,8 +166,8 @@ void Debugger::CreateStack() {
 
     ImGui::BeginListBox("Stack View");
 
-    for (uint16_t i = 0; i < stack->StackPointer; i++) {
-        Variable item = stack->Stack[stack->StackPointer];
+    for (uint16_t i = 1; i < stack->StackPointer; i++) {
+        Variable item = stack->Stack[i];
         ImGui::Text("Stack Index %d", i);
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("Char: %d\nShort: %d\nInt: %d\nLong: %zu\nFloat: %.6f\nDouble: %.6f\nObject: %zu\n",
@@ -175,6 +175,14 @@ void Debugger::CreateStack() {
     }
 
     ImGui::EndListBox();
+
+    if(ImGui::Button("Dump Stack")) {
+        for (uint16_t i = 1; i < stack->StackPointer; i++) {
+            Variable item = stack->Stack[i];
+            printf("\t[DEBUG] Stack index %d:\n\t\tInt: %d, Long: %zu, Float: %.6f, Double: %.6f, Object: %zu / %d\n",
+                    i, item.intVal, item.pointerVal, item.floatVal, item.doubleVal, item.object.Heap, item.object.Type);
+        }
+    }
     
     lock.unlock();
 

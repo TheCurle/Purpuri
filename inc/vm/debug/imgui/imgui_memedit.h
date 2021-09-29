@@ -8,14 +8,14 @@
 //
 // Usage:
 //   // Create a window and draw memory editor inside it:
-//   static MemoryEditor mem_edit_1;
+//   static BytecodeListing mem_edit_1;
 //   static char data[0x10000];
 //   size_t data_size = 0x10000;
 //   mem_edit_1.DrawWindow("Memory Editor", data, data_size);
 //
 // Usage:
 //   // If you already have a window, use DrawContents() instead:
-//   static MemoryEditor mem_edit_2;
+//   static BytecodeListing mem_edit_2;
 //   ImGui::Begin("MyWindow")
 //   mem_edit_2.DrawContents(this, sizeof(*this), (size_t)this);
 //   ImGui::End();
@@ -63,7 +63,7 @@
 #pragma warning (disable: 4996) // warning C4996: 'sprintf': This function or variable may be unsafe.
 #endif
 
-struct MemoryEditor
+struct BytecodeListing
 {
     enum DataFormat
     {
@@ -105,7 +105,7 @@ struct MemoryEditor
     int             PreviewEndianess;
     ImGuiDataType   PreviewDataType;
 
-    MemoryEditor()
+    BytecodeListing()
     {
         // Settings
         Open = true;
@@ -579,6 +579,12 @@ struct MemoryEditor
                 DataEditingTakeFocus = true;
             }
             GotoAddr = (size_t)-1;
+        }
+
+        ImGui::SameLine();
+        if(ImGui::Button("Step")) {
+            Debugger::ShouldStep = true;
+            Debugger::Notifier.notify_all();
         }
     }
 
