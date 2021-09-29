@@ -54,6 +54,9 @@ class Debugger {
     // The Condition Variable used to notify the thread of new data
     static std::condition_variable Notifier;
 
+    // A synchronized variable that determines whether or not the Engine should execute the next instruction.
+    static bool ShouldStep;
+
     // The data to be transferred to the thread. Usually a pointer.
     static size_t Pipe;
 

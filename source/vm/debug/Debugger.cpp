@@ -12,6 +12,7 @@
 #endif
 
 #include <vm/debug/imgui/imgui.h>
+#include <vm/debug/imgui/imgui_memedit.h>
 #include <vm/debug/imgui/imgui_impl_sdl.h>
 #include <vm/debug/imgui/imgui_impl_opengl3.h>
 #include <stdio.h>
@@ -26,6 +27,7 @@
 
 // Synchronization
 bool Debugger::Enabled = false;
+bool Debugger::ShouldStep = false;
 std::thread Debugger::Thread;
 std::mutex Debugger::Locker;
 std::condition_variable Debugger::Notifier;
@@ -137,6 +139,20 @@ void Debugger::ShutdownWindow() {
     SDL_Quit();
 }
 
+void Debugger::CreateBytecode() {
+    std::unique_lock<std::mutex> lock(Locker);
+
+    ImGui::Begin("Bytecode Viewer");
+
+    static MemoryEditor editor;
+
+    ImGui::Text("Function: %s", stack->_Class->GetStringConstant(stack->_Method->Name).c_str());
+    editor.DrawContents(stack->_Method->Code->Code, stack->_Method->Code->CodeLength);
+
+    ImGui::End();
+
+}
+
 void Debugger::CreateStack() {
     std::unique_lock<std::mutex> lock(Locker);
     
@@ -188,6 +204,7 @@ void Debugger::RenderFrame() {
     ImGui::ShowDemoWindow(&yes);
 
     CreateStack();
+    CreateBytecode();
 
     ImGui::Render();
     glViewport(0, 0, (int) (*io).DisplaySize.x, (int) (*io).DisplaySize.y);
