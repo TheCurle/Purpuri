@@ -48,8 +48,10 @@ void StartVM(char* MainFile) {
         Stack[i] = StackFrame();
     }
 
-    StackFrame::MemberStack = new Variable[100];
-    memset(StackFrame::MemberStack, 0, sizeof(Variable) * 100);
+    size_t StackSize = 100;
+    StackFrame::MemberStack = new Variable[StackSize];
+    for(size_t i = 0; i < StackSize; i++) 
+        StackFrame::MemberStack[i] = 0;
 
     Engine engine;
 
