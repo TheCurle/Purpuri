@@ -13,7 +13,7 @@ class StackFrame {
         Class* _Class;
         Method* _Method;
         uint32_t ProgramCounter;
-        int16_t StackPointer;
+        uint16_t StackPointer;
         Variable* Stack;
 
         StackFrame() {
