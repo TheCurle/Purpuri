@@ -180,7 +180,11 @@ void Debugger::CreateStack() {
         for (uint16_t i = 0; i < stack->StackPointer; i++) {
             Variable item = stack->Stack[i];
             printf("\t[DEBUG] Stack index %d:\n\t\tInt: %d, Long: %zu, Float: %.6f, Double: %.6f, Object: %zu / %d\n",
-                    i, item.intVal, item.pointerVal, item.floatVal, item.doubleVal, item.object.Heap, item.object.Type);
+                                           i,           item.intVal, 
+                                                                  item.pointerVal, 
+                                                                            item.floatVal,  item.doubleVal, 
+                                                                                                          item.object.Heap, 
+                                                                                                                item.object.Type);
         }
     }
     

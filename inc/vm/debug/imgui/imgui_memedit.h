@@ -446,7 +446,7 @@ struct BytecodeListing
                 ImVec2 pos = ImGui::GetCursorScreenPos();
                 pos.y += s.BytecodeLine;
                 addr = line_i * Cols;
-                ImGui::Text("");
+                ImGui::Text("%s", "");
                 for (int n = 0; n < Cols && s.BytecodeByte < mem_size; n++) {
 
                     BytecodeInstructions.emplace_back(s.BytecodeByte);
