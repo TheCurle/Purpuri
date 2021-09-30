@@ -114,7 +114,10 @@ bool Class::ParseConstants(const char *&Code) {
                 uint16_t classInd = ReadShortFromStream(Temp + 1);
                 uint16_t nameAndDescInd = ReadShortFromStream(Temp + 3);
 
-                std::string ClassName = GetStringConstant(classInd);
+                Temp = (char*)Constants[classInd];
+                uint16_t val = ReadShortFromStream(Temp + 1);
+                std::string ClassName = GetStringConstant(val);
+                
                 std::string NameAndDesc = GetStringConstant(nameAndDescInd);
                 printf("Retrieved name %s from index %d\n", NameAndDesc.c_str(), nameAndDescInd);
 
@@ -130,12 +133,15 @@ bool Class::ParseConstants(const char *&Code) {
                 uint16_t classInd = ReadShortFromStream(Temp + 1);
                 uint16_t nameAndDescInd = ReadShortFromStream(Temp + 3);
 
-                std::string ClassName = GetStringConstant(classInd);
+                Temp = (char*)Constants[classInd];
+                uint16_t val = ReadShortFromStream(Temp + 1);
+                std::string ClassName = GetStringConstant(val);
+
                 std::string FieldDesc = GetStringConstant(nameAndDescInd);
 
                 StringConstants[i] = FieldDesc;
 
-                printf("%d:\tField %s belongs to class %s\n", i, FieldDesc.c_str(), ClassName.c_str());
+                printf("%d:\tField %s belongs to class %s (%d)\n", i, FieldDesc.c_str(), ClassName.c_str(), classInd);
                 break;
             }
 
