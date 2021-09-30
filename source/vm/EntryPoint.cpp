@@ -3,6 +3,7 @@
  *    PURPURI *
  **************/
 
+#include <iostream>
 #include <cstdio>
 #include <cstring>
 #include <vm/Stack.hpp>
@@ -19,6 +20,8 @@ void DisplayUsage(char* Name) {
 }
 
 void StartVM(char* MainFile) {
+
+    // Preinitialization
 
     ClassHeap heap;
     Class* Object = new Class();
@@ -54,9 +57,38 @@ void StartVM(char* MainFile) {
         StackFrame::MemberStack[i] = 0;
 
     Engine engine;
+    
+    engine._ClassHeap = &heap;
 
-    class Object object = Engine::_ObjectHeap.CreateObject(GivenClass);
-    //Class* VirtualClass = GivenClass;
+    // All classes loaded - run clinit. Keep quiet.
+
+    bool quiet = Engine::QuietMode;
+    bool debug = Debugger::Enabled;
+    Engine::QuietMode = false;
+    Debugger::Enabled = false;
+
+    for(std::string clazz : heap.GetAllClasses()) {
+        Class* iterClass = heap.GetClass(clazz);
+        int init = iterClass->GetMethodFromDescriptor("<clinit>", "()V", clazz.c_str(), iterClass);
+        // If there's no static initializer, skip
+        if(init < 0)
+            continue;
+
+        int StartFrame = 0;
+
+        Stack[StartFrame]._Class = iterClass;
+        Stack[StartFrame]._Method = &iterClass->Methods[init];
+        Stack[StartFrame].Stack = StackFrame::MemberStack;
+        Stack[StartFrame].StackPointer = Stack[StartFrame]._Method->Code->LocalsSize;
+        print("Running static initializer for class %s\n", clazz.c_str());
+
+        engine.Ignite(&Stack[StartFrame]);
+    }
+
+    Engine::QuietMode = quiet;
+    Debugger::Enabled = debug;
+
+    // Invoke the static method.
 
     int EntryPoint = GivenClass->GetMethodFromDescriptor("EntryPoint", "()I", GivenClass->GetClassName().c_str(), GivenClass);
 
@@ -66,27 +98,27 @@ void StartVM(char* MainFile) {
     }
 
     int StartFrame = 0;
+    
+    for(size_t i = 0; i < StackSize; i++) 
+        StackFrame::MemberStack[i] = 0;
 
     Stack[StartFrame]._Class = GivenClass;
     Stack[StartFrame]._Method = &GivenClass->Methods[EntryPoint];
     Stack[StartFrame].Stack = StackFrame::MemberStack;
     Stack[StartFrame].StackPointer = Stack[StartFrame]._Method->Code->LocalsSize;
-    Stack[StartFrame].Stack[0].object = object;
 
     puts("*****************");
     puts("\n\nStarting Execution\n\n");
     puts("*****************");
 
-    engine._ClassHeap = &heap;
-
     
-    DEBUG(Debugger::SpinOff();)
+    DEBUG(Debugger::SpinOff());
 
     engine.Ignite(&Stack[StartFrame]);
 
     
     // Make sure the thread never dies.
-    DEBUG(Debugger::Rejoin();)
+    DEBUG(Debugger::Rejoin());
 
 }
 

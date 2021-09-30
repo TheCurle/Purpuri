@@ -90,6 +90,8 @@ class ClassHeap {
         bool ClassExists(std::string Name);
         Class* GetClass(std::string Name);
         
+        std::list<std::string> GetAllClasses() { return ClassCache; }
+        
 };
 
 class Class : public ClassFile {

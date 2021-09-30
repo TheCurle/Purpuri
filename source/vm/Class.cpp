@@ -332,7 +332,7 @@ bool Class::ParseFields(const char* &Code) {
 }
 
 uint32_t Class::GetMethodFromDescriptor(const char *MethodName, const char *Descriptor, const char* ClassName, Class *&pClass) {
-    if(Methods == NULL) {
+    if(Methods == nullptr) {
         puts("GetMethodFromDescriptor called too early! Class not initialised yet!");
         return false;
     }
@@ -392,7 +392,6 @@ uint32_t Class::GetMethodFromDescriptor(const char *MethodName, const char *Desc
 }
 
 uint32_t Class::GetClassSize() {
-    if (GetStringConstant(This) == "java/lang/Object") return 0;
     uint32_t Size = FieldsCount * sizeof(Variable);
 
     Class* Super = GetSuper();
@@ -406,10 +405,6 @@ uint32_t Class::GetClassSize() {
 }
 
 uint32_t Class::GetClassFieldCount() {
-    // The parent of all classes has no super.
-    if (GetStringConstant(This) == "java/lang/Object") 
-        return 0;
-
     uint32_t Count = FieldsCount;
 
     Class* Super = GetSuper();
@@ -423,6 +418,9 @@ uint32_t Class::GetClassFieldCount() {
 }
 
 Class* Class::GetSuper() {
+    if(this->GetStringConstant(This) == "java/lang/Object")
+        return NULL;
+
     return _ClassHeap->GetClass(GetSuperName());
 }
 

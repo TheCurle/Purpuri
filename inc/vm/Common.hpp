@@ -32,8 +32,12 @@ class ObjectHeap;
 
 #define SHUTUPUNUSED(X) ((void)X)
 
+#define print(...) \
+    printf(__VA_ARGS__)
+    
 #define printf(...) \
     if(!Engine::QuietMode) printf(__VA_ARGS__)
+
 
 #define puts(x) \
     if(!Engine::QuietMode) puts(x)
