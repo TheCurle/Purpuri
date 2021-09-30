@@ -212,7 +212,7 @@ struct BytecodeListing
     }
 
     // Memory Editor contents only
-    void DrawContents(void* mem_data_void, size_t mem_size, size_t base_display_addr = 0x0000)
+    void DrawContents(void* mem_data_void, size_t mem_size, size_t highlight_addr = 0, size_t base_display_addr = 0x0000)
     {
         if (Cols < 1)
             Cols = 1;
@@ -399,6 +399,13 @@ struct BytecodeListing
                     }
                     else
                     {
+                        ImVec2 pos = ImGui::GetCursorScreenPos();
+                        if (addr == highlight_addr)
+                        {
+                            draw_list->AddRectFilled(pos, ImVec2(pos.x + s.GlyphWidth * 2, pos.y + s.LineHeight), ImGui::GetColorU32(ImGuiCol_FrameBg));
+                            draw_list->AddRectFilled(pos, ImVec2(pos.x + s.GlyphWidth * 2, pos.y + s.LineHeight), ImColor::HSV(206/360, 0.84f, 0.95f));
+                        }
+
                         if (b == 0 && OptGreyOutZeroes)
                             ImGui::TextDisabled("00 ");
                         else
@@ -427,11 +434,12 @@ struct BytecodeListing
                 ImGui::PopID();
                 for (int n = 0; n < Cols && addr < mem_size; n++, addr++)
                 {
-                    if (addr == DataEditingAddr)
+                    if (addr == DataEditingAddr || addr == highlight_addr)
                     {
                         draw_list->AddRectFilled(pos, ImVec2(pos.x + s.GlyphWidth, pos.y + s.LineHeight), ImGui::GetColorU32(ImGuiCol_FrameBg));
-                        draw_list->AddRectFilled(pos, ImVec2(pos.x + s.GlyphWidth, pos.y + s.LineHeight), ImGui::GetColorU32(ImGuiCol_TextSelectedBg));
+                        draw_list->AddRectFilled(pos, ImVec2(pos.x + s.GlyphWidth, pos.y + s.LineHeight), addr == highlight_addr ? (ImU32) ImColor::HSV(206/360, 0.84f, 0.95f) : ImGui::GetColorU32(ImGuiCol_TextSelectedBg));
                     }
+
                     unsigned char c = ReadFn ? ReadFn(mem_data, addr) : mem_data[addr];
                     char display_c = (c < 32 || c >= 128) ? '.' : c;
                     draw_list->AddText(pos, (display_c == c) ? color_text : color_disabled, &display_c, &display_c + 1);
@@ -460,10 +468,11 @@ struct BytecodeListing
                     std::string instr_name = Instruction::GetInstrName(mem_data[s.BytecodeByte]);
                     size_t instr_length = Instruction::GetInstrLength(mem_data[s.BytecodeByte]);
                     
-                    
-                    if (s.BytecodeByte == DataEditingAddr) {
+                    if (s.BytecodeByte == highlight_addr || s.BytecodeByte == DataEditingAddr)
+                    {
                         draw_list->AddRectFilled(pos, ImVec2(pos.x + (s.GlyphWidth * instr_name.size() - 1), pos.y + s.LineHeight), ImGui::GetColorU32(ImGuiCol_FrameBg));
-                        draw_list->AddRectFilled(pos, ImVec2(pos.x + (s.GlyphWidth * instr_name.size() - 1), pos.y + s.LineHeight), ImGui::GetColorU32(ImGuiCol_TextSelectedBg));
+                        draw_list->AddRectFilled(pos, ImVec2(pos.x + (s.GlyphWidth * instr_name.size() - 1), pos.y + s.LineHeight), s.BytecodeByte == highlight_addr ? (ImU32) ImColor::HSV(206/360, 0.84f, 0.95f) : ImGui::GetColorU32(ImGuiCol_TextSelectedBg));
+
                     }
 
                     s.BytecodeByte++;
@@ -475,6 +484,7 @@ struct BytecodeListing
                             draw_list->AddRectFilled(posStart, ImVec2(posStart.x + (s.GlyphWidth * std::to_string(mem_data[addr]).length() - 1), pos.y + s.LineHeight), ImGui::GetColorU32(ImGuiCol_FrameBg));
                             draw_list->AddRectFilled(posStart, ImVec2(posStart.x + (s.GlyphWidth * std::to_string(mem_data[addr]).length() - 1), pos.y + s.LineHeight), ImGui::GetColorU32(ImGuiCol_TextSelectedBg));
                         }
+
                         instr_name = instr_name.append(" ").append(std::to_string(mem_data[s.BytecodeByte]));
                         s.BytecodeByte++;
                         instr_length--;

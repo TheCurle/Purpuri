@@ -147,7 +147,7 @@ void Debugger::CreateBytecode() {
     static BytecodeListing listing;
 
     ImGui::Text("Function: %s", stack->_Class->GetStringConstant(stack->_Method->Name).c_str());
-    listing.DrawContents(stack->_Method->Code->Code, stack->_Method->Code->CodeLength);
+    listing.DrawContents(stack->_Method->Code->Code, stack->_Method->Code->CodeLength, stack->ProgramCounter);
 
     ImGui::End();
 
