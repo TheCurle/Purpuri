@@ -64,23 +64,22 @@ void StartVM(char* MainFile) {
 
     bool quiet = Engine::QuietMode;
     bool debug = Debugger::Enabled;
-    Engine::QuietMode = false;
+    Engine::QuietMode = true;
     Debugger::Enabled = false;
 
-    for(std::string clazz : heap.GetAllClasses()) {
-        Class* iterClass = heap.GetClass(clazz);
-        int init = iterClass->GetMethodFromDescriptor("<clinit>", "()V", clazz.c_str(), iterClass);
+    for(Class* clazz : heap.GetAllClasses()) {
+        int init = clazz->GetMethodFromDescriptor("<clinit>", "()V", clazz->GetClassName().c_str(), clazz);
         // If there's no static initializer, skip
         if(init < 0)
             continue;
 
         int StartFrame = 0;
 
-        Stack[StartFrame]._Class = iterClass;
-        Stack[StartFrame]._Method = &iterClass->Methods[init];
+        Stack[StartFrame]._Class = clazz;
+        Stack[StartFrame]._Method = &clazz->Methods[init];
         Stack[StartFrame].Stack = StackFrame::MemberStack;
         Stack[StartFrame].StackPointer = Stack[StartFrame]._Method->Code->LocalsSize;
-        print("Running static initializer for class %s\n", clazz.c_str());
+        print("Running static initializer for class %s\n", clazz->GetClassName().c_str());
 
         engine.Ignite(&Stack[StartFrame]);
     }
@@ -99,10 +98,12 @@ void StartVM(char* MainFile) {
 
     int StartFrame = 0;
     
+    StackFrame::MemberStack = new Variable[StackSize];
     for(size_t i = 0; i < StackSize; i++) 
         StackFrame::MemberStack[i] = 0;
 
     Stack[StartFrame]._Class = GivenClass;
+    Stack[StartFrame].ProgramCounter = 0;
     Stack[StartFrame]._Method = &GivenClass->Methods[EntryPoint];
     Stack[StartFrame].Stack = StackFrame::MemberStack;
     Stack[StartFrame].StackPointer = Stack[StartFrame]._Method->Code->LocalsSize;
