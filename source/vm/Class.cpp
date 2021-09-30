@@ -111,6 +111,8 @@ bool Class::ParseFullClass() {
 
     FieldsCount = ReadShortFromStream(Code); Code += 2;
 
+    ClassStatics = new Variable[FieldsCount];
+
     if(FieldsCount > 0) {
         ParseFields(Code);
     }
@@ -319,6 +321,11 @@ bool Class::ParseFields(const char* &Code) {
         Fields[i]->Descriptor = ReadShortFromStream(Code); Code += 2;
         Fields[i]->AttributeCount = ReadShortFromStream(Code); Code += 2;
 
+        if(Fields[i]->Access & 0x8) {
+            StaticFieldIndexes.emplace_back(i);
+            PutStatic(i, ObjectHeap::Null);
+        }
+
         if(Fields[i]->AttributeCount > 0) {
             for(int attr = 0; attr < Fields[i]->AttributeCount; attr++) {
                 Code += 2;
@@ -327,6 +334,8 @@ bool Class::ParseFields(const char* &Code) {
             }
         }
     }
+
+    StaticFieldCount = StaticFieldIndexes.size();
 
     return true;
 }

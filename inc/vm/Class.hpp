@@ -32,7 +32,9 @@ class Engine {
 
         bool MethodClassMatches(uint16_t MethodInd, Class* pClass, const char* TestName);
 
+        void PutStatic(StackFrame* Stack);
         void PutField(StackFrame* Stack);
+        void GetStatic(StackFrame* Stack);
         void GetField(StackFrame* Stack);
 
         Variable GetConstant(Class* Class, uint8_t Index);
@@ -85,12 +87,18 @@ class ClassHeap {
         static std::string UnknownClass;
         std::string ClassPrefix;
 
-        bool LoadClass(const char* ClassName, Class* Class);
-        bool AddClass(Class* Class);
+        bool LoadClass(const char* ClassName, Class* pClass);
+        bool AddClass(Class* pClass);
         bool ClassExists(std::string Name);
         Class* GetClass(std::string Name);
-        
-        std::list<std::string> GetAllClasses() { return ClassCache; }
+
+        std::list<Class*> GetAllClasses() { 
+            std::list<Class*> list;
+            for(std::map<std::string,Class*>::iterator it = ClassMap.begin(); it != ClassMap.end(); ++it)
+                list.push_back(it->second);
+
+            return list;
+        }
         
 };
 
@@ -120,6 +128,10 @@ class Class : public ClassFile {
         virtual uint32_t GetClassSize();
         virtual uint32_t GetClassFieldCount();
 
+        
+        bool PutStatic(uint16_t Field, Variable Value);
+        Variable GetStatic(uint16_t Field);
+
         Class* GetSuper();
 
         uint32_t GetMethodFromDescriptor(const char* MethodName, const char* Descriptor, const char* ClassName, Class* &Class);
@@ -137,9 +149,14 @@ class Class : public ClassFile {
         size_t BytecodeLength;
         size_t LoadedLocation;
         const char* Code;
+
         ClassHeap* _ClassHeap;
         uint16_t FieldsCount;
         std::vector<std::string> StringConstants;
+    
+        uint16_t StaticFieldCount;
+        Variable* ClassStatics;
+        std::vector<size_t> StaticFieldIndexes;
 
         bool ParseConstants(const char* &Code);
         uint32_t GetConstantsCount(const char* Constants);

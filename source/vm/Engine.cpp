@@ -149,10 +149,23 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->ProgramCounter += 3;
                 break;
 
+            case Instruction::putstatic:
+                PutStatic(CurrentFrame);
+                CurrentFrame->StackPointer--;
+                CurrentFrame->ProgramCounter += 3;
+                break;
+
             case Instruction::putfield:
                 PutField(CurrentFrame);
                 CurrentFrame->StackPointer -= 2;
                 CurrentFrame->ProgramCounter += 3;
+                break;
+
+            case Instruction::getstatic:
+                GetStatic(CurrentFrame);
+                CurrentFrame->StackPointer++;
+                CurrentFrame->ProgramCounter += 3;
+                printf("Got value %zu.\n", Stack->Stack[Stack->StackPointer].pointerVal);
                 break;
 
             case Instruction::getfield:
@@ -273,10 +286,9 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
 
             case Instruction::ldc:
-                CurrentFrame->Stack[CurrentFrame->StackPointer + 1] = GetConstant(CurrentFrame->_Class, (uint8_t) Code[CurrentFrame->ProgramCounter + 1]);
-                CurrentFrame->StackPointer++;
+                CurrentFrame->Stack[++CurrentFrame->StackPointer] = GetConstant(CurrentFrame->_Class, (uint8_t) Code[CurrentFrame->ProgramCounter + 1]);
                 CurrentFrame->ProgramCounter += 2;
-                printf("Pushed constant %d (0x%zx / %.6f) to the stack\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal);
+                printf("Pushed constant %d (0x%zx / %.6f) to the stack. Below = %zu\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal);
                 break;
 
             case Instruction::ldc2_w:
@@ -698,6 +710,7 @@ void Engine::ANewArray(StackFrame* Stack) {
 }
 
 void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
+    printf("ptr %d, stack - 1 = %zu\n", Stack->StackPointer, Stack->Stack[Stack->StackPointer - 1].pointerVal);
 
     uint16_t MethodIndex = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
 
@@ -752,7 +765,14 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     size_t Parameters = GetParameters(MethodDesc.c_str());
 
     printf("\tMethod has %zu parameters, skipping ahead..\r\n", Parameters);
-    Variable UnderStack = Stack->Stack[Stack->StackPointer - (Parameters + 1)];
+    
+    // Make sure there's no weirdness if all we do is call a function
+    Variable UnderStack;
+    if(Stack->StackPointer <= (Parameters + 1))
+        UnderStack = 0;
+    else
+        UnderStack = Stack->Stack[Stack->StackPointer - (Parameters + 1)];
+
     printf("\tSaved value %zu (object %zu) for restoration\r\n", UnderStack.pointerVal, UnderStack.object.Heap);
 
     std::vector<Variable> ParamList;
@@ -778,7 +798,6 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
             NativeContext Context = { .InvocationMethod = Type, .ClassName = ClassName, .MethodName = MethodName, .MethodDescriptor = MethodDesc, .Parameters = ParamList, .ClassInstance = &ClassInStack.object};
             InvokeNative(Context);
         } catch (NativeReturn& e) {
-            //HandleNativeReturn(CurrentFrame, e);
             printf("Native: %s %zu\n", e.what(), e.Value.pointerVal);
 
             Stack->StackPointer -= ParamList.size();
