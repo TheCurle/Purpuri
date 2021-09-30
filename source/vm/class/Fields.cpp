@@ -8,7 +8,7 @@
 #include <vm/Stack.hpp>
 
 void Engine::PutField(StackFrame* Stack) {
-    printf("Value %zu, object %zu, field %zu\n", Stack->Stack[Stack->StackPointer].pointerVal, Stack->Stack[Stack->StackPointer - 1].pointerVal, 1);
+    printf("Value %zu, object %zu, field %zu\n", Stack->Stack[Stack->StackPointer].pointerVal, Stack->Stack[Stack->StackPointer - 1].pointerVal, (size_t) 1);
 
     uint16_t SearchIndex = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
 
