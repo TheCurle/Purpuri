@@ -47,7 +47,7 @@ Variable* ObjectHeap::GetObjectPtr(Object obj) {
     objIter = ObjectMap.find(obj.Heap);
 
     if(objIter == ObjectMap.end()) {
-        printf("**************\nObject Heap does not contain object %d. Highest object is %d.\n******************\n", obj.Heap, ObjectMap.size());
+        printf("**************\nObject Heap does not contain object %zu. Highest object is %zu.\n******************\n", obj.Heap, ObjectMap.size());
         for(;;);
         return NULL;
     }
@@ -73,7 +73,13 @@ Object ObjectHeap::CreateString(std::string String, ClassHeap *ClassHeap) {
     // Create a new char array
     Object array = CreateArray(5, String.length());
     Variable* data = (Variable*) ObjectMap.at(array.Heap);
-    memcpy(data + 1, String.c_str(), String.length());
+    
+    // Copy the string into the array
+    const char* str = String.c_str();
+    size_t strLen = String.length();
+    for(size_t i = 1; i < strLen; i++)
+        data[i] = str[i - 1];
+
     Var[1].object = array;
 
     return obj;
