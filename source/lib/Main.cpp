@@ -23,8 +23,15 @@ extern "C" void Java_java_vm_Printer_println_Ljava_lang_StringE_V_() {
 
     Object charArray = ClassObj[1].object;
     Variable* data = VM::GetObject(charArray);
+    data++; // Skip the char marker
 
-    printf("%s\n", data + 1);
+    size_t datalen = VM::GetArrayLength(charArray) + 1;
+
+    char text[datalen];
+    for(size_t i = 0; i < datalen; i++)
+        text[i] = data[i].charVal;
+
+    printf("%s\n", text);
     
     VM::Return(10);
 }
