@@ -196,7 +196,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::istore_3:
                 CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter] - Instruction::istore_0] = CurrentFrame->Stack[CurrentFrame->StackPointer--];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled int %d out of the stack into 0\n", CurrentFrame->Stack[CurrentFrame->StackPointer + 1].intVal);
+                printf("Pulled int %d out of the stack into local %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer + 1].intVal, (uint8_t)Code[CurrentFrame->ProgramCounter - 1] - Instruction::istore_0);
                 break;
 
             case Instruction::iload_0:
@@ -850,6 +850,9 @@ uint16_t Engine::GetParameters(const char *Descriptor) {
     size_t Length = strlen(Descriptor);
 
     for(size_t i = 1; i < Length; i++) {
+        if(Descriptor[i] == '[')
+            continue;
+
         if(Descriptor[i] == 'L')
             while(Descriptor[i] != ';')
                 i++;
