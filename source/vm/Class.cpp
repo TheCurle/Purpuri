@@ -381,6 +381,7 @@ uint32_t Class::GetMethodFromDescriptor(const char *MethodName, const char *Desc
 }
 
 uint32_t Class::GetClassSize() {
+    if (GetStringConstant(This) == "java/lang/Object") return 0;
     uint32_t Size = FieldsCount * sizeof(Variable);
 
     Class* Super = GetSuper();
