@@ -97,4 +97,9 @@ class EXPORT VM {
          */
 
         static Variable* GetObject(Object ID);
+
+        /**
+         * Retrieve the length of a Java array.
+         */
+        static size_t GetArrayLength(Object ID);
 };

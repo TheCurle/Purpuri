@@ -33,6 +33,10 @@ Variable* VM::GetObject(Object ID) {
     return Engine::_ObjectHeap.GetObjectPtr(ID);
 }
 
+size_t VM::GetArrayLength(Object ID) {
+    return Engine::_ObjectHeap.GetArraySize(ID);
+}
+
 // Find and replace all instances of a substring inside a std::string
 void ICantBelieveThisIsNeededWithModernCPP(std::string& subject, const std::string& search,
                           const std::string& replace) {
