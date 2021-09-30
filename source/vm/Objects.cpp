@@ -92,7 +92,9 @@ Object ObjectHeap::CreateArray(uint8_t Type, uint32_t Count) {
     object.Type = Type;
 
     if(array) {
-        memset(array, 0, sizeof(Variable) * (Count + 1));
+        for(size_t i = 0; i < Count + 1; i++)
+            array[i] = 0;
+
         object.Heap = NextObjectID++;
         array[0].intVal = Type;
 
@@ -107,7 +109,9 @@ bool ObjectHeap::CreateObjectArray(Class* pClass, uint32_t Count, Object& pObjec
     Variable* array = new Variable[Count];
 
     if(array) {
-        memset(array, 0, sizeof(Variable) * (Count));
+        for(size_t i = 1; i < Count; i++)
+            array[i] = 0;
+            
         array[0].pointerVal = (size_t) pClass;
     } else {
         return false;
