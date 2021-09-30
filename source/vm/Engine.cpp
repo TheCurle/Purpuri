@@ -278,6 +278,21 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                     CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
                 break;
 
+            case Instruction::irem:
+                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal = 
+                    CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal
+                    % CurrentFrame->Stack[CurrentFrame->StackPointer].intVal;
+                CurrentFrame->StackPointer--;
+                CurrentFrame->ProgramCounter++;
+                printf("Modulo'd the last two integers on the stack (result %d)\r\n",
+                    CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                break;
+
+            case Instruction::i2c:
+                CurrentFrame->ProgramCounter++;
+                printf("Int %zu converted to char.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                break;
+
             case Instruction::i2d:
                 Long = CurrentFrame->Stack[CurrentFrame->StackPointer].intVal;
                 CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal = (double) Long;
@@ -517,6 +532,23 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->ProgramCounter += 3;
                 printf("Pushed short %d to the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].shortVal);
                 break;
+
+            case Instruction::ifne: {
+                bool NotEqual = CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal != 0;
+                printf("Comparing: %zd != 0\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Integer equality comparison returned %s\n", NotEqual ? "true" : "false");
+
+                CurrentFrame->StackPointer -= 2;
+
+                if(NotEqual) {
+                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    CurrentFrame->ProgramCounter += Offset;
+                } else {
+                    CurrentFrame->ProgramCounter += 3;
+                }
+                break;
+            }
 
             case Instruction::if_icmpeq: {
                 bool Equal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal == CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
