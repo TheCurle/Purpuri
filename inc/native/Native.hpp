@@ -25,6 +25,18 @@ class Object {
 };
 
 union Variable {
+    Variable(size_t val) {
+        pointerVal = val;
+    }
+
+    Variable(Object obj) {
+        object = obj;
+    }
+
+    Variable() { 
+        pointerVal = 0;
+    }
+    
     uint8_t charVal;
     uint16_t shortVal;
     uint32_t intVal;

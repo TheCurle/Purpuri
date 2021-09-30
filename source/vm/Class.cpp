@@ -134,10 +134,13 @@ void Class::ClassloadReferents(const char* &Code) {
     SHUTUPUNUSED(Code);
 
     printf("Searching for unloaded classes referenced by the current.\n");
-
+    bool NeedsString = false;
     for(int i = 1; i < ConstantCount; i++) {
         if(Constants == NULL) return;
         if(Constants[i] == NULL) continue;
+
+        if(Constants[i]->Tag == TypeString)
+            NeedsString = true;
 
         if(Constants[i]->Tag == TypeClass) {
             char* Temp = (char*)Constants[i];
@@ -159,6 +162,14 @@ void Class::ClassloadReferents(const char* &Code) {
             } else {
                 printf(" - clear\n");
             }
+        }
+    }
+
+    
+    if(NeedsString) {
+        if(!this->_ClassHeap->LoadClass("java/lang/String", new Class)) {
+            printf("Classloading referenced class %s failed. Fatal error.\n", "java/lang/String");
+            exit(6);
         }
     }
 }
