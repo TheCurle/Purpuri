@@ -17,15 +17,15 @@ jobs:
         with:
           platform: x64
 
-      - name: Install OpenGL headers
+      - name: Install OpenGL
         run: |
-          sudo apt-get install libgl1-mesa-dev
+          sudo apt-get install libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev
 
-      - name: Setup
+      - name: Cmake Initialization
         run: |
           cmake ./
 
-      - name: Setup
+      - name: Build
         run: |
           make purpuri
       
