@@ -683,7 +683,7 @@ void Engine::NewArray(StackFrame* Stack) {
     size_t ArrayLength = Stack->Stack[Stack->StackPointer].intVal;
     uint8_t Type = Stack->_Method->Code->Code[Stack->ProgramCounter + 1];
     Stack->Stack[Stack->StackPointer].object = _ObjectHeap.CreateArray(Type, ArrayLength);
-    printf("Initialized a %d-wide array of type %d.\n", ArrayLength, Type);
+    printf("Initialized a %zu-wide array of type %d.\n", ArrayLength, Type);
 }
 
 void Engine::ANewArray(StackFrame* Stack) {
