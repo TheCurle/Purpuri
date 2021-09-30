@@ -17,6 +17,10 @@ jobs:
         with:
           platform: x64
 
+      - name: Install OpenGL headers
+        run: |
+          sudo apt-get install libgl1-mesa-dev
+
       - name: Setup
         run: |
           cmake ./
