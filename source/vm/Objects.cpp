@@ -60,19 +60,21 @@ Object ObjectHeap::CreateString(std::string String, ClassHeap *ClassHeap) {
     obj.Heap = 0;
     obj.Type = 0;
 
+    // Retrieve the String class
     if(ClassHeap == NULL) return obj;
-    
     Class* Class = ClassHeap->GetClass("java/lang/String");
 
+    // Create a new String instance
     if(Class == NULL) return obj;
     obj = CreateObject(Class);
-
     Variable* Var = this->GetObjectPtr(obj);
-
     if(Var == NULL) return obj;
 
-    const char* Str = String.c_str();
-    Var[1].pointerVal = (size_t)(&Str);
+    // Create a new char array
+    Object array = CreateArray(5, String.length());
+    Variable* data = (Variable*) ObjectMap.at(array.Heap);
+    memcpy(data + 1, String.c_str(), String.length());
+    Var[1].object = array;
 
     return obj;
 }
