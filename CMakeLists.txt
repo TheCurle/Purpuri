@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 
 project(purpuri)
 
-find_package(OpenGL REQUIRED)
+find_package(OpenGL)
 
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
@@ -39,5 +39,7 @@ set_target_properties(purpuri PROPERTIES ENABLE_EXPORTS ON)
 target_compile_definitions(purpuri PRIVATE VM_BUILDING)
 target_link_libraries(purpuri PRIVATE sdl opengl32)
 
-add_library(native MODULE ${lib_src})
-target_link_libraries(native PRIVATE purpuri)
+if(OPENGL_FOUND)
+    add_library(native MODULE ${lib_src})
+    target_link_libraries(native PRIVATE purpuri)
+endif()
