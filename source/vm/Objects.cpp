@@ -89,17 +89,17 @@ Object ObjectHeap::CreateArray(uint8_t Type, uint32_t Count) {
         array[0].intVal = Type;
 
         ObjectMap.emplace((size_t) object.Heap, (size_t) array);
-        ArraySizeMap.emplace((size_t) object.Heap, (size_t) Count + 1);
+        ArraySizeMap.emplace((size_t) object.Heap, (size_t) Count);
     }
 
     return object;
 }
 
 bool ObjectHeap::CreateObjectArray(Class* pClass, uint32_t Count, Object& pObject) {
-    Variable* array = new Variable[Count + 1];
+    Variable* array = new Variable[Count];
 
     if(array) {
-        memset(array, 0, sizeof(Variable) * (Count + 1));
+        memset(array, 0, sizeof(Variable) * (Count));
         array[0].pointerVal = (size_t) pClass;
     } else {
         return false;
@@ -108,7 +108,7 @@ bool ObjectHeap::CreateObjectArray(Class* pClass, uint32_t Count, Object& pObjec
     pObject.Heap = NextObjectID++;
 
     ObjectMap.emplace((size_t) pObject.Heap, (size_t) array);
-    ArraySizeMap.emplace((size_t) pObject.Heap, (size_t) Count + 1);
+    ArraySizeMap.emplace((size_t) pObject.Heap, (size_t) Count);
     return true;
 }
 
