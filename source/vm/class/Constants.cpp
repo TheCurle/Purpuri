@@ -78,7 +78,7 @@ bool Class::ParseConstants(const char *&Code) {
             case TypeLong: {
                 Temp = (char*)Constants[i];
                 size_t val = ReadLongFromStream(Temp + 1);
-                printf("%d:\tValue %zd\n", i, val);
+                printf("%d:\tValue " PrtInt64 "\n", i, val);
                 break;
             }
 

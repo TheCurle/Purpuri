@@ -190,7 +190,7 @@ bool Class::ParseAttribs(const char *&Code) {
         Code += AttrLength;
 
         //GetStringConstant(AttrName, Name);
-        printf("\tAttribute has id %d, length %zu\n", AttrName, AttrLength);
+        printf("\tAttribute has id %d, length " PrtSizeT "\n", AttrName, AttrLength);
             
     }
 
@@ -244,7 +244,7 @@ bool Class::ParseMethods(const char *&Code) {
                 
                 std::string AttrName = GetStringConstant(AttrNameInd);
 
-                printf("\tAttribute has name %s, length %zu\n", AttrName.c_str(), AttrLength);
+                printf("\tAttribute has name %s, length " PrtSizeT "\n", AttrName.c_str(), AttrLength);
             }
 
             Methods[i].Code = new CodePoint;

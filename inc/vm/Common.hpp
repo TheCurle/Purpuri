@@ -20,6 +20,16 @@ class ClassHeap;
 class StackFrame;
 class ObjectHeap;
 
+#ifdef __linux__
+    #define PrtSizeT "%llu"
+    #define PrtInt64 "%lld"
+    #define PrtHex64 "%llx"
+#elif __WIN32
+    #define PrtSizeT "%zu"
+    #define PrtInt64 "%zd"
+    #define PrtHex64 "%zx"
+#endif
+
 #define ReadLongFromStream(Stream) \
         (size_t) ( (((size_t) ReadIntFromStream(Stream) << 32) & 0xFFFFFFFF00000000) | ((size_t) ReadIntFromStream(Stream + 4) & 0x00000000FFFFFFFF))
 

@@ -47,7 +47,7 @@ Variable* ObjectHeap::GetObjectPtr(Object obj) {
     objIter = ObjectMap.find(obj.Heap);
 
     if(objIter == ObjectMap.end()) {
-        printf("******************\nObject Heap does not contain object %zu. Highest object is %zu.\n******************\n", obj.Heap, ObjectMap.size());
+        printf("******************\nObject Heap does not contain object " PrtSizeT ". Highest object is " PrtSizeT ".\n******************\n", obj.Heap, ObjectMap.size());
         for(;;);
         return NULL;
     }

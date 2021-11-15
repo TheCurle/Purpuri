@@ -101,7 +101,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::arraylength:
                 CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal
                     = _ObjectHeap.GetArraySize(CurrentFrame->Stack[CurrentFrame->StackPointer].object);
-                printf("Got the size %zu from the array just pushed.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Got the size " PrtSizeT " from the array just pushed.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 CurrentFrame->ProgramCounter++;
                 break;
 
@@ -165,20 +165,20 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 GetStatic(CurrentFrame);
                 CurrentFrame->StackPointer++;
                 CurrentFrame->ProgramCounter += 3;
-                printf("Got value %zu.\n", Stack->Stack[Stack->StackPointer].pointerVal);
+                printf("Got value " PrtSizeT ".\n", Stack->Stack[Stack->StackPointer].pointerVal);
                 break;
 
             case Instruction::getfield:
                 GetField(CurrentFrame);
                 CurrentFrame->ProgramCounter += 3;
-                printf("Retrieved value %zu from field.\r\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Retrieved value " PrtSizeT " from field.\r\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 break;
 
             case Instruction::istore:
             case Instruction::lstore:
 			    CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter + 1]] =
                     CurrentFrame->Stack[CurrentFrame->StackPointer--];
-                printf("Stored value %zu in local %d.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, Code[CurrentFrame->ProgramCounter + 1]);
+                printf("Stored value " PrtSizeT " in local %d.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, Code[CurrentFrame->ProgramCounter + 1]);
 		    	CurrentFrame->ProgramCounter += 2;
 			    break;
 
@@ -233,7 +233,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->Stack[CurrentFrame->StackPointer - 1] =
                     _ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 1].object)
                         [CurrentFrame->Stack[CurrentFrame->StackPointer].intVal + 1];
-                printf("Pulled value %zu (%.6f) out of the %zuth entry of array object %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].object.Heap);
+                printf("Pulled value " PrtSizeT " (%.6f) out of the " PrtSizeT "th entry of array object " PrtSizeT "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].object.Heap);
 			    CurrentFrame->StackPointer--;
 			    CurrentFrame->ProgramCounter++;
 			    break;
@@ -290,20 +290,20 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case Instruction::i2c:
                 CurrentFrame->ProgramCounter++;
-                printf("Int %zu converted to char.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Int " PrtSizeT " converted to char.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 break;
 
             case Instruction::i2d:
                 Long = CurrentFrame->Stack[CurrentFrame->StackPointer].intVal;
                 CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal = (double) Long;
                 CurrentFrame->ProgramCounter++;
-                printf("Convert int %zu to double %.6f\n", Long, CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
+                printf("Convert int " PrtSizeT " to double %.6f\n", Long, CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
                 break;
 
             case Instruction::ldc:
                 CurrentFrame->Stack[++CurrentFrame->StackPointer] = GetConstant(CurrentFrame->_Class, (uint8_t) Code[CurrentFrame->ProgramCounter + 1]);
                 CurrentFrame->ProgramCounter += 2;
-                printf("Pushed constant %d (0x%zx / %.6f) to the stack. Below = %zu\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal);
+                printf("Pushed constant %d (0x" PrtHex64 " / %.6f) to the stack. Below = " PrtSizeT "\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal);
                 break;
 
             case Instruction::ldc2_w:
@@ -312,7 +312,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal = ReadLongFromStream(&((char *)Class->Constants[Index])[1]);
                 CurrentFrame->ProgramCounter += 3;
 
-                printf("Pushed constant %d of type %d, value 0x%zx / %.6f onto the stack\n", Index, Class->Constants[Index]->Tag, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
+                printf("Pushed constant %d of type %d, value 0x" PrtHex64 " / %.6f onto the stack\n", Index, Class->Constants[Index]->Tag, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
                 break;
 
             case Instruction::ddiv: {
@@ -373,7 +373,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 CurrentFrame->StackPointer++;
                 CurrentFrame->Stack[CurrentFrame->StackPointer] = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - Instruction::aload_0];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled object %zu out of local %d into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].object.Heap, Code[CurrentFrame->ProgramCounter - 1] - Instruction::aload_0);
+                printf("Pulled object " PrtSizeT " out of local %d into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].object.Heap, Code[CurrentFrame->ProgramCounter - 1] - Instruction::aload_0);
                 break;
 
             case Instruction::astore_0:
@@ -391,7 +391,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 			    _ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object)
                     [CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1] =
                         CurrentFrame->Stack[CurrentFrame->StackPointer];
-                printf("Stored reference %d into the %zuth entry of array object %zu.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
+                printf("Stored reference %d into the " PrtSizeT "th entry of array object " PrtSizeT ".\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
 			    CurrentFrame->StackPointer -= 3;
 			    CurrentFrame->ProgramCounter++;
 			    break;
@@ -404,7 +404,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             	_ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object)
                     [CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1] =
                         CurrentFrame->Stack[CurrentFrame->StackPointer];
-                printf("Stored number %d into the %zuth entry of array object %zu.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
+                printf("Stored number %d into the " PrtSizeT "th entry of array object " PrtSizeT ".\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
 			    CurrentFrame->StackPointer -= 3;
 			    CurrentFrame->ProgramCounter++;
 			    break;
@@ -414,7 +414,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 _ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object)
                     [CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1] =
                         CurrentFrame->Stack[CurrentFrame->StackPointer];
-                printf("Stored number (%.6f) into the %zuth entry of array object %zu.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
+                printf("Stored number (%.6f) into the " PrtSizeT "th entry of array object " PrtSizeT ".\n", CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
 			    CurrentFrame->StackPointer -= 3;
 			    CurrentFrame->ProgramCounter++;
 			    break;
@@ -535,7 +535,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case Instruction::ifne: {
                 bool NotEqual = CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal != 0;
-                printf("Comparing: %zd != 0\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: " PrtInt64 " != 0\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer equality comparison returned %s\n", NotEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -552,7 +552,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case Instruction::if_icmpeq: {
                 bool Equal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal == CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %zd == %zd\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: " PrtInt64 " == " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer equality comparison returned %s\n", Equal ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -569,7 +569,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case Instruction::if_icmpne: {
                 bool NotEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal != CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %zd != %zd\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: " PrtInt64 " != " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer inequality comparison returned %s\n", NotEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -586,7 +586,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case Instruction::if_icmpgt: {
                 bool GreaterThan = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal > CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %zu > %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: " PrtInt64 " > " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer greater-than comparison returned %s\n", GreaterThan ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -603,7 +603,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case Instruction::if_icmplt: {
                 bool LessThan = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal < CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %zu < %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: " PrtInt64 " < " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer less-than comparison returned %s\n", LessThan ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -620,7 +620,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case Instruction::if_icmpge: {
                 bool GreaterEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal >= CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %zu >= %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: " PrtInt64 " >= " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer greater-than-or-equal comparison returned %s\n", GreaterEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -637,7 +637,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case Instruction::if_icmple: {
                 bool LessEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal <= CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: %zu <= %zu\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Comparing: " PrtInt64 " <= " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
                 printf("Integer less-than-or-equal comparison returned %s\n", LessEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -718,7 +718,7 @@ int Engine::New(StackFrame *Stack) {
     if(newObj == ObjectHeap::Null)
         return false;
 
-    printf("New object is in ObjectHeap position %zu.\n", newObj.Heap);
+    printf("New object is in ObjectHeap position " PrtSizeT ".\n", newObj.Heap);
     Stack->Stack[Stack->StackPointer].object = newObj;
     return true;
 }
@@ -727,7 +727,7 @@ void Engine::NewArray(StackFrame* Stack) {
     size_t ArrayLength = Stack->Stack[Stack->StackPointer].intVal;
     uint8_t Type = Stack->_Method->Code->Code[Stack->ProgramCounter + 1];
     Stack->Stack[Stack->StackPointer].object = _ObjectHeap.CreateArray(Type, ArrayLength);
-    printf("Initialized a %zu-wide array of type %d.\n", ArrayLength, Type);
+    printf("Initialized a " PrtSizeT "-wide array of type %d.\n", ArrayLength, Type);
 }
 
 void Engine::ANewArray(StackFrame* Stack) {
@@ -742,7 +742,7 @@ void Engine::ANewArray(StackFrame* Stack) {
 }
 
 void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
-    printf("ptr %d, stack - 1 = %zu\n", Stack->StackPointer, Stack->Stack[Stack->StackPointer - 1].pointerVal);
+    printf("ptr %d, stack - 1 = " PrtSizeT "\n", Stack->StackPointer, Stack->Stack[Stack->StackPointer - 1].pointerVal);
 
     uint16_t MethodIndex = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
 
@@ -796,7 +796,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     printf("\tInvocation resolves to method %s%s\n", MethodName.c_str(), MethodDesc.c_str());
     size_t Parameters = GetParameters(MethodDesc.c_str());
 
-    printf("\tMethod has %zu parameters, skipping ahead..\r\n", Parameters);
+    printf("\tMethod has " PrtSizeT " parameters, skipping ahead..\r\n", Parameters);
     
     // Make sure there's no weirdness if all we do is call a function
     Variable UnderStack;
@@ -805,20 +805,20 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     else
         UnderStack = Stack->Stack[Stack->StackPointer - (Parameters + 1)];
 
-    printf("\tSaved value %zu (object %zu) for restoration\r\n", UnderStack.pointerVal, UnderStack.object.Heap);
+    printf("\tSaved value " PrtSizeT " (object " PrtSizeT ") for restoration\r\n", UnderStack.pointerVal, UnderStack.object.Heap);
 
     std::vector<Variable> ParamList;
 
     for(size_t i = 0; i < Parameters; i++) {
-        printf("\t\tParameter %zu = %zu\r\n", i, Stack->Stack[Stack->StackPointer - i].pointerVal);
+        printf("\t\tParameter " PrtSizeT " = " PrtSizeT "\r\n", i, Stack->Stack[Stack->StackPointer - i].pointerVal);
         ParamList.push_back(Stack->Stack[Stack->StackPointer - i]);
     }
 
     Variable ClassInStack = Stack->Stack[Stack->StackPointer - Parameters];
-    printf("\tClass to invoke is object #%zu.\r\n", ClassInStack.object.Heap);
+    printf("\tClass to invoke is object #" PrtSizeT ".\r\n", ClassInStack.object.Heap);
 
     Variable* ObjectFromHeap = _ObjectHeap.GetObjectPtr(ClassInStack.object);
-    printf("\tClass at 0x%zx.\r\n", ObjectFromHeap->pointerVal);
+    printf("\tClass at 0x" PrtHex64 ".\r\n", ObjectFromHeap->pointerVal);
     class Class* VirtualClass = (class Class*) ObjectFromHeap->pointerVal;
 
     int MethodInClassIndex = VirtualClass->GetMethodFromDescriptor(MethodName.c_str(), MethodDesc.c_str(), ClassName.c_str(), VirtualClass);
@@ -830,7 +830,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
             NativeContext Context = { .InvocationMethod = Type, .ClassName = ClassName, .MethodName = MethodName, .MethodDescriptor = MethodDesc, .Parameters = ParamList, .ClassInstance = &ClassInStack.object};
             InvokeNative(Context);
         } catch (NativeReturn& e) {
-            printf("Native: %s %zu\n", e.what(), e.Value.pointerVal);
+            printf("Native: %s " PrtSizeT "\n", e.what(), e.Value.pointerVal);
 
             Stack->StackPointer -= ParamList.size();
 
@@ -859,17 +859,17 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     printf("\tSetting locals..\r\n");
     // If non static, set "this"
     if(!(Stack[1]._Method->Access & 0x8)) {
-        printf("\tSetting \"this\" to %zu.\r\n", ClassInStack.object.Heap);
+        printf("\tSetting \"this\" to " PrtSizeT ".\r\n", ClassInStack.object.Heap);
         Stack[1].Stack[ParameterCount] = ClassInStack;
         ParameterCount++;
     }
 
     for(size_t i = ParameterCount; i < Parameters; i++) {
         Stack[1].Stack[i] = Stack->Stack[Stack->StackPointer - (i - 1)];
-        printf("\tSetting local %zu to %zu.\r\n", i, Stack[1].Stack[i].pointerVal);
+        printf("\tSetting local " PrtSizeT " to " PrtSizeT ".\r\n", i, Stack[1].Stack[i].pointerVal);
     }
 
-    printf("\tFunction's parameters start at %zu.\r\n", Parameters);
+    printf("\tFunction's parameters start at " PrtSizeT ".\r\n", Parameters);
 
     Stack[1].StackPointer = Parameters;
 
@@ -883,16 +883,16 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
 
     Stack->StackPointer -= Parameters;
 
-    printf("Shrinking the stack by %zu positions.\r\n", Parameters);
+    printf("Shrinking the stack by " PrtSizeT " positions.\r\n", Parameters);
 
     int Offset = 0;
     if(MethodDesc.find(")V") == std::string::npos) {
         Stack->Stack[Stack->StackPointer] = ReturnValue;
-        printf("Pushing function return value, %zu\r\n", ReturnValue.pointerVal);
+        printf("Pushing function return value, " PrtSizeT "\r\n", ReturnValue.pointerVal);
         Offset--; // Make Offset -1, so that the line below works with return.
     }
     Stack->Stack[Stack->StackPointer + Offset] = UnderStack;
-    printf("Restoring the value %zu under the function, just in case.\r\n", UnderStack.pointerVal);
+    printf("Restoring the value " PrtSizeT " under the function, just in case.\r\n", UnderStack.pointerVal);
 
 }
 
