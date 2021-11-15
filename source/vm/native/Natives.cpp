@@ -11,7 +11,10 @@
     #undef GetClassName
     #undef LoadLibrary
     #undef GetObject
+#elif linux
+    #include <dlfcn.h>
 #endif
+
 #include <regex>
 
 std::map<std::string, void*> Native::LibraryHandleMap;
@@ -80,14 +83,20 @@ std::string Native::EncodeName(NativeContext Context) {
 
 void* Native::LoadLibrary(std::string LibraryName) {
     #ifdef WIN32
-        void* Handle = LoadLibraryA(LibraryName.c_str());
+        void* Handle = LoadLibraryA(LibraryName.c_str());    
+    #elif linux
+        void* Handle = dlopen(LibraryName.c_str(), RTLD_NOW | RTLD_LOCAL);
+    #endif
+
         LibraryHandleMap.emplace(LibraryName, Handle);
         return Handle;
-    #endif
+
 }
 
 function_t Native::LoadSymbol(std::string LibraryName, std::string SymbolName) {
     #ifdef WIN32
         return GetProcAddress((HMODULE) LibraryHandleMap.at(LibraryName), SymbolName.c_str());
+    #elif linux
+        return function_t(dlsym(LibraryHandleMap.at(LibraryName), SymbolName.c_str()));
     #endif
 }

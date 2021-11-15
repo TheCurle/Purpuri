@@ -40,9 +40,15 @@ void Engine::InvokeNative(NativeContext Context) {
     printf("Function %s%s from class %s wants to call to function %s.\n", Context.MethodName.c_str(), Context.MethodDescriptor.c_str(), Context.ClassName.c_str(), FunctionName.c_str());
 
     Native::Parameters = Context.Parameters;
-    Native::LoadLibrary(NATIVES "\\libnative.dll");
+    #ifdef WIN32
+        #define EXT ".dll"
+    #elif linux
+        #define EXT ".so"
+    #endif
+
+    Native::LoadLibrary(NATIVES "\\libnative" EXT);
     
-    auto func = Native::LoadSymbol(NATIVES "\\libnative.dll", FunctionName.c_str());
+    auto func = Native::LoadSymbol(NATIVES "\\libnative" EXT, FunctionName.c_str());
 
     if(func == nullptr) {
         printf("\n\n*************\n*************\n*************\nFunction %s does not exist in any loaded library.\n*************\n*************\n*************\n", FunctionName.c_str());

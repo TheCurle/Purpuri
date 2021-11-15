@@ -140,8 +140,13 @@ int main(int argc, char* argv[]) {
             // Finally, identify what option is being invoked.
             switch(argv[i][j]) {
                 case 'd':
-                    // Debug Stuff.
-                    Debugger::Enabled = true;
+                    #ifndef VISUAL_DEBUGGER
+                        printf("Purpuri was compiled without Debugging features. Recompile with -DDEBUGGER to enable it.\n");
+                    #else
+                        // Debug Stuff.
+                        Debugger::Enabled = true;
+                    #endif
+
                     break;
 
                 case 'q':

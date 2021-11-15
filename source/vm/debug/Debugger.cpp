@@ -11,16 +11,19 @@
 #undef __MINGW32__
 #endif
 
+#include <stdio.h>
+
+#ifdef VISUAL_DEBUGGER
 #include <vm/debug/imgui/imgui.h>
 #include <vm/debug/imgui/imgui_memedit.h>
 #include <vm/debug/imgui/imgui_impl_sdl.h>
 #include <vm/debug/imgui/imgui_impl_opengl3.h>
-#include <stdio.h>
 #include <vm/debug/SDL2/SDL.h>
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <vm/debug/SDL2/SDL_opengles2.h>
 #else
 #include <vm/debug/SDL2/SDL_opengl.h>
+#endif
 #endif
 
 /** Main Thread Variables **/
@@ -68,6 +71,17 @@ void Debugger::SpinOff() {
 void Debugger::Rejoin() {
     Debugger::Thread.join();
 }
+
+#ifndef VISUAL_DEBUGGER
+
+void Debugger::SetupWindow() {}
+void Debugger::ShutdownWindow() {}
+void Debugger::CreateBytecode() {}
+void Debugger::CreateStack() {}
+bool Debugger::VerifyOpen() { return false; }
+void Debugger::RenderFrame() {}
+
+#else
 
 /** Debugger Thread Variables **/
 SDL_WindowFlags window_flags;
@@ -225,3 +239,5 @@ void Debugger::RenderFrame() {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     SDL_GL_SwapWindow(window);
 }
+
+#endif
