@@ -184,7 +184,7 @@ void Debugger::CreateStack() {
         Variable item = stack->Stack[i];
         ImGui::Text("Stack Index %d", i);
         if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Char: %d\nShort: %d\nInt: %d\nLong: " PrtSizeT "\nFloat: %.6f\nDouble: %.6f\nObject: " PrtSizeT "\n",
+            ImGui::SetTooltip("Char: %d\nShort: %d\nInt: %d\nLong: %llu\nFloat: %.6f\nDouble: %.6f\nObject: %llu\n",
                          item.charVal, item.shortVal, item.intVal, item.pointerVal, item.floatVal, item.doubleVal, item.object.Heap);
     }
 
@@ -193,7 +193,7 @@ void Debugger::CreateStack() {
     if(ImGui::Button("Dump Stack")) {
         for (uint16_t i = 0; i < stack->StackPointer; i++) {
             Variable item = stack->Stack[i];
-            printf("\t[DEBUG] Stack index %d:\n\t\tInt: %d, Long: " PrtSizeT ", Float: %.6f, Double: %.6f, Object: " PrtSizeT " / %d\n",
+            printf("\t[DEBUG] Stack index %d:\n\t\tInt: %d, Long: %llu, Float: %.6f, Double: %.6f, Object: %llu / %d\n",
                                            i,           item.intVal, 
                                                                   item.pointerVal, 
                                                                             item.floatVal,  item.doubleVal, 

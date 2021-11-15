@@ -14,7 +14,9 @@ void DisplayUsage(char* Name) {
     fprintf(stderr, "Purpuri VM v1.6 - Gemwire Institute\n");
     fprintf(stderr, "***************************************\n");
     fprintf(stderr, "Usage: %s <class file>\n", Name);
-    fprintf(stderr, "          -d: Enable Visual Debugger\n");
+    #ifdef VISUAL_DEBUGGER
+        fprintf(stderr, "          -d: Enable Visual Debugger\n");
+    #endif
     fprintf(stderr, "          -q: Enable Quiet Mode\n");
     fprintf(stderr, "\n16:50 25/02/21 Curle\n");
 }
