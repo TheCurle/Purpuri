@@ -22,6 +22,15 @@ using ptr = T *;
 #define NATIVES \
     "./bin/"
 
+#define PEEK \
+    CurrentFrame->Stack[CurrentFrame->StackPointer]
+
+#define UNDER \
+    CurrentFrame->Stack[CurrentFrame->StackPointer - 1]
+
+#define OVER \
+    CurrentFrame->Stack[CurrentFrame->StackPointer + 1]
+
 
 Variable* StackFrame::MemberStack;
 StackFrame* StackFrame::FrameBase;
@@ -92,7 +101,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 puts("Function returns"); return 0;
 
             case Instruction::ireturn:
-                fprintf(stderr, "\n******************\n\nFunction returned value %d\n\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                fprintf(stderr, "\n******************\n\nFunction returned value %d\n\n", PEEK.intVal);
                 return 0;
 
             case Instruction::_new:
@@ -105,9 +114,9 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
 
             case Instruction::arraylength:
-                CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal
-                    = _ObjectHeap.GetArraySize(CurrentFrame->Stack[CurrentFrame->StackPointer].object);
-                printf("Got the size " PrtSizeT " from the array just pushed.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                PEEK.pointerVal
+                    = _ObjectHeap.GetArraySize(PEEK.object);
+                printf("Got the size " PrtSizeT " from the array just pushed.\n", PEEK.pointerVal);
                 CurrentFrame->ProgramCounter++;
                 break;
 
@@ -125,11 +134,11 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 break;
 
             case Instruction::bcdup:
-                CurrentFrame->Stack[CurrentFrame->StackPointer + 1] =
-                    CurrentFrame->Stack[CurrentFrame->StackPointer];
+                OVER =
+                    PEEK;
                 // pre-emptive strike on weirdness
-                CurrentFrame->Stack[CurrentFrame->StackPointer].object =
-                    CurrentFrame->Stack[CurrentFrame->StackPointer + 1].object;
+                PEEK.object =
+                    OVER.object;
                 CurrentFrame->StackPointer++;
                 CurrentFrame->ProgramCounter++;
                 printf("Duplicated the last item on the stack\n");
@@ -177,14 +186,14 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::getfield:
                 GetField(CurrentFrame);
                 CurrentFrame->ProgramCounter += 3;
-                printf("Retrieved value " PrtSizeT " from field.\r\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Retrieved value " PrtSizeT " from field.\r\n", PEEK.pointerVal);
                 break;
 
             case Instruction::istore:
             case Instruction::lstore:
 			    CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter + 1]] =
                     CurrentFrame->Stack[CurrentFrame->StackPointer--];
-                printf("Stored value " PrtSizeT " in local %d.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, Code[CurrentFrame->ProgramCounter + 1]);
+                printf("Stored value " PrtSizeT " in local %d.\n", PEEK.pointerVal, Code[CurrentFrame->ProgramCounter + 1]);
 		    	CurrentFrame->ProgramCounter += 2;
 			    break;
 
@@ -192,7 +201,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::dstore:
 			    CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter + 1]] =
                     CurrentFrame->Stack[CurrentFrame->StackPointer--];
-                printf("Stored value %.6f in local %d.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal, Code[CurrentFrame->ProgramCounter + 1]);
+                printf("Stored value %.6f in local %d.\n", PEEK.doubleVal, Code[CurrentFrame->ProgramCounter + 1]);
 		    	CurrentFrame->ProgramCounter += 2;
 			    break;
 
@@ -204,9 +213,9 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::iconst_4:
             case Instruction::iconst_5:
                 CurrentFrame->StackPointer++;
-                CurrentFrame->Stack[CurrentFrame->StackPointer].intVal = (uint8_t) Code[CurrentFrame->ProgramCounter] - Instruction::iconst_0;
+                PEEK.intVal = (uint8_t) Code[CurrentFrame->ProgramCounter] - Instruction::iconst_0;
                 CurrentFrame->ProgramCounter++;
-                printf("Pushed int constant %d to the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                printf("Pushed int constant %d to the stack\n", PEEK.intVal);
                 break;
 
             case Instruction::istore_0:
@@ -215,7 +224,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::istore_3:
                 CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter] - Instruction::istore_0] = CurrentFrame->Stack[CurrentFrame->StackPointer--];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled int %d out of the stack into local %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer + 1].intVal, (uint8_t)Code[CurrentFrame->ProgramCounter - 1] - Instruction::istore_0);
+                printf("Pulled int %d out of the stack into local %d\n", OVER.intVal, (uint8_t)Code[CurrentFrame->ProgramCounter - 1] - Instruction::istore_0);
                 break;
 
             case Instruction::iload_0:
@@ -223,9 +232,9 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::iload_2:
             case Instruction::iload_3:
                 CurrentFrame->StackPointer++;
-                CurrentFrame->Stack[CurrentFrame->StackPointer] = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - Instruction::iload_0];
+                PEEK = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - Instruction::iload_0];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled int %d out of local %d into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, Code[CurrentFrame->ProgramCounter - 1] - Instruction::iload_0);
+                printf("Pulled int %d out of local %d into the stack\n", PEEK.intVal, Code[CurrentFrame->ProgramCounter - 1] - Instruction::iload_0);
                 break;
 
             case Instruction::aaload:
@@ -236,10 +245,10 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::laload:
             case Instruction::faload:
             case Instruction::daload:
-                CurrentFrame->Stack[CurrentFrame->StackPointer - 1] =
-                    _ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 1].object)
-                        [CurrentFrame->Stack[CurrentFrame->StackPointer].intVal + 1];
-                printf("Pulled value " PrtSizeT " (%.6f) out of the " PrtSizeT "th entry of array object " PrtSizeT "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].object.Heap);
+                UNDER =
+                    _ObjectHeap.GetObjectPtr(UNDER.object)
+                        [PEEK.intVal + 1];
+                printf("Pulled value " PrtSizeT " (%.6f) out of the " PrtSizeT "th entry of array object " PrtSizeT "\n", UNDER.pointerVal, UNDER.floatVal, (size_t) PEEK.intVal + 1, UNDER.object.Heap);
 			    CurrentFrame->StackPointer--;
 			    CurrentFrame->ProgramCounter++;
 			    break;
@@ -249,83 +258,83 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::fload_2:
             case Instruction::fload_3:
                 CurrentFrame->StackPointer++;
-                CurrentFrame->Stack[CurrentFrame->StackPointer] = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - Instruction::fload_0];
+                PEEK = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - Instruction::fload_0];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled float %.6f out of local %d into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal, Code[CurrentFrame->ProgramCounter - 1] - Instruction::fload_0);
+                printf("Pulled float %.6f out of local %d into the stack\n", PEEK.floatVal, Code[CurrentFrame->ProgramCounter - 1] - Instruction::fload_0);
                 break;
 
             case Instruction::imul:
-                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal = 
-                    CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal
-                    * CurrentFrame->Stack[CurrentFrame->StackPointer].intVal;
+                UNDER.intVal = 
+                    UNDER.intVal
+                    * PEEK.intVal;
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
-                printf("Multiplied the last two integers on the stack (result %d)\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                printf("Multiplied the last two integers on the stack (result %d)\n", PEEK.intVal);
                 break;
 
             case Instruction::iadd:
-                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal = 
-                    CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal
-                    + CurrentFrame->Stack[CurrentFrame->StackPointer].intVal;
+                UNDER.intVal = 
+                    UNDER.intVal
+                    + PEEK.intVal;
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
-                printf("Added the last two integers on the stack (%d + %d = %d)\r\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer].intVal - CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                printf("Added the last two integers on the stack (%d + %d = %d)\r\n", UNDER.intVal, PEEK.intVal - UNDER.intVal, PEEK.intVal);
                 break;
 
             case Instruction::isub:
-                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal = 
-                    CurrentFrame->Stack[CurrentFrame->StackPointer].intVal
-                    - CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal;
+                UNDER.intVal = 
+                    PEEK.intVal
+                    - UNDER.intVal;
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
                 printf("Subtracted the last two integers on the stack (%d - %d = %d)\r\n", 
-                    CurrentFrame->Stack[CurrentFrame->StackPointer + 1].intVal, 
-                    CurrentFrame->Stack[CurrentFrame->StackPointer + 1].intVal - CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, 
-                    CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                    OVER.intVal, 
+                    OVER.intVal - PEEK.intVal, 
+                    PEEK.intVal);
                 break;
 
             case Instruction::irem:
-                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal = 
-                    CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal
-                    % CurrentFrame->Stack[CurrentFrame->StackPointer].intVal;
+                UNDER.intVal = 
+                    UNDER.intVal
+                    % PEEK.intVal;
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
                 printf("Modulo'd the last two integers on the stack (result %d)\r\n",
-                    CurrentFrame->Stack[CurrentFrame->StackPointer].intVal);
+                    PEEK.intVal);
                 break;
 
             case Instruction::i2c:
                 CurrentFrame->ProgramCounter++;
-                printf("Int " PrtSizeT " converted to char.\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                printf("Int " PrtSizeT " converted to char.\n", PEEK.pointerVal);
                 break;
 
             case Instruction::i2d:
-                Long = CurrentFrame->Stack[CurrentFrame->StackPointer].intVal;
-                CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal = (double) Long;
+                Long = PEEK.intVal;
+                PEEK.doubleVal = (double) Long;
                 CurrentFrame->ProgramCounter++;
-                printf("Convert int " PrtSizeT " to double %.6f\n", Long, CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
+                printf("Convert int " PrtSizeT " to double %.6f\n", Long, PEEK.doubleVal);
                 break;
 
             case Instruction::ldc:
                 CurrentFrame->Stack[++CurrentFrame->StackPointer] = GetConstant(CurrentFrame->_Class, (uint8_t) Code[CurrentFrame->ProgramCounter + 1]);
                 CurrentFrame->ProgramCounter += 2;
-                printf("Pushed constant %d (0x" PrtHex64 " / %.6f) to the stack. Below = " PrtSizeT "\n", Code[CurrentFrame->ProgramCounter - 1], CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal);
+                printf("Pushed constant %d (0x" PrtHex64 " / %.6f) to the stack. Below = " PrtSizeT "\n", Code[CurrentFrame->ProgramCounter - 1], PEEK.pointerVal, PEEK.floatVal, UNDER.pointerVal);
                 break;
 
             case Instruction::ldc2_w:
                 Index = ReadShortFromStream(&Code[CurrentFrame->ProgramCounter + 1]);
                 CurrentFrame->StackPointer++;
-                CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal = ReadLongFromStream(&((char *)Class->Constants[Index])[1]);
+                PEEK.pointerVal = ReadLongFromStream(&((char *)Class->Constants[Index])[1]);
                 CurrentFrame->ProgramCounter += 3;
 
-                printf("Pushed constant %d of type %d, value 0x" PrtHex64 " / %.6f onto the stack\n", Index, Class->Constants[Index]->Tag, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
+                printf("Pushed constant %d of type %d, value 0x" PrtHex64 " / %.6f onto the stack\n", Index, Class->Constants[Index]->Tag, PEEK.pointerVal, PEEK.doubleVal);
                 break;
 
             case Instruction::ddiv: {
-                double topVal = CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal;
-                double underVal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].doubleVal;
+                double topVal = PEEK.doubleVal;
+                double underVal = UNDER.doubleVal;
                 double res = topVal / underVal;
-                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].doubleVal = res;
+                UNDER.doubleVal = res;
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
                 printf("Divided the last two doubles on the stack (%.6f / %.6f = %.6f)\n", topVal, underVal, res);
@@ -333,10 +342,10 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case Instruction::_fdiv: {
-                float topVal = CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal;
-                float underVal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal;
+                float topVal = PEEK.floatVal;
+                float underVal = UNDER.floatVal;
                 float res = topVal / underVal;
-                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal = res;
+                UNDER.floatVal = res;
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
                 printf("Divided the last two floats on the stack (%.6f / %.6f = %.6f)\n", topVal, underVal, res);
@@ -349,7 +358,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::dstore_3:
                 CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter] - Instruction::dstore_0] = CurrentFrame->Stack[CurrentFrame->StackPointer--];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled double %.6f out of the stack into 1\n", CurrentFrame->Stack[CurrentFrame->StackPointer + 1].doubleVal);
+                printf("Pulled double %.6f out of the stack into 1\n", OVER.doubleVal);
                 break;
 
             case Instruction::fstore_0:
@@ -358,7 +367,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::fstore_3:
                 CurrentFrame->Stack[(uint8_t)Code[CurrentFrame->ProgramCounter] - Instruction::fstore_0] = CurrentFrame->Stack[CurrentFrame->StackPointer--];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled float %f out of the stack into local %d\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal, Code[CurrentFrame->ProgramCounter - 1] - Instruction::fstore_0);
+                printf("Pulled float %f out of the stack into local %d\n", UNDER.floatVal, Code[CurrentFrame->ProgramCounter - 1] - Instruction::fstore_0);
                 break;
 
             case Instruction::dload_0:
@@ -366,10 +375,10 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::dload_2:
             case Instruction::dload_3:
                 CurrentFrame->StackPointer++;
-                CurrentFrame->Stack[CurrentFrame->StackPointer] =
+                PEEK =
                     CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - Instruction::dload_0];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled %.6f out of local 1 into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal);
+                printf("Pulled %.6f out of local 1 into the stack\n", PEEK.doubleVal);
                 break;
 
             case Instruction::aload_0:
@@ -377,9 +386,9 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::aload_2:
             case Instruction::aload_3:
                 CurrentFrame->StackPointer++;
-                CurrentFrame->Stack[CurrentFrame->StackPointer] = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - Instruction::aload_0];
+                PEEK = CurrentFrame->Stack[(uint8_t) Code[CurrentFrame->ProgramCounter] - Instruction::aload_0];
                 CurrentFrame->ProgramCounter++;
-                printf("Pulled object " PrtSizeT " out of local %d into the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].object.Heap, Code[CurrentFrame->ProgramCounter - 1] - Instruction::aload_0);
+                printf("Pulled object " PrtSizeT " out of local %d into the stack\n", PEEK.object.Heap, Code[CurrentFrame->ProgramCounter - 1] - Instruction::aload_0);
                 break;
 
             case Instruction::astore_0:
@@ -395,9 +404,9 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
 		    case Instruction::aastore:
 			    _ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object)
-                    [CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1] =
-                        CurrentFrame->Stack[CurrentFrame->StackPointer];
-                printf("Stored reference %d into the " PrtSizeT "th entry of array object " PrtSizeT ".\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
+                    [UNDER.intVal + 1] =
+                        PEEK;
+                printf("Stored reference %d into the " PrtSizeT "th entry of array object " PrtSizeT ".\n", PEEK.intVal, (size_t) UNDER.intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
 			    CurrentFrame->StackPointer -= 3;
 			    CurrentFrame->ProgramCounter++;
 			    break;
@@ -408,9 +417,9 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::bastore:
             case Instruction::castore:
             	_ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object)
-                    [CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1] =
-                        CurrentFrame->Stack[CurrentFrame->StackPointer];
-                printf("Stored number %d into the " PrtSizeT "th entry of array object " PrtSizeT ".\n", CurrentFrame->Stack[CurrentFrame->StackPointer].intVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
+                    [UNDER.intVal + 1] =
+                        PEEK;
+                printf("Stored number %d into the " PrtSizeT "th entry of array object " PrtSizeT ".\n", PEEK.intVal, (size_t) UNDER.intVal, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
 			    CurrentFrame->StackPointer -= 3;
 			    CurrentFrame->ProgramCounter++;
 			    break;
@@ -418,19 +427,19 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::fastore:
             case Instruction::dastore:
                 _ObjectHeap.GetObjectPtr(CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object)
-                    [CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1] =
-                        CurrentFrame->Stack[CurrentFrame->StackPointer];
-                printf("Stored number (%.6f) into the " PrtSizeT "th entry of array object " PrtSizeT ".\n", CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal, (size_t) CurrentFrame->Stack[CurrentFrame->StackPointer - 1].intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
+                    [UNDER.intVal + 1] =
+                        PEEK;
+                printf("Stored number (%.6f) into the " PrtSizeT "th entry of array object " PrtSizeT ".\n", PEEK.doubleVal, (size_t) UNDER.intVal + 1, CurrentFrame->Stack[CurrentFrame->StackPointer - 2].object.Heap);
 			    CurrentFrame->StackPointer -= 3;
 			    CurrentFrame->ProgramCounter++;
 			    break;
 
             case Instruction::_drem: {
-                double topVal = CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal;
-                double underVal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].doubleVal;
+                double topVal = PEEK.doubleVal;
+                double underVal = UNDER.doubleVal;
 
                 double res = fmod(topVal, underVal);
-                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].doubleVal = res;
+                UNDER.doubleVal = res;
 
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
@@ -439,27 +448,27 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case Instruction::d2f: {
-                double val = CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal;
+                double val = PEEK.doubleVal;
                 float floatVal = (float) val;
-                CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal = floatVal;
+                PEEK.floatVal = floatVal;
                 CurrentFrame->ProgramCounter++;
                 printf("Converted double %.6f to float %.6f\n", val, floatVal);
                 break;
             }
 
             case Instruction::d2i: {
-                double val = CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal;
+                double val = PEEK.doubleVal;
                 int32_t intVal = (int) val; //*reinterpret_cast<int32_t*>(&val);
-                CurrentFrame->Stack[CurrentFrame->StackPointer].intVal = intVal;
+                PEEK.intVal = intVal;
                 CurrentFrame->ProgramCounter++;
                 printf("Converted double %.6f to int %d\n", val, intVal);
                 break;
             }
 
             case Instruction::f2d: {
-                float val = CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal;
+                float val = PEEK.floatVal;
                 double doubleVal = (double) val;
-                CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal = doubleVal;
+                PEEK.doubleVal = doubleVal;
                 CurrentFrame->ProgramCounter++;
 
                 printf("Converted float %.6f to double %.6f\n", val, doubleVal);
@@ -467,19 +476,19 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case Instruction::f2i: {
-                float val = CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal;
+                float val = PEEK.floatVal;
                 int32_t intVal = (int) val; //*reinterpret_cast<int32_t*>(&val);
-                CurrentFrame->Stack[CurrentFrame->StackPointer].intVal = intVal;
+                PEEK.intVal = intVal;
                 CurrentFrame->ProgramCounter++;
                 printf("Converted float %.6f to int %d\n", val, intVal);
                 break;
             }
 
             case Instruction::_fmul: {
-                float val = CurrentFrame->Stack[CurrentFrame->StackPointer].floatVal;
-                float underVal =  CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal;
+                float val = PEEK.floatVal;
+                float underVal =  UNDER.floatVal;
                 float res = val * underVal;
-                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].floatVal = res;
+                UNDER.floatVal = res;
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
                 printf("Multiplied the last two floats on the stack (%.6f * %.6f = %.6f)\n", val, underVal, res);
@@ -487,10 +496,10 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case Instruction::dmul: {
-                double val = CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal;
-                double underVal =  CurrentFrame->Stack[CurrentFrame->StackPointer - 1].doubleVal;
+                double val = PEEK.doubleVal;
+                double underVal =  UNDER.doubleVal;
                 double res = val * underVal;
-                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].doubleVal = res;
+                UNDER.doubleVal = res;
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
                 printf("Multiplied the last two doubles on the stack (%.6f * %.6f = %.6f)\n", val, underVal, res);
@@ -498,10 +507,10 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case Instruction::dadd: {
-                double val = CurrentFrame->Stack[CurrentFrame->StackPointer].doubleVal;
-                double underVal =  CurrentFrame->Stack[CurrentFrame->StackPointer - 1].doubleVal;
+                double val = PEEK.doubleVal;
+                double underVal =  UNDER.doubleVal;
                 double res = val + underVal;
-                CurrentFrame->Stack[CurrentFrame->StackPointer - 1].doubleVal = res;
+                UNDER.doubleVal = res;
                 CurrentFrame->StackPointer--;
                 CurrentFrame->ProgramCounter++;
                 printf("Added the last two doubles on the stack (%.6f + %.6f = %.6f)\n", val, underVal, res);
@@ -511,7 +520,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             case Instruction::fconst_0: // TODO
             case Instruction::fconst_1:
             case Instruction::fconst_2:
-                CurrentFrame->Stack[CurrentFrame->StackPointer + 1].floatVal = (float) 2.0F;
+                OVER.floatVal = (float) 2.0F;
                 CurrentFrame->StackPointer++;
                 CurrentFrame->ProgramCounter++;
                 printf("Pushed 2.0F to the stack\n");
@@ -519,7 +528,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case Instruction::dconst_0: // TODO
             case Instruction::dconst_1:
-                CurrentFrame->Stack[CurrentFrame->StackPointer + 1].doubleVal = (double) 1.0F;
+                OVER.doubleVal = (double) 1.0F;
                 CurrentFrame->StackPointer++;
                 CurrentFrame->ProgramCounter++;
                 printf("Pushed 1.0D to the stack\n");
@@ -527,21 +536,21 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case Instruction::bipush:
                 CurrentFrame->StackPointer++;
-                CurrentFrame->Stack[CurrentFrame->StackPointer].charVal = (uint8_t) Code[CurrentFrame->ProgramCounter + 1];
+                PEEK.charVal = (uint8_t) Code[CurrentFrame->ProgramCounter + 1];
                 CurrentFrame->ProgramCounter += 2;
-                printf("Pushed char %d to the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].charVal);
+                printf("Pushed char %d to the stack\n", PEEK.charVal);
                 break;
 
             case Instruction::sipush:
                 CurrentFrame->StackPointer++;
-                CurrentFrame->Stack[CurrentFrame->StackPointer].shortVal = ReadShortFromStream(Code + (CurrentFrame->ProgramCounter + 1));
+                PEEK.shortVal = ReadShortFromStream(Code + (CurrentFrame->ProgramCounter + 1));
                 CurrentFrame->ProgramCounter += 3;
-                printf("Pushed short %d to the stack\n", CurrentFrame->Stack[CurrentFrame->StackPointer].shortVal);
+                printf("Pushed short %d to the stack\n", PEEK.shortVal);
                 break;
 
             case Instruction::ifne: {
-                bool NotEqual = CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal != 0;
-                printf("Comparing: " PrtInt64 " != 0\n", CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                bool NotEqual = PEEK.pointerVal != 0;
+                printf("Comparing: " PrtInt64 " != 0\n", PEEK.pointerVal);
                 printf("Integer equality comparison returned %s\n", NotEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -557,8 +566,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case Instruction::if_icmpeq: {
-                bool Equal = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal == CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: " PrtInt64 " == " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                bool Equal = UNDER.pointerVal == PEEK.pointerVal;
+                printf("Comparing: " PrtInt64 " == " PrtInt64 "\n", UNDER.pointerVal, PEEK.pointerVal);
                 printf("Integer equality comparison returned %s\n", Equal ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -574,8 +583,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case Instruction::if_icmpne: {
-                bool NotEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal != CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: " PrtInt64 " != " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                bool NotEqual = UNDER.pointerVal != PEEK.pointerVal;
+                printf("Comparing: " PrtInt64 " != " PrtInt64 "\n", UNDER.pointerVal, PEEK.pointerVal);
                 printf("Integer inequality comparison returned %s\n", NotEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -591,8 +600,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case Instruction::if_icmpgt: {
-                bool GreaterThan = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal > CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: " PrtInt64 " > " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                bool GreaterThan = UNDER.pointerVal > PEEK.pointerVal;
+                printf("Comparing: " PrtInt64 " > " PrtInt64 "\n", UNDER.pointerVal, PEEK.pointerVal);
                 printf("Integer greater-than comparison returned %s\n", GreaterThan ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -608,8 +617,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case Instruction::if_icmplt: {
-                bool LessThan = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal < CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: " PrtInt64 " < " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                bool LessThan = UNDER.pointerVal < PEEK.pointerVal;
+                printf("Comparing: " PrtInt64 " < " PrtInt64 "\n", UNDER.pointerVal, PEEK.pointerVal);
                 printf("Integer less-than comparison returned %s\n", LessThan ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -625,8 +634,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case Instruction::if_icmpge: {
-                bool GreaterEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal >= CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: " PrtInt64 " >= " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                bool GreaterEqual = UNDER.pointerVal >= PEEK.pointerVal;
+                printf("Comparing: " PrtInt64 " >= " PrtInt64 "\n", UNDER.pointerVal, PEEK.pointerVal);
                 printf("Integer greater-than-or-equal comparison returned %s\n", GreaterEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
@@ -642,8 +651,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
             }
 
             case Instruction::if_icmple: {
-                bool LessEqual = CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal <= CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal;
-                printf("Comparing: " PrtInt64 " <= " PrtInt64 "\n", CurrentFrame->Stack[CurrentFrame->StackPointer - 1].pointerVal, CurrentFrame->Stack[CurrentFrame->StackPointer].pointerVal);
+                bool LessEqual = UNDER.pointerVal <= PEEK.pointerVal;
+                printf("Comparing: " PrtInt64 " <= " PrtInt64 "\n", UNDER.pointerVal, PEEK.pointerVal);
                 printf("Integer less-than-or-equal comparison returned %s\n", LessEqual ? "true" : "false");
 
                 CurrentFrame->StackPointer -= 2;
