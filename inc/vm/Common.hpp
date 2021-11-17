@@ -21,9 +21,9 @@ class StackFrame;
 class ObjectHeap;
 
 #ifdef __linux__
-    #define PrtSizeT "%llu"
-    #define PrtInt64 "%lld"
-    #define PrtHex64 "%llx"
+    #define PrtSizeT "%lu"
+    #define PrtInt64 "%ld"
+    #define PrtHex64 "%lx"
 #elif __WIN32
     #define PrtSizeT "%zu"
     #define PrtInt64 "%zd"

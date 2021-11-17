@@ -9,10 +9,14 @@
 #include <string>
 #include <exception>
 
-#ifdef VM_BUILDING
-    #define EXPORT __declspec(dllexport)
-#else
-    #define EXPORT __declspec(dllimport)
+#ifdef WIN32
+    #ifdef VM_BUILDING
+        #define EXPORT __declspec(dllexport)
+    #else
+        #define EXPORT __declspec(dllimport)
+    #endif
+#elif linux
+    #define EXPORT
 #endif
 
 #ifndef COMMON_SYMBOLS
