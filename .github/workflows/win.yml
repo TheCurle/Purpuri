@@ -1,0 +1,34 @@
+name: Build Windows Package (With Debugger)
+
+on: 
+  push:
+    branches: 
+      - master
+
+jobs:
+    build:
+      runs-on: ubuntu-latest
+
+      steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up MinGW
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: x64
+
+      - name: Install OpenGL
+        run: |
+          sudo apt-get install libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev
+      - name: Cmake Initialization
+        run: |
+          cmake -D debugger= ./ 
+      - name: Build
+        run: |
+          make purpuri
+      
+      - uses: actions/upload-artifact@v2
+        with:
+          name: binary
+          path: |
+            bin/
