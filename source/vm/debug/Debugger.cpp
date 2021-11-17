@@ -193,7 +193,7 @@ void Debugger::CreateStack() {
     if(ImGui::Button("Dump Stack")) {
         for (uint16_t i = 0; i < stack->StackPointer; i++) {
             Variable item = stack->Stack[i];
-            printf("\t[DEBUG] Stack index %d:\n\t\tInt: %d, Long: %lu, Float: %.6f, Double: %.6f, Object: %lu / %d\n",
+            printf("\t[DEBUG] Stack index %d:\n\t\tInt: %d, Long: " PrtSizeT ", Float: %.6f, Double: %.6f, Object: " PrtSizeT " / %d\n",
                                            i,           item.intVal, 
                                                                   item.pointerVal, 
                                                                             item.floatVal,  item.doubleVal, 
