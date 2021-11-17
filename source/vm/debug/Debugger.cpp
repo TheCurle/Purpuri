@@ -184,7 +184,7 @@ void Debugger::CreateStack() {
         Variable item = stack->Stack[i];
         ImGui::Text("Stack Index %d", i);
         if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Char: %d\nShort: %d\nInt: %d\nLong: %lu\nFloat: %.6f\nDouble: %.6f\nObject: %lu\n",
+            ImGui::SetTooltip("Char: %d\nShort: %d\nInt: %d\nLong: " PrtSizeT "\nFloat: %.6f\nDouble: %.6f\nObject: " PrtSizeT "\n",
                          item.charVal, item.shortVal, item.intVal, item.pointerVal, item.floatVal, item.doubleVal, item.object.Heap);
     }
 
