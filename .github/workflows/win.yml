@@ -7,22 +7,27 @@ on:
 
 jobs:
     build:
-      runs-on: ubuntu-latest
+      runs-on: windows-latest
+      
+      defaults:
+       run:
+        shell: msys2 {0}
 
       steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up MinGW
-        uses: egor-tensin/setup-mingw@v2
+      - uses: msys2/setup-msys2@v2
         with:
-          platform: x64
-
-      - name: Install OpenGL
-        run: |
-          sudo apt-get install libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev
+          update: true
+          install: >-
+            base-devel
+            git
+            cmake
+            
+      - uses: actions/checkout@v2
+      
       - name: Cmake Initialization
         run: |
           cmake -D debugger= ./ 
+          
       - name: Build
         run: |
           make purpuri
