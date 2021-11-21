@@ -55,6 +55,7 @@ void Synchronize(size_t Ptr, Debugger::TypeFlags Type) {
 void Debugger::SetStack(StackFrame* Vars) {
     TypeFlags flag;
     flag.Stack = true;
+    flag.StackPtr = false;
     Synchronize((size_t) Vars, flag);
 }
 
