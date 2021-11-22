@@ -15,9 +15,10 @@
     #else
         #define EXPORT __declspec(dllimport)
     #endif
-#elif linux
+#elif defined linux || defined __APPLE__
     #define EXPORT
 #endif
+
 
 #ifndef COMMON_SYMBOLS
 class Object {

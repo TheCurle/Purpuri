@@ -27,7 +27,8 @@ extern "C" void Java_java_vm_Printer_println_Ljava_lang_StringE_V_() {
 
     size_t datalen = VM::GetArrayLength(charArray);
 
-    char text[datalen + 1];
+    char* text = (char*) alloca(datalen + 1);
+
     for(size_t i = 0; i < datalen; i++)
         text[i] = data[i].charVal;
     text[datalen] = '\0';

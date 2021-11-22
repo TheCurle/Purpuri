@@ -49,15 +49,8 @@ void Engine::InvokeNative(NativeContext Context) {
     printf("Function %s%s from class %s wants to call to function %s.\n", Context.MethodName.c_str(), Context.MethodDescriptor.c_str(), Context.ClassName.c_str(), FunctionName.c_str());
 
     Native::Parameters = Context.Parameters;
-    #ifdef WIN32
-        #define EXT ".dll"
-    #elif linux
-        #define EXT ".so"
-    #endif
 
-    Native::LoadLibrary(NATIVES "\\libnative" EXT);
-    
-    auto func = Native::LoadSymbol(NATIVES "\\libnative" EXT, FunctionName.c_str());
+    auto func = Native::LoadSymbol(NATIVES_FILE, FunctionName.c_str());
 
     if(func == nullptr) {
         printf("\n\n*************\n*************\n*************\nFunction %s does not exist in any loaded library.\n*************\n*************\n*************\n", FunctionName.c_str());
@@ -557,7 +550,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 if(NotEqual) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -574,7 +567,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 if(Equal) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -591,7 +584,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 if(NotEqual) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -608,7 +601,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 if(GreaterThan) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -625,7 +618,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 if(LessThan) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -642,7 +635,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 if(GreaterEqual) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -659,7 +652,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 if(LessEqual) {
                     short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
                     CurrentFrame->ProgramCounter += 3;
@@ -680,7 +673,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             case Instruction::_goto: {
                 short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                printf("Jumping to (%d + %hd) = %hd\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                 CurrentFrame->ProgramCounter += Offset;
                 break;
             }

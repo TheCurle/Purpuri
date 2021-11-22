@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstring>
 #include <vm/Stack.hpp>
+#include <vm/Native.hpp>
 
 #include <vm/debug/Debug.hpp>
 
@@ -18,6 +19,7 @@ void DisplayUsage(char* Name) {
         fprintf(stderr, "          -d: Enable Visual Debugger\n");
     #endif
     fprintf(stderr, "          -q: Enable Quiet Mode\n");
+    fprintf(stderr, "Compiled on " ifsystem("linux", "windows", "macOS") " with " ifcompiler("gcc", "clang", "MSVC") ".");
     fprintf(stderr, "\n16:50 25/02/21 Curle\n");
 }
 
@@ -62,6 +64,10 @@ void StartVM(char* MainFile) {
     
     engine._ClassHeap = &heap;
 
+    // Load the natives library.
+
+    Native::LoadLibrary(std::string(NATIVES_FILE));
+
     // All classes loaded - run clinit. Keep quiet.
 
     bool quiet = Engine::QuietMode;
@@ -88,6 +94,7 @@ void StartVM(char* MainFile) {
 
     Engine::QuietMode = quiet;
     Debugger::Enabled = debug;
+
 
     // Invoke the static method.
 

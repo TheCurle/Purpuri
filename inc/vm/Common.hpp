@@ -21,14 +21,32 @@ class StackFrame;
 class ObjectHeap;
 
 #ifdef __linux__
-    #define PrtSizeT "%lu"
-    #define PrtInt64 "%ld"
-    #define PrtHex64 "%lx"
+    #define ifsystem(linux,windows,apple) linux
 #elif __WIN32
-    #define PrtSizeT "%zu"
-    #define PrtInt64 "%zd"
-    #define PrtHex64 "%zx"
+    #define ifsystem(linux,windows,apple) windows
+#elif __APPLE__
+    #define ifsystem(linux,windows,apple) apple
 #endif
+
+// Clang on macOS has __GNUC__ defined to 4, for some reason.
+#ifdef __clang__
+    #define ifcompiler(gcc,clang,msvc) clang
+#elif __GNUC__
+    #define ifcompiler(gcc,clang,msvc) gcc
+#elif _MSC_VER
+    #define ifcompiler(gcc,clang,msvc) msvc
+#endif
+
+#define PrtSizeT ifsystem("%lu", "%zu", "%lu")
+#define PrtInt64 ifsystem("%ld", "%zd", "%ld")
+#define PrtHex64 ifsystem("%lx", "%zx", "%lx")
+
+#define NATIVES_DIR \
+    "./bin/"
+
+#define NATIVES_EXT ifsystem(".so",".dll",".so")
+
+#define NATIVES_FILE NATIVES_DIR "libnative" NATIVES_EXT
 
 #define ReadLongFromStream(Stream) \
         (size_t) ( (((size_t) ReadIntFromStream(Stream) << 32) & 0xFFFFFFFF00000000) | ((size_t) ReadIntFromStream(Stream + 4) & 0x00000000FFFFFFFF))

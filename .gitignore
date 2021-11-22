@@ -1,5 +1,6 @@
 
 /bin/
+/build/
 
 *.vcxproj
 *.vcxproj.filters
@@ -8,6 +9,7 @@
 CMakeFiles/**/*
 cmake_install.cmake
 CMakeCache.txt
+.DS_Store
 
 Makefile
 

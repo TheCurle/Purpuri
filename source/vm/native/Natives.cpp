@@ -5,17 +5,18 @@
 
 #include <vm/Class.hpp>
 #include <vm/Native.hpp>
-#ifdef WIN32
+#if defined WIN32
     #include <windows.h>
     #include <libloaderapi.h>
     #undef GetClassName
     #undef LoadLibrary
     #undef GetObject
-#elif linux
+#elif defined linux || defined __APPLE__
     #include <dlfcn.h>
 #endif
 
 #include <regex>
+
 
 std::map<std::string, void*> Native::LibraryHandleMap;
 
@@ -84,7 +85,7 @@ std::string Native::EncodeName(NativeContext Context) {
 void* Native::LoadLibrary(std::string LibraryName) {
     #ifdef WIN32
         void* Handle = LoadLibraryA(LibraryName.c_str());    
-    #elif linux
+    #elif defined linux || defined __APPLE__
         void* Handle = dlopen(LibraryName.c_str(), RTLD_NOW | RTLD_LOCAL);
     #endif
 
@@ -96,7 +97,7 @@ void* Native::LoadLibrary(std::string LibraryName) {
 function_t Native::LoadSymbol(std::string LibraryName, std::string SymbolName) {
     #ifdef WIN32
         return GetProcAddress((HMODULE) LibraryHandleMap.at(LibraryName), SymbolName.c_str());
-    #elif linux
+    #elif defined __linux__ || defined __APPLE__
         return function_t(dlsym(LibraryHandleMap.at(LibraryName), SymbolName.c_str()));
     #endif
 }
