@@ -69,7 +69,7 @@ std::string Native::EncodeName(NativeContext Context) {
     // Replace ; with E (Lnet_company_ClassE)
     ICantBelieveThisIsNeededWithModernCPP(Parameters, "/", "_");
     ICantBelieveThisIsNeededWithModernCPP(Parameters, ";", "E");
-    if(Parameters.size() == 0) Parameters = "V";
+    if(Parameters.empty()) Parameters = "V";
     MangledName.append(Parameters).append("_");
 
     std::string ReturnType = Descriptor.substr(Descriptor.find_first_of(")") + 1, Descriptor.size());

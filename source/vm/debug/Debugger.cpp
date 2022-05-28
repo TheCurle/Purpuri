@@ -8,22 +8,23 @@
 
 // imgui is very particular about not allowing you to use clang with msys?
 #if defined(__clang__)
-#undef __MINGW32__
+    #undef __MINGW32__
 #endif
 
 #include <stdio.h>
 
 #ifdef VISUAL_DEBUGGER
-#include <vm/debug/imgui/imgui.h>
-#include <vm/debug/imgui/imgui_memedit.h>
-#include <vm/debug/imgui/imgui_impl_sdl.h>
-#include <vm/debug/imgui/imgui_impl_opengl3.h>
-#include <vm/debug/SDL2/SDL.h>
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-#include <vm/debug/SDL2/SDL_opengles2.h>
-#else
-#include <vm/debug/SDL2/SDL_opengl.h>
-#endif
+    #include <vm/debug/imgui/imgui.h>
+    #include <vm/debug/imgui/imgui_memedit.h>
+    #include <vm/debug/imgui/imgui_impl_sdl.h>
+    #include <vm/debug/imgui/imgui_impl_opengl3.h>
+    #include <vm/debug/SDL2/SDL.h>
+    
+    #if defined(IMGUI_IMPL_OPENGL_ES2)
+        #include <vm/debug/SDL2/SDL_opengles2.h>
+    #else
+        #include <vm/debug/SDL2/SDL_opengl.h>
+    #endif
 #endif
 
 /** Main Thread Variables **/

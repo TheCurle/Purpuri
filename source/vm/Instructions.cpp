@@ -5,6 +5,15 @@
 
 #include <vm/Common.hpp>
 
+/**
+ * This file implements two maps that are used in the Debugger.
+ *
+ * InstrToName is used to display the name of each instruction in the bytecode viewer.
+ * InstrLengths is used to display the amount of bytes each instruction takes, also in the bytecode viewer.
+ *
+ * These maps are large, so they're held in this special file so that they don't fill out something more important.
+ */
+
 std::map<size_t, std::string> Instruction::InstrToName = {
         { noop, "noop" },
         { aconst_null, "aconst_null" },

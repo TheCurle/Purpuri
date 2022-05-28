@@ -7,10 +7,15 @@
 #include <cstdio>
 #include <cstring>
 #include <vm/Stack.hpp>
-#include <vm/Native.hpp>
 
 #include <vm/debug/Debug.hpp>
+#include "vm/Native.hpp"
 
+/**
+ * When the VM is executed without a class name, we need to display a usage hint.
+ * This will show the user what's available, including compile-only extras.
+ * @param Name the name of the Purpuri executable.
+ */
 void DisplayUsage(char* Name) {
     fprintf(stderr, "Purpuri VM v1.6 - Gemwire Institute\n");
     fprintf(stderr, "***************************************\n");
@@ -23,113 +28,208 @@ void DisplayUsage(char* Name) {
     fprintf(stderr, "\n16:50 25/02/21 Curle\n");
 }
 
+/**
+ * When a valid file is given, execute the code.
+ * This will, in order:
+ *  - Classload the Object class
+ *  - Classload the requested class
+ *  - Execute static initializers of every class in the heap all at once
+ *  - Create an execution engine context
+ *  - Execute the static main method of the given class file
+ *
+ * The actual execution and interpretation of bytecode is handled in Engine.cpp.
+ * See ClassHeap for how classloading is handled.
+ * @param MainFile the class file to load and execute.
+ */
 void StartVM(char* MainFile) {
 
     // Preinitialization
 
     ClassHeap heap;
-    Class* Object = new Class();
-    Class* GivenClass = new Class();
-    GivenClass->SetClassHeap(&heap);
-    Object->SetClassHeap(&heap);
 
-    std::string GivenPath(MainFile);
-    size_t LastInd = GivenPath.find_last_of("/");
-    if(LastInd != GivenPath.size())
-        heap.ClassPrefix = GivenPath.substr(0, LastInd + 1);
+    // Initialize the Object class before anything else.
+    auto* Object = new Class();
+    Object->SetClassHeap(&heap);
 
     if(!heap.LoadClass((char*)"java/lang/Object", Object)) {
         printf("Unable to load Object class. Fatal error.\n");
         exit(6);
     }
 
+    // Initialize the class we were asked to
+    auto* GivenClass = new Class();
+    GivenClass->SetClassHeap(&heap);
+
+    std::string GivenPath(MainFile);
+
+    // We need to figure out where the specified file is, relative to the current working directory.
+    // With this, we can load relative classes (ie. src/GivenClass loads OtherClass, we must append "src/" to the
+    // file path to be able to load it properly.
+    size_t LastInd = GivenPath.find_last_of('/');
+    if(LastInd != GivenPath.size())
+        heap.ClassPrefix = GivenPath.substr(0, LastInd + 1);
+
+    // With the prefix handled, classload the requested class file.
     if(!heap.LoadClass(MainFile, GivenClass)) {
         printf("Loading given class failed. Fatal error.\n");
         exit(6);
     }
 
-    StackFrame* Stack = new StackFrame[20];
-    StackFrame::FrameBase = Stack;
+    // Here we search for the index of the EntryPoint method.
+    // The reason we use EntryPoint rather than main will be explained later, but we need to check this NOW,
+    // rather than after we do so much extra work on clinit.
 
-    for(size_t i = 0; i < 20; i++) {
-        Stack[i] = StackFrame();
-    }
+    // Search for the EntryPoint method..
+    uint32_t EntryPoint = GivenClass->GetMethodFromDescriptor("EntryPoint", "()I", GivenClass->GetClassName().c_str(), GivenClass);
 
-    size_t StackSize = 100;
-    StackFrame::MemberStack = new Variable[StackSize];
-    for(size_t i = 0; i < StackSize; i++) 
-        StackFrame::MemberStack[i] = 0;
-
-    Engine engine;
-    
-    engine._ClassHeap = &heap;
-
-    // Load the natives library.
-
-    Native::LoadLibrary(std::string(NATIVES_FILE));
-
-    // All classes loaded - run clinit. Keep quiet.
-
-    bool quiet = Engine::QuietMode;
-    bool debug = Debugger::Enabled;
-    Engine::QuietMode = true;
-    Debugger::Enabled = false;
-
-    for(Class* clazz : heap.GetAllClasses()) {
-        int init = clazz->GetMethodFromDescriptor("<clinit>", "()V", clazz->GetClassName().c_str(), clazz);
-        // If there's no static initializer, skip
-        if(init < 0)
-            continue;
-
-        int StartFrame = 0;
-
-        Stack[StartFrame]._Class = clazz;
-        Stack[StartFrame]._Method = &clazz->Methods[init];
-        Stack[StartFrame].Stack = StackFrame::MemberStack;
-        Stack[StartFrame].StackPointer = Stack[StartFrame]._Method->Code->LocalsSize;
-        print("Running static initializer for class %s\n", clazz->GetClassName().c_str());
-
-        engine.Ignite(&Stack[StartFrame]);
-    }
-
-    Engine::QuietMode = quiet;
-    Debugger::Enabled = debug;
-
-
-    // Invoke the static method.
-
-    int EntryPoint = GivenClass->GetMethodFromDescriptor("EntryPoint", "()I", GivenClass->GetClassName().c_str(), GivenClass);
-
+    // If it doesn't exist, we need to stop now.
+    // It doesn't make sense to execute any code if it's all going to go to waste anyway.
     if(EntryPoint < 0) {
         printf("%s does not have an EntryPoint function, unable to execute.\n", MainFile);
         return;
     }
 
-    int StartFrame = 0;
-    
+    // -------------------------------------------------------------------------------------------------------------- //
+
+    // With all of the preliminary classloading handled, we can begin to create and initialise the
+    // static fields that allow the Execution Engine to work.
+
+    // First, the Stack Frame.
+    // The Stack Frame is what handles calling methods and returning values.
+    // By default, it only has 20 frames, but this is merely a safe guard.
+    auto* Stack = new StackFrame[20];
+    StackFrame::FrameBase = Stack;
+
+    // The frames need to each be initialized, since we only declared the list.
+    for(size_t i = 0; i < 20; i++) {
+        Stack[i] = StackFrame();
+    }
+
+    // Next, the Object Stack.
+    // This is what is actually referred to as the "stack" in Java.
+    // When you perform a calculation like 2 + 2, the value 2 is pushed to the stack twice, and then calculated upon.
+    // This works similar to an internal Reverse Polish Notation; 2 2 ADD.
+
+    // The Object Stack is implemented as a 100-deep list, that can be traversed up and down while retaining values.
+    // This ability to pop and then recover the value with push is important, and is why this is not a traditional
+    // stack data structure. An array makes more sense here, just this once.
+    size_t StackSize = 100;
     StackFrame::MemberStack = new Variable[StackSize];
-    for(size_t i = 0; i < StackSize; i++) 
+    // Like before, we only declared the list, we need to initialize the values.
+    for(size_t i = 0; i < StackSize; i++)
         StackFrame::MemberStack[i] = 0;
 
+    // Now we create the Execution Engine itself.
+    // This is what actually interprets the bytecode.
+    // See Engine.cpp for how it works.
+    Engine engine;
+    // The Engine needs to know what classes it can access, so we provide the heap here.
+    engine._ClassHeap = &heap;
+
+
+    // -------------------------------------------------------------------------------------------------------------- //
+
+    // With all of the initialization handled, we need to move onto the next step of loading.
+    // That being, running the static initializers.
+
+    // In Java, when you have a block that contains static { }, or static Object THING = new xyz(), this inserts
+    // code into a special function called <clinit>.
+
+    // This stands for ClassLoading Initializer, and is intended to be run as soon as classloading happens.
+
+    // Purpuri goes against the Java spec for ease of implementation here; we run all static initializers early,
+    // rather than when the class is first referenced.
+
+    // This has disastrous consequences on programs that rely on the order of static initializers, and will be changed
+    // in the future.
+
+    bool quiet = Engine::QuietMode; // Save the current value of the quiet setting, so that we can override it temporarily
+    bool debug = Debugger::Enabled; // Save the current value of the debugger setting, so that we can override it temporarily
+    Engine::QuietMode = true; // Set quiet mode for static initializers; they get very spammy
+    Debugger::Enabled = false; // Disable the debugger; speeds things up considerably.
+
+    // As mentioned, we go against the Java spec here.
+    // This is not supposed to be done in one batch, but it's far far far easier to implement like this.
+    for(Class* clazz : heap.GetAllClasses()) {
+        // We need to know the index of the method before we can invoke it.
+        uint32_t init = clazz->GetMethodFromDescriptor("<clinit>", "()V", clazz->GetClassName().c_str(), clazz);
+
+        // If there's no static initializer, skip this class.
+        if(init < 0)
+            continue;
+
+        // New execution context, so make this the 0th execution.
+        // From a regular debugger's perspective, this is the equivalent of the main() method.
+        int StartFrame = 0;
+
+        // Set some of the required metadata.
+        // The Execution Engine relies on this data being available before it can start interpreting bytecode.
+        Stack[StartFrame]._Class = clazz;
+        Stack[StartFrame]._Method = &clazz->Methods[init]; // This is why we needed the lookup.
+        Stack[StartFrame].Stack = StackFrame::MemberStack; // This is unclear to see, but it sets the stack to the base of the array, index 0.
+        Stack[StartFrame].StackPointer = Stack[StartFrame]._Method->Code->LocalsSize; // The stack grows down towards 0, which is what facilitates pop.
+
+        print("Running static initializer for class %s\n", clazz->GetClassName().c_str());
+
+        // Everything's ready; start executing bytecode!
+        engine.Ignite(&Stack[StartFrame]);
+    }
+
+    // After all static initializers are executed, we can undo our temporary changes to these variables.
+    Engine::QuietMode = quiet;
+    Debugger::Enabled = debug;
+
+    // -------------------------------------------------------------------------------------------------------------- //
+
+    // At this point, we're ready to start actually executing the class we were asked to.
+    // This is done by seeking for the EntryPoint method.
+    // In the class, it looks like this:
+    //  public static int EntryPoint();
+
+    // Again, this is a deviation from the Java spec, which dictates that code should start executing from
+    // the main method. However, we have a reason for doing it like this.
+
+    // Having two entry points - one for Java, one for Purpuri, allows us to implement a testing framework that compares
+    // the outputs of Purpuri and Java based on the same low-complexity classes.
+
+    // The EntryPoint has been searched and stored above - before the static initializers, so we can move on to setting
+    // the Execution Engine context again.
+
+    // Starting again, so make this index 0.
+    int StartFrame = 0;
+
     Stack[StartFrame]._Class = GivenClass;
-    Stack[StartFrame].ProgramCounter = 0;
-    Stack[StartFrame]._Method = &GivenClass->Methods[EntryPoint];
-    Stack[StartFrame].Stack = StackFrame::MemberStack;
-    Stack[StartFrame].StackPointer = Stack[StartFrame]._Method->Code->LocalsSize;
+    Stack[StartFrame].ProgramCounter = 0; // The Program Counter counts upwards, and indicates the byte we're currently executing.
+    Stack[StartFrame]._Method = &GivenClass->Methods[EntryPoint]; // EntryPoint is stored above.
+    Stack[StartFrame].Stack = StackFrame::MemberStack; // The stack starts at 0.
+    Stack[StartFrame].StackPointer = Stack[StartFrame]._Method->Code->LocalsSize; // The stack pointer starts high and grows towards 0.
 
-    puts("*****************");
-    puts("\n\nStarting Execution\n\n");
-    puts("*****************");
-
-    
+    // If the debugger is enabled, now is the time to start its' thread.
+    // The Engine will prepare and wait for the Debugger before it will start executing.
     DEBUG(Debugger::SpinOff());
 
+
+    // Set up the libnative library as a valid target for the Native module.
+    Native::LoadLibrary(NATIVES_FILE);
+
+    // -------------------------------------------------------------------------------------------------------------- //
+
+    // All else is ready,
+    // This call will start the EntryPoint function of the class the user entered.
+    // If a value is returned, it will be lost (but printed, due to the nature of the VM).
+    // There is no spin-down required, since the main function is about to be terminated and all memory freed to the OS.
+
+    // However, this may change in the future.
+
+    puts("\n\nStarting Execution\n\n");
     engine.Ignite(&Stack[StartFrame]);
 
-    
-    // Make sure the thread never dies.
-    DEBUG(Debugger::Rejoin());
+    // If we get here, the EntryPoint function returned successfully.
+    // This is an achievement!
 
+    // The debugger lives in a separate thread, so after the Engine is finished executing, we need to wait for that
+    // thread to die.
+    DEBUG(Debugger::Rejoin());
 }
 
 int main(int argc, char* argv[]) {
@@ -175,7 +275,6 @@ int main(int argc, char* argv[]) {
         DisplayUsage(argv[0]);
         return 0;
     }
-
     
     StartVM(argv[i]);
 

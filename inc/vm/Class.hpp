@@ -27,12 +27,12 @@ class Engine {
 
         void Invoke(StackFrame* Stack, uint16_t Type);
 
-        void InvokeNative(NativeContext Context);
+        void InvokeNative(const NativeContext& Context);
         void HandleNativeReturn(NativeContext Context, Variable Value);
 
         bool MethodClassMatches(uint16_t MethodInd, Class* pClass, const char* TestName);
 
-        void PutStatic(StackFrame* Stack);
+        void PutStatic(StackFrame* Stack) const;
         void PutField(StackFrame* Stack);
         void GetStatic(StackFrame* Stack);
         void GetField(StackFrame* Stack);
@@ -67,7 +67,7 @@ struct ClassFile {
     uint16_t InterfaceCount;
     uint16_t* Interfaces;
 
-    uint16_t FieldCount;
+    [[maybe_unused]] uint16_t FieldCount;
     struct FieldData** Fields;
 
     uint16_t MethodCount;
@@ -89,13 +89,13 @@ class ClassHeap {
 
         bool LoadClass(const char* ClassName, Class* pClass);
         bool AddClass(Class* pClass);
-        bool ClassExists(std::string Name);
-        Class* GetClass(std::string Name);
+        bool ClassExists(const std::string& Name);
+        Class* GetClass(const std::string& Name);
 
         std::list<Class*> GetAllClasses() { 
             std::list<Class*> list;
-            for(std::map<std::string,Class*>::iterator it = ClassMap.begin(); it != ClassMap.end(); ++it)
-                list.push_back(it->second);
+            for(auto& it : ClassMap)
+                list.push_back(it.second);
 
             return list;
         }
@@ -111,13 +111,13 @@ class Class : public ClassFile {
         void SetCode(const char* Code);
 
         bool ParseFullClass();
-        bool ParseInterfaces(const char* &Code);
-        bool ParseFields(const char* &Code);
-        bool ParseMethods(const char* &Code);
-        bool ParseMethodCodePoints(int Method, CodePoint* Code);
-        bool ParseAttribs(const char* &Code);
+        bool ParseInterfaces(const char* &ClassCode);
+        bool ParseFields(const char* &ClassCode);
+        bool ParseMethods(const char* &ClassCode);
+        bool ParseMethodCodePoints(int Method, CodePoint* MethodCode);
+        bool ParseAttribs(const char* &ClassCode);
 
-        void ClassloadReferents(const char* &Code);
+        void ClassloadReferents();
 
         bool GetConstants(uint16_t index, ConstantPoolEntry &Pool);
         std::string GetStringConstant(uint32_t index);
@@ -135,7 +135,7 @@ class Class : public ClassFile {
         Class* GetSuper();
 
         uint32_t GetMethodFromDescriptor(const char* MethodName, const char* Descriptor, const char* ClassName, Class* &Class);
-        uint32_t GetFieldFromDescriptor(std::string FieldAndDescriptor);
+        uint32_t GetFieldFromDescriptor(const std::string& FieldAndDescriptor);
 
 
         Object CreateObject(uint16_t Index, ObjectHeap* ObjectHeap);
@@ -154,12 +154,12 @@ class Class : public ClassFile {
         uint16_t FieldsCount;
         std::vector<std::string> StringConstants;
     
-        uint16_t StaticFieldCount;
-        Variable* ClassStatics;
+        uint16_t StaticFieldCount{};
+        Variable* ClassStatics{};
         std::vector<size_t> StaticFieldIndexes;
 
-        bool ParseConstants(const char* &Code);
-        uint32_t GetConstantsCount(const char* Constants);
+        bool ParseConstants(const char* &pCode);
+        uint32_t GetConstantsCount(const char* pCode);
 
         std::string GetName(uint16_t ThisOrSuper);
 };

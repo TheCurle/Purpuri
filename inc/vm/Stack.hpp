@@ -9,7 +9,7 @@
 class StackFrame {
     public:
         static Variable* MemberStack;
-        static StackFrame* FrameBase;
+    [[maybe_unused]] static StackFrame* FrameBase;
         Class* _Class;
         Method* _Method;
         uint32_t ProgramCounter;

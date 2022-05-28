@@ -60,6 +60,18 @@ class ObjectHeap;
 
 #define SHUTUPUNUSED(X) ((void)X)
 
+// The location of native support libraries.
+// TODO: read this from arguments, or an install metadata file
+#define NATIVES \
+    "./bin/"
+
+// If we're on windows, we're looking for a dll. If we're on linux or macOS, we're looking for a so.
+#ifdef WIN32
+  #define EXT ".dll"
+#elif linux
+  #define EXT ".so"
+#endif
+
 #define print(...) \
     printf(__VA_ARGS__)
     
@@ -97,12 +109,20 @@ class Object {
 };
 
 union Variable {
-    Variable(size_t val) {
+    explicit Variable(size_t val) {
         pointerVal = val;
     }
 
-    Variable(Object obj) {
+    explicit Variable(Object obj) {
         object = obj;
+    }
+
+    explicit Variable(const char i) {
+        charVal = i;
+    }
+
+    Variable(int i) {
+        intVal = i;
     }
 
     Variable() {

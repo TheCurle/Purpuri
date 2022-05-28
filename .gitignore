@@ -14,3 +14,10 @@ CMakeCache.txt
 Makefile
 
 purpuri.exe
+/CMakeFiles/
+/.vscode/
+/.cmake/
+/.idea/
+/build.ninja
+/imgui.ini
+/libpurpuri.dll.a

@@ -18,9 +18,9 @@ class ObjectHeap {
         virtual size_t GetArraySize(Object obj);
 
         Object CreateObject(Class* Class);
-        Object CreateString(std::string String, ClassHeap* ClassHeap);
+        Object CreateString(const std::string& String, ClassHeap* ClassHeap);
         Object CreateArray(uint8_t Type, uint32_t Count);
-        bool CreateObjectArray(Class* Class, uint32_t Count, Object &Object);
+        Object CreateObjectArray(Class* Class, uint32_t Count);
 
     private:
         std::map<size_t, size_t> ObjectMap;
