@@ -4,8 +4,6 @@ Purpuri only supports a subset of Java 7 features.
 An exhaustive list would be exhausting to produce, so here's a list of unsupported features instead:
 
 * Every class in the Java Standard Library (`java.*`, `javax.*`)
-* Native methods
-* Visibility
 * Exceptions
 * Stack unwinding
 * Debugging
@@ -33,6 +31,7 @@ This means it does not support any features higher than Java 7:
 * bcdup
 * invokespecial, invokevirtual, invokeinterface, invokestatic
 * putfield, getfield
+* putstatic, getstatic
 * [ilfd]store
 * iconst_m1, iconst_[0-5]
 * fconst_[0-2]
@@ -51,6 +50,7 @@ This means it does not support any features higher than Java 7:
 * fmul, fdiv
 * dmul, dadd, ddiv
 * i2d, d2f, d2i, f2d, f2i
+* d2l, f2l, i2b, i2c, i2f, i2l, i2s, l2d, l2f, l2i
 * ldc, ldc2_w
 * drem
 * bipush
@@ -62,12 +62,10 @@ This means it does not support any features higher than Java 7:
 
 * dup, dup_x1, dup_x2
 * dup2, dup2_x1, dup2_x2
-* putstatic, getstatic
 * goto_w, ret
 * pop, pop2
 * [fd]cmpg, [fd]cmpl, [fd]neg, dsub
 * frem, fadd, fsub
-* d2l, f2l, i2b, i2c, i2f, i2l, i2s, l2d, l2f, l2i
 * ladd, lcmp, ldiv, lmul, lneg, lor, lrem, lreturn, lshl, lshr, lsub, lushr, lxor
 * iand, idiv, iinc, ineg, ior, irem, ireturn, ishl, ishr, iushr, ixor
 * if_acmpeq, if_acmpne, ifeq, ifge, ifgt, ifle, iflt, ifne, ifnonnul, ifnull

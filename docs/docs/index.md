@@ -2,11 +2,11 @@
 
 Purpuri is a custom JVM implementation. It is an interpreter (meaning, no JIT).
 
-Currently, it targets JVMS7 (the JVM Specification for Java 7) and supports only a subset of opcodes. A full supported opcode list is provided [here](spec.md).
+Currently, it targets JVMS7 (the JVM Specification for Java 7) and supports most opcodes. A full supported opcode list is provided [here](spec.md).
 
-Purpuri does not currently provide any form of Native Interface.
+Purpuri provides a native interface (that is not compatible with the standard JNI) called PNI. More details on that will be created in the future.
 
-Purpuri does not provide, or support, the Java Standard Library. The only classes in `java.*` that are provided is `java.lang.Object`, for it is required by the bytecode specification.
+Purpuri provides a minimal implementation of the Java Standard Library. The only classes in `java.*` that are provided are `java.lang.Object`, for it is required by the bytecode specification, and `java.lang.System`, for its' out field.
 
 Purpuri does no checking on visibility of objects. Every class, method and field is public by default.
 
@@ -18,11 +18,12 @@ The name Purpuri means Purple, in Ido (a fork of Esperanto).
 
 # Getting Started
 
-To use Purpuri, find or [create](https://github.com/TheCurle/Purpuri) a binary. There are no current distributed binaries for Purpuri.
+To use Purpuri, find or [create](https://github.com/TheCurle/Purpuri) a binary. You can find builds on Github Actions or my CI server.
 
-Compile a standard Java class (make sure it does not use any features or opcodes higher than Java 7).
+To test it, write and compile a standard Java class. (Make sure it does not use any features or opcodes higher than Java 7)
 
-Note that the entry point is not `main([Ljava.lang.String;)V` like traditional VMs, but `EntryPoint()I`.  
+Note that the entry point is not `main([Ljava.lang.String;)V` (that is, a "main" method that takes a list of Strings and returns void) like traditional VMs, but `EntryPoint()I` (that is, an "EntryPoint" method that takes nothing and returns an Integer).  
+
 This means that in order to be deemed worthy of execution by the VM, your class must contain the function:  
 ``public static int EntryPoint() {``
 
@@ -34,9 +35,9 @@ Any classes that are referenced by this class are loaded automatically (and clas
 
 By default, Purpuri will print enhanced debugging messages to the terminal for every opcode executed for every function called. In this configuration, stdout (System.out.println) messages are collected and printed all at once when the program ends.
 
-If you append the flag `-rel` to execution:  
-``./Purpuri exec.class -rel``  
-then enhanced debugging is stopped, and all that will be printed is what is sent to stdout.
+If you append the Quiet Mode flag `-q` to execution:  
+``./Purpuri exec.class -q``  
+then enhanced log output is stopped, and all that will be printed is what is sent to stdout by the Java program.
 
 
 # Developer Features
@@ -48,6 +49,13 @@ On the topic of debuggers however, Purpuri does not support any current Java deb
 
 It is planned that it will eventually support the Java Platform Debugger Architecture (JPDA), but this is a monumental task.
 
+In the interrim, it does provide a basic Visual Debugger built with Dear ImGui.
+To enable it, pass the -d flag:
+
+``./Purpuri exec.class -d``
+
+Note that the build of Purpuri must have been compiled with this feature enabled.
+It increases the size of the executable by a large amount, so it is an optional feature.
 
 # Disclaimer
 
