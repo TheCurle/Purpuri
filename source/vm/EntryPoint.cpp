@@ -84,7 +84,7 @@ void StartVM(char* MainFile) {
 
     // If it doesn't exist, we need to stop now.
     // It doesn't make sense to execute any code if it's all going to go to waste anyway.
-    if(EntryPoint < 0) {
+    if(EntryPoint == std::numeric_limits<uint32_t>::max()) {
         printf("%s does not have an EntryPoint function, unable to execute.\n", MainFile);
         return;
     }
@@ -155,7 +155,7 @@ void StartVM(char* MainFile) {
         uint32_t init = clazz->GetMethodFromDescriptor("<clinit>", "()V", clazz->GetClassName().c_str(), clazz);
 
         // If there's no static initializer, skip this class.
-        if(init < 0)
+        if(init == std::numeric_limits<uint32_t>::max())
             continue;
 
         // New execution context, so make this the 0th execution.

@@ -102,7 +102,7 @@ void Engine::InvokeNative(const NativeContext& Context) {
     Native::Parameters = Context.Parameters;
 
     // The libnative library was loaded in EntryPoint.cpp, so we can just ask the Native module to search for the function for us.
-    auto func = Native::LoadSymbol(NATIVES_FILE, FunctionName.c_str());
+    auto func = Native::LoadSymbol(NATIVES_FILE, FunctionName);
 
     // If the function wasn't found, we need to print and exit now, otherwise we're about to cause major system issues.
     // Basically every OS API is predicated on us not trying to execute code at NULLPTR with no system context.
@@ -114,7 +114,7 @@ void Engine::InvokeNative(const NativeContext& Context) {
     printf("Jumping to native function.\n");
 
     // LoadSymbol stores a function pointer, so we can jump to it here.
-    // The function takes no arguments, it retrieves system context from the PNI API..
+    // The function takes no arguments, it retrieves system context from the PNI API.
     func();
 }
 
@@ -134,7 +134,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
     // We're going to be executing bytecode, so it's a good idea to fetch the current state of the code here.
     uint8_t* Code = CurrentFrame->_Method->Code->Code + CurrentFrame->ProgramCounter;
     // Error is used to keep track of things that go wrong during execution. Invariably non-fatal, and it's fun to see how wrong it can go from a simple error.
-    int32_t Error = 0;
+    //int32_t Error = 0;
 
     // Some metadata for debug printing.
     Class* Class = CurrentFrame->_Class;
@@ -229,7 +229,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
                 printf("Duplicated the last item on the stack\n");
                 break;
 
-            // invokespecial: call methods without dynamic binding, for eg. constructors and superclass methods.
+            // invokespecial: call methods without dynamic binding, for e.g. constructors and superclass methods.
             case Instruction::invokespecial:
                 Invoke(CurrentFrame, Instruction::invokespecial);
                 PCPLUS 3;
@@ -701,7 +701,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 // Bytecode stores our destination, but just skip past it if we want to continue on our code path
                 if(NotEqual) {
-                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    short Offset = (Code[CurrentFrame->ProgramCounter + 1] << 8) | (Code[CurrentFrame->ProgramCounter + 2]);
                     printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     PCPLUS Offset;
                     CurrentFrame->ProgramCounter += Offset;
@@ -847,11 +847,7 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             default: printf("\nUnhandled opcode 0x%x\n", Code[CurrentFrame->ProgramCounter]); PCPLUS 1; return false;
         }
-
-        if(Error) break;
     }
-
-    return 0;
 }
 
 /**
@@ -866,13 +862,13 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
  * @param Index the index into the class' Constant Pool.
  * @return the Variable representation of the constant.
  */
-Variable Engine::GetConstant(Class *Class, uint8_t Index) {
+Variable Engine::GetConstant(Class *Class, uint8_t Index) const {
     Variable temp;
     temp.pointerVal = 0;
 
     char* Code = (char*) Class->Constants[Index];
     uint16_t shortTemp;
-    Object obj;
+    Object obj {};
 
     switch(Code[0]) {
         // Floats and Integers are single-wide.
@@ -884,7 +880,7 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
         // Strings are arbitrary width
         case TypeString:
             shortTemp = ReadShortFromStream(&Code[1]);
-            obj = _ObjectHeap.CreateString(Class->GetStringConstant(shortTemp).c_str(), _ClassHeap);
+            obj = _ObjectHeap.CreateString(Class->GetStringConstant(shortTemp), _ClassHeap);
             temp.pointerVal = obj.Heap;
             break;
 
@@ -912,8 +908,7 @@ Variable Engine::GetConstant(Class *Class, uint8_t Index) {
  * @return 0 if something went wrong, 1 otherwise
  */
 int Engine::New(StackFrame *Stack) {
-    uint8_t* Code = Stack->_Method->Code->Code;
-    auto Index = ReadShortFromStream(&Code[Stack->ProgramCounter + 1]);
+    auto Index = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
 
     Object newObj = Stack->_Class->CreateObject(Index, &_ObjectHeap);
     if(newObj == ObjectHeap::Null)
@@ -961,12 +956,12 @@ void Engine::NewArray(StackFrame* Stack) {
  * @return 0 if something went wrong, 1 otherwise
  */
 void Engine::ANewArray(StackFrame* Stack) {
-    uint16_t Index = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
+    auto Index = ReadShortFromStream(&Stack->_Method->Code->Code[Stack->ProgramCounter + 1]);
     uint32_t Count = Stack->Stack[Stack->StackPointer].intVal; // pop
 
     if(!Stack->_Class->CreateObjectArray(Index, Count, _ObjectHeap, Stack->Stack[++Stack->StackPointer].object)) // push
         // TODO: ERROR
-        printf("Intializing array failed.");
+        printf("Initializing array failed.");
     printf("Initialized a %d-wide array of objects.\n", Count);
 }
 
@@ -1049,7 +1044,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     // Sometimes the stack can be corrupted on the edge between caller and callee return.
     // By storing the value under the stack pointer (for non-void methods) we can hope to restore the proper
     // value to them. This is not a guarantee, and is indeed an indicator of a larger logic fault at hand, but I've
-    // been unable to find said larger fault as of yet.
+    // been unable to find said larger fault yet.
     // This is a hack, but it works, and it solves a really annoying problem.
     Variable UnderStack;
     if(Stack->StackPointer <= (Parameters + 1))
@@ -1076,11 +1071,11 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     printf("\tClass at 0x" PrtHex64 ".\r\n", ObjectFromHeap->pointerVal);
     auto* VirtualClass = (class Class*) ObjectFromHeap->pointerVal;
 
-    // Here's where we search the class for the method we want to call (since it may want to be in an interface, etc).
+    // Here's where we search the class for the method we want to call (since it may want to be in an interface, etc.)
     // If this class does not exist, something has gone horribly wrong with the compiler.
     uint32_t MethodInClassIndex = VirtualClass->GetMethodFromDescriptor(MethodName.c_str(), MethodDesc.c_str(), ClassName.c_str(), VirtualClass);
 
-    // Now, we know which class has the code, we know what method we want to call, we know the parameters of the call and we know
+    // Now, we know which class has the code, we know what method we want to call, we know the parameters of the call, and we know
     // what object of the class it was called on.
     // However, we first need to check something.
     // 0x100 means "native method", where the code to execute is NOT java bytecode, and cannot be simply jumped to.
@@ -1088,7 +1083,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     //
     // The native method will not return normally, since it is a void method.
     // Instead, it will throw a "NativeReturn" exception so that it can pass a JVM Object back to us if necessary.
-    // Exceptions as control flow is typically extremely bad, but it comes in really handy here.
+    // Exceptions as control flow is typically awful, but it comes in really handy here.
     // It means that we are in full control of when and how native code executes, and what we do with the data it returns.
     //
     if(VirtualClass->Methods[MethodInClassIndex].Access & 0x100) {
@@ -1155,8 +1150,8 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
 
     size_t ParameterCount = 0;
     printf("\tSetting locals..\r\n");
-    // If non static, set "this"
-    // This is a separate check than the one immediately above, because we needed to calculate the Parameters additional length
+    // If non-static, set "this"
+    // This check is separate from the one immediately above, because we needed to calculate the Parameters additional length
     // to be able to set the Member Stack size, and we need to use the Member Stack Size to be able to set the instance of the Object.
     // It's a chicken-and-egg scenario. The simplest solution was two checks.
     if(!(Stack[1]._Method->Access & 0x8)) {
@@ -1183,7 +1178,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     this->Ignite(&Stack[1]);
 
     // Because of the mechanisms of the standard return, the value is left on the new frame's stack.
-    // However, it's trivial to retrieve, since we also have its' stack pointer.
+    // However, it's trivial to retrieve, since we also have its stack pointer.
     Variable ReturnValue = Stack[1].Stack[Stack[1].StackPointer];
 
     // If the method was void, we need to adjust positively (this is about to be used in a -= so - is positive)
@@ -1205,7 +1200,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
 
     // As mentioned earlier, some edge cases occur on the interface between caller and callee.
     // By forcibly setting the value that used to be there into the same location, we can ensure that nothing changes or is corrupted.
-    // Again, this problem is an indication of a bigger fault, but it's an enormous pain to debug so i'll live with it and so should you.
+    // Again, this problem is an indication of a bigger fault, but it's an enormous pain to debug, so I'll live with it and so should you.
     Stack->Stack[Stack->StackPointer + Offset] = UnderStack;
     printf("Restoring the value " PrtSizeT " under the function, just in case.\r\n", UnderStack.pointerVal);
 

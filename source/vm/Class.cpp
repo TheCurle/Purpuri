@@ -10,6 +10,7 @@
 #include <list>
 #include <algorithm>
 #include <string>
+#include <limits>
 
 /**
  * This file implements the Class class, declared in Common.hpp.
@@ -83,21 +84,16 @@ bool Class::LoadFromFile(const char* Filename) {
 
     // The bytecode is stored on-heap. Allocate it, and read from the file.
     LocalCode = (char*) new char[FileSize + 2];
-    bool hasSize = (LocalCode != nullptr);
-    if(hasSize) {
-        File.read(&LocalCode[0], FileSize);
-    }
+    File.read(&LocalCode[0], FileSize);
 
     File.close();
 
     // If the data was read correctly, we need to call out and parse the bytecode.
-    if(hasSize) {
-        LocalCode[FileSize] = 0;
-        BytecodeLength = FileSize;
-        SetCode(LocalCode);
-    }
+    LocalCode[FileSize] = 0;
+    BytecodeLength = FileSize;
+    SetCode(LocalCode);
 
-    return hasSize;
+    return true;
 }
 
 /**
@@ -334,8 +330,7 @@ void Class::ClassloadReferents() {
         // Check if it's a Class. If so, we need to check if it's loaded, and load it if it isn't already.
         else if(Constants[i]->Tag == TypeClass) {
             // There's no good way to read an int from a char*, so we need to temporarily store it and ReadShort.
-            char* Temp = (char*)Constants[i];
-            auto ClassInd = ReadShortFromStream(&Temp[1]);
+            auto ClassInd = ReadShortFromStream((char*)Constants[i] + 1);
 
             // GetStringConstant is implemented in Constants.cpp.
             std::string ClassName = GetStringConstant(ClassInd);
@@ -449,11 +444,8 @@ bool Class::ParseInterfaces(const char* &ClassCode) {
         Interfaces[i] = ReadShortFromStream(ClassCode);
         ClassCode += 2; // We're now ready for the next iteration, but let's log something.
 
-        char* Stream;
-        // We need to read the constant - we've only read the index so far.
-        Stream = (char*) Constants[Interfaces[i]];
         // Read the name from the Class data.
-        auto NameInd = ReadShortFromStream(&Stream[1]);
+        auto NameInd = ReadShortFromStream((char*) Constants[Interfaces[i]] + 1);
 
         // Print out the name of the interface.
         printf("\tThis class implements interface %s\n", GetStringConstant(NameInd).c_str());
@@ -647,7 +639,7 @@ bool Class::ParseMethodCodePoints(int Method, CodePoint *MethodCode) {
             std::string AttribName = GetStringConstant(NameInd);
 
             // If we're not looking at the Method Code, keep looking.
-            if(AttribName != "MethodCode") continue;
+            if(AttribName != "MethodCode" && AttribName != "Code") continue;
 
             // If we get here, we must be looking at MethodCode - the Code Point data.
             // So we read all of the easy-to-read static data.
@@ -662,10 +654,14 @@ bool Class::ParseMethodCodePoints(int Method, CodePoint *MethodCode) {
             // This is technically malformed classes, but the spec changed with Java 8 to make this
             // javac bug part of the specification.
             // Oracle.
-            if(MethodCode->CodeLength > 0) {
+            if((AttribName == "MethodCode" && MethodCode->CodeLength > 0)) {
                 // Allocate and copy the data out of the class file so that we can use it later.
                 MethodCode->Code = new uint8_t[MethodCode->CodeLength];
                 memcpy(MethodCode->Code, AttribCode, MethodCode->CodeLength);
+            } else if ((AttribName == "Code" && MethodCode->Length > 0)) {
+                // Allocate and copy the data out of the class file so that we can use it later.
+                MethodCode->Code = new uint8_t[MethodCode->Length];
+                memcpy(MethodCode->Code, AttribCode, MethodCode->Length);
             } else {
                 MethodCode->Code = nullptr;
             }
@@ -791,7 +787,7 @@ uint32_t Class::GetMethodFromDescriptor(const char *MethodName, const char *Desc
     // This block should be removed once the VM stabilizes.
     if(Methods == nullptr) {
         puts("GetMethodFromDescriptor called too early! Class not initialised yet!");
-        return false;
+        return std::numeric_limits<uint32_t>::max();
     }
 
     // We need to recursively search up the class hierarchy to see where the method we want exists.
@@ -811,8 +807,7 @@ uint32_t Class::GetMethodFromDescriptor(const char *MethodName, const char *Desc
             for(size_t iface = 0; iface < CurrentClass->InterfaceCount; iface++) {
                 uint16_t interface = CurrentClass->Interfaces[iface];
 
-                char* Stream = (char*) CurrentClass->Constants[interface];
-                auto NameInd = ReadShortFromStream(&Stream[1]);
+                auto NameInd = ReadShortFromStream((char*) CurrentClass->Constants[interface] + 1);
 
                 std::string IfaceName = GetStringConstant(NameInd);
                 InterfaceNames.emplace_back(IfaceName);
@@ -855,7 +850,7 @@ uint32_t Class::GetMethodFromDescriptor(const char *MethodName, const char *Desc
 
     }
 
-    return -1;
+    return std::numeric_limits<uint32_t>::max();
 }
 
 /**
@@ -928,8 +923,7 @@ std::string Class::GetClassName() {
 std::string Class::GetName(uint16_t Obj) {
     if(Obj < 1 || (Obj != Super && Obj != This)) return ClassHeap::UnknownClass;
 
-    char* Entry = (char*)Constants[Obj];
-    auto NameInd = ReadShortFromStream(&Entry[1]);
+    auto NameInd = ReadShortFromStream((char*)Constants[Obj] + 1);
 
     return GetStringConstant(NameInd);
 }

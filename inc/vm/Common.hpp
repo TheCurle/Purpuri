@@ -105,7 +105,7 @@ class Object {
         size_t Heap;
         uint8_t Type;
 
-        bool operator==(const Object& other) { return other.Heap == this->Heap; }
+        bool operator==(const Object& other) const { return other.Heap == this->Heap; }
 };
 
 union Variable {

@@ -37,7 +37,7 @@ class Engine {
         void GetStatic(StackFrame* Stack);
         void GetField(StackFrame* Stack);
 
-        Variable GetConstant(Class* Class, uint8_t Index);
+        Variable GetConstant(Class* Class, uint8_t Index) const;
 
         uint16_t GetParameters(const char* Descriptor);
         uint16_t GetParametersStack(const char* Descriptor);
@@ -67,7 +67,7 @@ struct ClassFile {
     uint16_t InterfaceCount;
     uint16_t* Interfaces;
 
-    [[maybe_unused]] uint16_t FieldCount;
+    uint16_t FieldCount;
     struct FieldData** Fields;
 
     uint16_t MethodCount;
