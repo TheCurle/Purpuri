@@ -76,7 +76,7 @@ struct NativeReturn : public std::exception {
 /**
  * The primary way for a Natives application to interact with the Purpuri VM.
  * All of these methods are static - and thus can be called from anywhere.
- * Context is generated on-the-fly, rather than gathered beforehad.
+ * Context is generated on-the-fly, rather than gathered beforehand.
  * 
  * This constitutes a substantial performance improvement over the JNI.
  */

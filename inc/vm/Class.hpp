@@ -80,12 +80,16 @@ struct ClassFile {
 class ClassHeap {
     std::list<std::string> ClassCache;
     std::map<std::string, Class*> ClassMap;
+    std::list<std::string> ClassPath;
 
     public:
         ClassHeap();
         
         static std::string UnknownClass;
         std::string ClassPrefix;
+
+        void AddToClassPath(std::string);
+        std::string SearchClassPath(std::string&);
 
         bool LoadClass(const char* ClassName, Class* pClass);
         bool AddClass(Class* pClass);

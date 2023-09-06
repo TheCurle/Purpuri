@@ -10,6 +10,7 @@
 #include <string>
 #include <list>
 #include <algorithm>
+#include <filesystem>
 
 /**
  * This file implements the ClassHeap class declared in Class.hpp.
@@ -24,8 +25,8 @@
  * It throws out_of_range if you attempt to access a class that does not exist, so check with the Class Cache first.
  * They are always synchronized.
  *
- * The implementation of this class is mostly wrappers around searching through the Cache and Map, with some
- *  added handling for class prefixes.
+ *
+ * This class also handles the ClassPath, searching for class implementations, and jar handling.
  * For an explanation on class prefixes, see EntryPoint.cpp.
  *
  * @author Curle
@@ -80,6 +81,41 @@ Class* ClassHeap::GetClass(const std::string& Name) {
 }
 
 /**
+ * The ClassPath is a list of locations we can expect to find classes.
+ * By default, the classpath contains:
+ *  - The root folder of the Purpuri executable
+ *  - The working directory
+ *  - Every JAR file added via the -classpath argument
+ * These locations are searched in that order when trying to load classes.
+ */
+void ClassHeap::AddToClassPath(std::string path) {
+    ClassPath.emplace_back(path.append("\\"));
+}
+
+/**
+ * The ClassPath is a list of locations we can expect to find classes.
+ * By default, the classpath contains:
+ *  - The root folder of the Purpuri executable
+ *  - The working directory
+ *  - Every JAR file added via the -classpath argument
+ *
+ * This function searches <classpath>/<classFile> for a valid file, and returns the first valid match.
+ *
+ * @param classFile the class file to search for, with packages.
+ * @return the filesystem location of the class file.
+ */
+std::string ClassHeap::SearchClassPath(std::string& classFile) {
+    for (std::string path : ClassPath) {
+        std::string newPath = path.append(classFile).append(".class");
+        printf("Searching %s\r\n", newPath.c_str());
+        if (std::filesystem::exists(newPath))
+            return newPath;
+    }
+
+    return "INVALID";
+}
+
+/**
  * A relatively complex wrapper to load a class from the given path, to the given Class*.
  * This is where the Class Prefix is handled.
  * See EntryPoint.cpp for what the Class Prefix is, and why we need it.
@@ -97,24 +133,13 @@ bool ClassHeap::LoadClass(const char *ClassName, Class *Class) {
     // The ClassName is given to us by the Java Language.
     // Ergo, we're going to be given something like "OtherClass", or "java/lang/OtherClass".
 
-    // However, if we started executing in a different folder than our working directory, then we can't just
-    // load the file as-is.
-
-    // As explained in EntryPoint.cpp, we need to handle the Class Prefix, which is the difference between the
-    // cwd and the Class' location.
-
-    // Thus, we do a simple transformation; prepend the Prefix, add the Class Name, and add ".class" on the end.
-    // It is now a valid file name that we can load from disk, assuming it actually exists.
-
-    std::string pathTemp;
-    std::string classTemp(ClassName);
-    if(classTemp.find("java/") != 0 && classTemp.find(ClassPrefix) != 0)
-        pathTemp.append(ClassPrefix);
-    pathTemp.append(ClassName);
-    pathTemp.append(".class");
+    std::string ClassNameStr(ClassName);
+    std::string ClassLoc = SearchClassPath(ClassNameStr);
+    if (ClassLoc == "INVALID")
+        return false;
 
     // We need to transform it to a char* so that it can be read properly, so we do that here.
-    RelativePath = pathTemp.c_str();
+    RelativePath = ClassLoc.c_str();
 
     // Since we're preparing the class for being loaded, we need to tell it which class heap it belongs to.
     // That's this one.

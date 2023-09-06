@@ -9,6 +9,8 @@
 #include <vm/Stack.hpp>
 
 #include <vm/debug/Debug.hpp>
+#include <filesystem>
+#include <algorithm>
 #include "vm/Native.hpp"
 
 /**
@@ -41,11 +43,16 @@ void DisplayUsage(char* Name) {
  * See ClassHeap for how classloading is handled.
  * @param MainFile the class file to load and execute.
  */
-void StartVM(char* MainFile) {
+void StartVM(char* MainFile, char* Executable) {
 
     // Preinitialization
+    std::string ExecutableStr(Executable);
+    std::replace(ExecutableStr.begin(), ExecutableStr.end(), '/', '\\');
+    std::string ExecutablePath = ExecutableStr.substr(0, ExecutableStr.find_last_of('\\'));
 
     ClassHeap heap;
+    heap.AddToClassPath(ExecutablePath);
+    heap.AddToClassPath(std::filesystem::current_path().string());
 
     // Initialize the Object class before anything else.
     auto* Object = new Class();
@@ -276,7 +283,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     
-    StartVM(argv[i]);
+    StartVM(argv[i], argv[0]);
 
     return 1;
 }
