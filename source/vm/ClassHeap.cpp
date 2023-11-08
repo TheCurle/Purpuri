@@ -89,7 +89,7 @@ Class* ClassHeap::GetClass(const std::string& Name) {
  * These locations are searched in that order when trying to load classes.
  */
 void ClassHeap::AddToClassPath(std::string path) {
-    ClassPath.emplace_back(path.append("\\"));
+    ClassPath.emplace_back(path + std::filesystem::path::preferred_separator);
 }
 
 /**

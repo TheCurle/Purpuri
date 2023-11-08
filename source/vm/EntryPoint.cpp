@@ -19,7 +19,7 @@
  * @param Name the name of the Purpuri executable.
  */
 void DisplayUsage(char* Name) {
-    fprintf(stderr, "Purpuri VM v1.6 - Gemwire Institute\n");
+    fprintf(stderr, "Purpuri VM v1.7a - Gemwire Institute\n");
     fprintf(stderr, "***************************************\n");
     fprintf(stderr, "Usage: %s <class file>\n", Name);
     #ifdef VISUAL_DEBUGGER

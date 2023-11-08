@@ -21,6 +21,9 @@ set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# CMAKE dependencies
+find_package(Threads REQUIRED)
+
 add_compile_options(
     # gcc and clang: debugging symbols
     "$<$<CXX_COMPILER_ID:AppleClang,Clang,GNU>:-g>" 
@@ -53,9 +56,6 @@ add_compile_options(
 
     # windows: mingw and msys; use ANSI compatible printf, workaround a gcc bug.
     "$<$<PLATFORM_ID:Windows>:-D__USE_MINGW_ANSI_STDIO>"
-
-    # all systems and compilers: link threading library
-    "-pthread"
 )
 
 # ******************************************
@@ -94,6 +94,7 @@ add_executable(purpuri)
 target_sources(purpuri PRIVATE ${vm_src})
 set_target_properties(purpuri PROPERTIES ENABLE_EXPORTS ON)
 target_compile_definitions(purpuri PRIVATE VM_BUILDING)
+target_link_libraries(purpuri PRIVATE Threads::Threads)
 
 # Linux needs to compile against -ldl
 if (UNIX)
