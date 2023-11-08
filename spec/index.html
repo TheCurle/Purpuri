@@ -1,0 +1,356 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://purpuri.gemwire.uk/spec/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.6">
+    
+    
+      
+        <title>JVM Spec - Purpuri</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.558e4712.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.2505c338.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#supported-features" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Purpuri" class="md-header__button md-logo" aria-label="Purpuri" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Purpuri
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              JVM Spec
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Purpuri" class="md-nav__button md-logo" aria-label="Purpuri" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Purpuri
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        JVM Spec
+      </a>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="supported-features">Supported Features</h1>
+<p>Purpuri only supports a subset of Java 7 features.<br />
+An exhaustive list would be exhausting to produce, so here's a list of unsupported features instead:</p>
+<ul>
+<li>Every class in the Java Standard Library (<code>java.*</code>, <code>javax.*</code>)</li>
+<li>Exceptions</li>
+<li>Stack unwinding</li>
+<li>Debugging</li>
+</ul>
+<p>This means it does not support any features higher than Java 7:</p>
+<ul>
+<li>Lambdas</li>
+<li>Modules</li>
+<li>Static, private or default interface methods</li>
+<li>Method References</li>
+<li>Direct execution of Java Source files.</li>
+<li>Dynamic class-file constants</li>
+<li>Switch expressions</li>
+<li><code>instanceof</code> pattern matching.</li>
+<li>Records</li>
+<li>Sealed classes</li>
+</ul>
+<h1 id="supported-opcodes">Supported opcodes</h1>
+<ul>
+<li>noop</li>
+<li>return, ireturn</li>
+<li>new</li>
+<li>arraylength</li>
+<li>newarray, anewarray</li>
+<li>bcdup</li>
+<li>invokespecial, invokevirtual, invokeinterface, invokestatic</li>
+<li>putfield, getfield</li>
+<li>putstatic, getstatic</li>
+<li>[ilfd]store</li>
+<li>iconst_m1, iconst_[0-5]</li>
+<li>fconst_[0-2]</li>
+<li>dconst_[0-1]</li>
+<li>istore_[0-3]</li>
+<li>iload_[0-3]</li>
+<li>dstore_[0-3]</li>
+<li>dload_[0-3]</li>
+<li>fstore_[0-3]</li>
+<li>aload_[0-3]</li>
+<li>astore_[0-3]</li>
+<li>aaload, iaload</li>
+<li>aastore, [ilsbcfd]astore</li>
+<li>fload_[0-3]</li>
+<li>imul, iadd, isub,</li>
+<li>fmul, fdiv</li>
+<li>dmul, dadd, ddiv</li>
+<li>i2d, d2f, d2i, f2d, f2i</li>
+<li>d2l, f2l, i2b, i2c, i2f, i2l, i2s, l2d, l2f, l2i</li>
+<li>ldc, ldc2_w</li>
+<li>drem</li>
+<li>bipush</li>
+<li>if_icmpeq, if_icmpge, if_icmpgt, if_icmple, if_icmplt, if_icmpne</li>
+<li>goto</li>
+<li>sipush</li>
+</ul>
+<h1 id="todo-opcodes">TODO opcodes</h1>
+<ul>
+<li>dup, dup_x1, dup_x2</li>
+<li>dup2, dup2_x1, dup2_x2</li>
+<li>goto_w, ret</li>
+<li>pop, pop2</li>
+<li>[fd]cmpg, [fd]cmpl, [fd]neg, dsub</li>
+<li>frem, fadd, fsub</li>
+<li>ladd, lcmp, ldiv, lmul, lneg, lor, lrem, lreturn, lshl, lshr, lsub, lushr, lxor</li>
+<li>iand, idiv, iinc, ineg, ior, irem, ireturn, ishl, ishr, iushr, ixor</li>
+<li>if_acmpeq, if_acmpne, ifeq, ifge, ifgt, ifle, iflt, ifne, ifnonnul, ifnull</li>
+<li>impdep1, impdep2</li>
+<li>jsr, jsr_w</li>
+<li>[adf]return,</li>
+<li>[adfil]load, [a]store</li>
+<li>[bcdfls]aload</li>
+<li>wide</li>
+<li>swap</li>
+<li>breakpoint</li>
+<li>checkcast</li>
+<li>instanceof</li>
+<li>lookupswitch, tableswitch</li>
+<li>monitorenter, monitorexit</li>
+<li>multianewarray</li>
+</ul>
+<h1 id="unsupported-opcodes">Unsupported opcodes</h1>
+<ul>
+<li>athrow</li>
+</ul>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.e5c33ebb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.51d95adb.min.js"></script>
+      
+        <script src="../search/main.js"></script>
+      
+    
+  </body>
+</html>
