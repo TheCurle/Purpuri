@@ -23,6 +23,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # CMAKE dependencies
 find_package(Threads REQUIRED)
+find_package(ZLIB REQUIRED)
 
 add_compile_options(
     # gcc and clang: debugging symbols
@@ -94,7 +95,7 @@ add_executable(purpuri)
 target_sources(purpuri PRIVATE ${vm_src})
 set_target_properties(purpuri PROPERTIES ENABLE_EXPORTS ON)
 target_compile_definitions(purpuri PRIVATE VM_BUILDING)
-target_link_libraries(purpuri PRIVATE Threads::Threads)
+target_link_libraries(purpuri PRIVATE Threads::Threads ZLIB::ZLIB)
 
 # Linux needs to compile against -ldl
 if (UNIX)
