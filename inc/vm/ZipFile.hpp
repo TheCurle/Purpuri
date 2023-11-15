@@ -4,6 +4,9 @@
  **************/
 
 #include <unordered_map>
+#include <fstream>
+#include <vector>
+#include <string>
 #include <zlib.h>
 
 /**
@@ -15,6 +18,7 @@ struct ZipFile {
     int Size;
     std::ifstream* File;
     std::unordered_map<int, int> HashTable;
+    std::vector<std::string> FileNames; // For debugging only
 };
 
 /************* ZLIB Defines *************/
@@ -50,7 +54,7 @@ struct ZipFile {
 #define COMPRESSION_DEFLATED       8
 
 // Read the data of the ZIP/JAR/WAR file, decompose to a hash table of contents.
-ZipFile* ProcessArchive(char* path);
+ZipFile* ProcessArchive(const char* path);
 // Get a file offset for a file in the given archive.
 int FindZipFileOffset(char* folder, ZipFile* zip);
 // Get the raw data for a file in the given archive.

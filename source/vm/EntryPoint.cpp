@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstring>
 #include <vm/Stack.hpp>
+#include <vm/ZipFile.hpp>
 
 #include <vm/debug/Debug.hpp>
 #include <filesystem>
@@ -240,6 +241,19 @@ void StartVM(char* MainFile, char* Executable) {
 }
 
 int main(int argc, char* argv[]) {
+
+    std::cout << "Testing JAR reading." << std::endl;
+    std::cout << "Input: stdlib.jar" << std::endl;
+    // Testing jar files.
+    ZipFile* stdlib = ProcessArchive("./stdlib.jar");
+    if (stdlib == nullptr) {
+        std::cout << "Error reading archive." << std::endl;
+        return 1;
+    }
+    std::cout << "File size " << stdlib->Size << ", has " << stdlib->FileNames.size() << " files within." << std::endl;
+    std::cout << "File contains java/lang/Object: " << ((std::find(stdlib->FileNames.begin(), stdlib->FileNames.end(), std::string("java/lang/object")) != stdlib->FileNames.end()) ? "true" : "false") << std::endl;
+    std::cout << "Ending.." << std::endl;
+    return 0;
 
     // Parse command line arguments.
     // Stolen from Greek Tools' Erythro Compiler.
