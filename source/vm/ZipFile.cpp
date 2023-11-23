@@ -45,8 +45,9 @@
     }                                               \
 
 // A short macro to deal with an error condition while processing a jar; close the file handle and return null.
-#define ERROR \
+#define ERROR(x) \
     {             \
+        std::cout << x << std::endl; \
         File.close(); \
         return NULL;  \
     }
@@ -85,9 +86,8 @@ int utf8Hash(unsigned char *utf8) {
  * At the end, a fully formed and valid ZipFile is created.
  * This ZipFile will have all necessary data filled in.
 */
-ZipFile* ProcessArchive(char* path) {
+ZipFile* ProcessArchive(const char* path) {
     char MagicNumber[SIGNATURE_LENGTH];
-    uint8_t* Data, *Ptr;
 
     int Entries = 0, Length = 0, Offset = 0, HeaderStart = 0;
     int NextFileSignature;
@@ -95,29 +95,37 @@ ZipFile* ProcessArchive(char* path) {
 
     ZipFile* Zip;
     std::unordered_map<int, int> Map;
+    std::vector<std::string> Names;
     
     // Open Zip file
     File = std::ifstream(path, std::ios::binary);
-    if(!File.is_open())
+    if(!File.is_open()) {
+        std::cout << "Unable to read file " << path << std::endl;
         return NULL;
+    }
 
     // Verify signature. We always want to start with a local file - the manifest.
     File.read(MagicNumber, SIGNATURE_LENGTH);
-    if(ReadIntFromStream(MagicNumber) != LOCAL_FILE_HEADER_SIG)
-        ERROR;
+    if(*reinterpret_cast<unsigned int*>(MagicNumber) != LOCAL_FILE_HEADER_SIG)
+        ERROR("Start of Zip file has invalid magic: " << *reinterpret_cast<unsigned int*>(MagicNumber) << "(" << ReadIntFromStream(MagicNumber) << ")" << " expected to see " << LOCAL_FILE_HEADER_SIG);
 
     // Find the end of the file.
-    File.seekg(std::ios::end);
+    File.seekg(0, std::ios::end);
     Length = File.tellg();
+
+    std::cout << "File length is " << Length << std::endl;
 
     // Start searching backwards.
     for (Offset = Length - CDR_END_LENGTH; Offset >= 0; ) {
         // Try read the signature
+        File.seekg(Offset);
         File.read(MagicNumber, SIGNATURE_LENGTH);
+        std::cout << "Offset is " << Offset << ", magic is " << *reinterpret_cast<unsigned int*>(MagicNumber) << std::endl;
+        fflush(stdout);
         // Check if the first byte matches, as an optimization
         if (*MagicNumber == (CDR_END_SIGNATURE & 0xff)) {
             // Read the full thing if we think it might be what we want
-            if (ReadIntFromStream(MagicNumber) == CDR_END_SIGNATURE)
+            if (*reinterpret_cast<unsigned int*>(MagicNumber)== CDR_END_SIGNATURE)
                 // Break from the loop.
                 break;
             else
@@ -130,7 +138,7 @@ ZipFile* ProcessArchive(char* path) {
 
     // If Offset is <0, we got back to the start without finding the sig. It's possible to find the signature AT 0, though, so we must be careful with this check.
     if (Offset < 0) 
-        ERROR;
+        ERROR("Unable to find dictionary header in zip file.");
 
     // We found the signature, so we know the base of the CDR.
     File.seekg(Offset);
@@ -143,23 +151,22 @@ ZipFile* ProcessArchive(char* path) {
     READ_INT(file, HeaderStart + CDR_END_DIR_OFFSET, Offset)
 
     if (Offset + SIGNATURE_LENGTH > Length) 
-        ERROR;
+        ERROR("Malformed zip file - signature is longer than the file.");
 
     // Iterate every entry in the zip file.
     while (Entries--) {
-        char* name;
         int pathLength, commentLength, extraLength, found;
 
         // Sanity check the length.
         if (Offset + CDR_FILE_HEADER_LEN > Length)
-            ERROR;
+            ERROR("Malformed zip file - file header is longer than the file.");
 
             
         READ_INT(signature, Offset, NextFileSignature)
 
         // Sanity check the signature. Once we stop reading files, we're out.
         if (NextFileSignature != CDR_FILE_HEADER_SIG) 
-            ERROR;
+            ERROR("Malformed zip file - sequential headers are not file signatures.");
         
         // The length of the path. The path comes immediately after the header.
         READ_SHORT(path, Offset + CDR_FILE_PATHLEN_OFFSET, pathLength)
@@ -178,6 +185,8 @@ ZipFile* ProcessArchive(char* path) {
         // Manually terminate the path.
         // When we search for this later on, the terminator will come included, so we must add it to the hash.
         filepath[pathLength] = '\0';
+        // Add the path to the list we save
+        Names.emplace_back(std::string(filepath));
         // Save the location
         found = Offset;
 
@@ -189,9 +198,9 @@ ZipFile* ProcessArchive(char* path) {
         // Sanity check the zip - there should always be more bytes.
         // TODO: is this leaking that filepath we just allocated?
         if (Offset + SIGNATURE_LENGTH > Length)
-            ERROR;
+            ERROR("Malformed zip file - the end of a file reaches EOF without extra bytes.");
 
-        Map.insert(utf8Hash((unsigned char*) filepath), found);
+        Map.emplace(utf8Hash((unsigned char*) filepath), found);
         
         delete filepath;
     }
@@ -200,6 +209,9 @@ ZipFile* ProcessArchive(char* path) {
     Zip->File = &File;
     Zip->Size = Length;
     Zip->HashTable = Map;
+    Zip->FileNames = Names;
+
+    return Zip;
 }
 
 /**
@@ -290,7 +302,7 @@ char* GetFileInZip(char* name, ZipFile* zip, int& size) {
 
             // The "proper" return path. This is where valid data leaves.
             // All other exit paths are errors.
-            if (error = Z_STREAM_END || (error == Z_OK && stream.avail_in == 0)) {
+            if (error == Z_STREAM_END || (error == Z_OK && stream.avail_in == 0)) {
                 delete CompressedData;
                 return DecompressionBuffer;
             }
