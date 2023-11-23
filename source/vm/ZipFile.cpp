@@ -179,7 +179,7 @@ ZipFile* ProcessArchive(const char* path) {
         Offset += CDR_FILE_HEADER_LEN;
 
         // Read in the file path.
-        char* filepath = (char*) malloc(pathLength + 1);
+        char* filepath = new char[pathLength + 1];
         File.seekg(Offset);
         File.read(filepath, pathLength + 1);
         // Manually terminate the path.
@@ -202,7 +202,7 @@ ZipFile* ProcessArchive(const char* path) {
 
         Map.emplace(utf8Hash((unsigned char*) filepath), found);
         
-        delete filepath;
+        delete[] filepath;
     }
 
     Zip = new ZipFile;
@@ -292,8 +292,8 @@ char* GetFileInZip(char* name, ZipFile* zip, int& size) {
             stream.zfree = Z_NULL;
 
             if (inflateInit2(&stream, -MAX_WINDOW_BITS) != Z_OK) {
-                delete DecompressionBuffer;
-                delete CompressedData;
+                delete[] DecompressionBuffer;
+                delete[] CompressedData;
                 return NULL;
             }
 
@@ -303,7 +303,7 @@ char* GetFileInZip(char* name, ZipFile* zip, int& size) {
             // The "proper" return path. This is where valid data leaves.
             // All other exit paths are errors.
             if (error == Z_STREAM_END || (error == Z_OK && stream.avail_in == 0)) {
-                delete CompressedData;
+                delete[] CompressedData;
                 return DecompressionBuffer;
             }
             break;
@@ -314,7 +314,7 @@ char* GetFileInZip(char* name, ZipFile* zip, int& size) {
     }
 
     delete DecompressionBuffer;
-    delete CompressedData;
+    delete[] CompressedData;
     return NULL;
 
 }
