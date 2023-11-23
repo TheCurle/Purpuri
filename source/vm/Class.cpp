@@ -96,6 +96,11 @@ bool Class::LoadFromFile(const char* Filename) {
     return true;
 }
 
+bool Class::LoadFromMemory(char* data, size_t size) {
+    BytecodeLength = size;
+    SetCode(data);
+}
+
 /**
  * A simple wrapper that overrides the bytecode stored in the current class.
  * @param p_Code the new bytecode to read

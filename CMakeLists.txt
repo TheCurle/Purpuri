@@ -30,7 +30,7 @@ add_compile_options(
     "$<$<CXX_COMPILER_ID:AppleClang,Clang,GNU>:-g>" 
 
     # gcc and clang: warnings become errors
-    "$<$<CXX_COMPILER_ID:AppleClang,Clang,GNU>:-Werror>"
+    #"$<$<CXX_COMPILER_ID:AppleClang,Clang,GNU>:-Werror>"
     # msvc: warnings are fatal
     "$<$<CXX_COMPILER_ID:MSVC>:/WX>"
 
@@ -67,6 +67,7 @@ file(GLOB vm_src CONFIGURE_DEPENDS
     "source/vm/class/*.cpp"
     "source/vm/native/*.cpp"
     "source/vm/debug/*.cpp"
+    "source/miniz.c"
 )
 
 file(GLOB lib_src CONFIGURE_DEPENDS

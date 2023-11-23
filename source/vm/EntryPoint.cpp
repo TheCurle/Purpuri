@@ -251,8 +251,22 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     std::cout << "File size " << stdlib->Size << ", has " << stdlib->FileNames.size() << " files within." << std::endl;
-    std::cout << "File contains java/lang/Object: " << ((std::find(stdlib->FileNames.begin(), stdlib->FileNames.end(), std::string("java/lang/object")) != stdlib->FileNames.end()) ? "true" : "false") << std::endl;
+    std::cout << "File contains java/lang/Object: " << ((std::find(stdlib->FileNames.begin(), stdlib->FileNames.end(), std::string("java/lang/Object.class")) != stdlib->FileNames.end()) ? "true" : "false") << std::endl;
+    uint32_t idx;
+    mz_zip_reader_locate_file_v2(stdlib->File, "java/lang/Object.class", "", 0, &idx);
+    std::cout << "Object is index " << stdlib->Map.at(utf8Hash((unsigned char*) "java/lang/Object.class")) << ", file says " << idx << std::endl;
     std::cout << "Ending.." << std::endl;
+
+    std::cout << "Reading files from zip test." << std::endl;
+    size_t ClassSize = 0;
+    char* FileData = GetFileInZip("java/lang/Object.class", stdlib, ClassSize);
+    std::cout << "Object class is " << ClassSize << " bytes long.";
+
+    Class Object;
+    Object.LoadFromMemory(FileData, ClassSize);
+
+    std::cout << "Class name is " << Object.GetClassName() << ", super class is " << Object.GetSuperName() << ", has " << Object.MethodCount << " methods." << std::endl;
+
     return 0;
 
     // Parse command line arguments.

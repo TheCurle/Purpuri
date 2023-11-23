@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <zlib.h>
+#include <miniz.h>
 
 /**
  * A Java-compatible archive file.
@@ -15,10 +16,10 @@
  * Decomposes to a hash table, specifying data pointers for each file and folder in the file.
  */
 struct ZipFile {
-    int Size;
-    std::ifstream* File;
-    std::unordered_map<int, int> HashTable;
-    std::vector<std::string> FileNames; // For debugging only
+    size_t Size;
+    mz_zip_archive* File;
+    std::unordered_map<int, int> Map;
+    std::vector<std::string> FileNames;
 };
 
 /************* ZLIB Defines *************/
@@ -58,4 +59,5 @@ ZipFile* ProcessArchive(const char* path);
 // Get a file offset for a file in the given archive.
 int FindZipFileOffset(char* folder, ZipFile* zip);
 // Get the raw data for a file in the given archive.
-char* GetFileInZip(char* file, ZipFile* zip, int& size);
+char* GetFileInZip(char* file, ZipFile* zip, size_t& size);
+int utf8Hash(unsigned char *utf8);

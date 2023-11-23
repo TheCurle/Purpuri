@@ -112,6 +112,7 @@ class Class : public ClassFile {
         virtual ~Class();
 
         virtual bool LoadFromFile(const char* Filename);
+        virtual bool LoadFromMemory(char* Data, size_t size);
         void SetCode(const char* Code);
 
         bool ParseFullClass();
