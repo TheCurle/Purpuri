@@ -1035,6 +1035,18 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     std::string MethodDesc = Stack->_Class->GetStringConstant(MethodToInvoke.Descriptor);
     printf("\tInvocation resolves to method %s%s\n", MethodName.c_str(), MethodDesc.c_str());
 
+    // TODO: Grab parameters from descriptor.
+    // Classload them.
+    /*
+     *          auto* Class = new class Class();
+
+                // Note that this is potentially re-entrant; LoadClass calls LoadFromFile, which eventually calls ClassloadReferents.
+                if(!this->_ClassHeap->LoadClass(ClassName.c_str(), Class)) {
+                    printf("Classloading referenced class %s failed. Fatal error.\n", ClassName.c_str());
+                    exit(6);
+                }
+     */
+
     // The biggest pain here is that we need to synchronize parameters between the caller and callee.
     // Prepare now by counting the parameters in the descriptor.
     size_t Parameters = GetParameters(MethodDesc.c_str());

@@ -76,7 +76,7 @@ class ObjectHeap;
     printf(__VA_ARGS__)
     
 #define printf(...) \
-    if(!Engine::QuietMode) printf(__VA_ARGS__)
+    { if(!Engine::QuietMode) printf(__VA_ARGS__); fflush(stdout); }
 
 
 #define puts(x) \

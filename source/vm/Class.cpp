@@ -351,14 +351,7 @@ void Class::ClassloadReferents() {
             //  we need to also check the ClassHeap itself for nullptr values.
             // If it's nullptr, we're in the process of loading it (through that class' ClassloadReferents) so skip it.
             if(i != Super && i != This && (!this->_ClassHeap->ClassExists(ClassName) && this->_ClassHeap->GetClass(ClassName) == nullptr)) {
-                printf("\tClass is not loaded - invoking the classloader\n");
-                auto* Class = new class Class();
-
-                // Note that this is potentially re-entrant; LoadClass calls LoadFromFile, which eventually calls ClassloadReferents.
-                if(!this->_ClassHeap->LoadClass(ClassName.c_str(), Class)) {
-                    printf("Classloading referenced class %s failed. Fatal error.\n", ClassName.c_str());
-                    exit(6);
-                }
+                printf("\tClass is not loaded - deferring until invocation.\n");
             } else {
                 printf(" - clear\n");
             }
@@ -367,7 +360,7 @@ void Class::ClassloadReferents() {
 
     
     if(NeedsString) {
-        if(!this->_ClassHeap->LoadClass("java/lang/String", new Class)) {
+        if(!this->_ClassHeap->ClassExists("java/lang/String") && !this->_ClassHeap->LoadClass("java/lang/String", new Class)) {
             printf("Classloading referenced class %s failed. Fatal error.\n", "java/lang/String");
             exit(6);
         }

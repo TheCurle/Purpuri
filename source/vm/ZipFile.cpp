@@ -124,6 +124,7 @@ ZipFile* ProcessArchive(const char* path) {
     zfile->Size = length;
     zfile->FileNames = Names;
     zfile->Map = Map;
+    zfile->ZipName = path;
 
     return zfile;
 
@@ -278,8 +279,6 @@ ZipFile* ProcessArchive(const char* path) {
 char* GetFileInZip(char* name, ZipFile* zip, size_t& size) {
     void* data;
     int hash = utf8Hash((unsigned char*) name);
-    std::cout << "Attempting to find file " << name << " in zip." << std::endl;
-    std::cout << "Path hash is " << std::hex << hash << std::dec << ", contained: " << (zip->Map.contains(hash) ? "true" : "false") << std::endl;
     data = mz_zip_reader_extract_to_heap(zip->File, zip->Map.at(hash), &size, 0);
     return (char*) data;
 

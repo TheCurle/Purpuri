@@ -9,11 +9,13 @@
 #include <cstring>
 #include <list>
 #include <vector>
+#include <filesystem>
 
 #include "Constants.hpp"
 #include "Fields.hpp"
 #include "Methods.hpp"
 #include "Objects.hpp"
+#include "ZipFile.hpp"
 
 class Engine {
     public:
@@ -77,10 +79,26 @@ struct ClassFile {
     struct AttributeData** Attributes;
 };
 
+/**
+ * A class information can either be inside a zip archive, or on the filesystem.
+ * Passing the information out each time can be troublesome.
+ * This packages it up a little more cleanly.
+ */
+
+struct ClassLocation {
+    bool inZip;
+    bool isValid;
+    std::filesystem::path FSPath;
+    std::string ZipPath;
+    ZipFile* Zip;
+};
+
 class ClassHeap {
     std::list<std::string> ClassCache;
     std::map<std::string, Class*> ClassMap;
-    std::list<std::string> ClassPath;
+    std::list<ClassLocation> ClassPath;
+    std::list<ClassLocation> BootstrapClasspath;
+    std::list<ZipFile*> ZipsInUse;
 
     public:
         ClassHeap();
@@ -89,7 +107,8 @@ class ClassHeap {
         std::string ClassPrefix;
 
         void AddToClassPath(std::string);
-        std::string SearchClassPath(std::string&);
+        void AddToBootstrapClasspath(std::string);
+        ClassLocation SearchClassPath(std::string&);
 
         bool LoadClass(const char* ClassName, Class* pClass);
         bool AddClass(Class* pClass);

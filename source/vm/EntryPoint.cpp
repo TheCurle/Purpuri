@@ -52,6 +52,7 @@ void StartVM(char* MainFile, char* Executable) {
     std::string ExecutablePath = ExecutableStr.substr(0, ExecutableStr.find_last_of('\\'));
 
     ClassHeap heap;
+    heap.AddToBootstrapClasspath(std::filesystem::current_path().append("stdlib.jar").string());
     heap.AddToClassPath(ExecutablePath);
     heap.AddToClassPath(std::filesystem::current_path().string());
 
@@ -153,7 +154,7 @@ void StartVM(char* MainFile, char* Executable) {
 
     bool quiet = Engine::QuietMode; // Save the current value of the quiet setting, so that we can override it temporarily
     bool debug = Debugger::Enabled; // Save the current value of the debugger setting, so that we can override it temporarily
-    Engine::QuietMode = true; // Set quiet mode for static initializers; they get very spammy
+    Engine::QuietMode = false; // Set quiet mode for static initializers; they get very spammy
     Debugger::Enabled = false; // Disable the debugger; speeds things up considerably.
 
     // As mentioned, we go against the Java spec here.
@@ -179,8 +180,10 @@ void StartVM(char* MainFile, char* Executable) {
 
         print("Running static initializer for class %s\n", clazz->GetClassName().c_str());
 
+
         // Everything's ready; start executing bytecode!
         engine.Ignite(&Stack[StartFrame]);
+        fflush(stdout);
     }
 
     // After all static initializers are executed, we can undo our temporary changes to these variables.
@@ -241,33 +244,6 @@ void StartVM(char* MainFile, char* Executable) {
 }
 
 int main(int argc, char* argv[]) {
-
-    std::cout << "Testing JAR reading." << std::endl;
-    std::cout << "Input: stdlib.jar" << std::endl;
-    // Testing jar files.
-    ZipFile* stdlib = ProcessArchive("./stdlib.jar");
-    if (stdlib == nullptr) {
-        std::cout << "Error reading archive." << std::endl;
-        return 1;
-    }
-    std::cout << "File size " << stdlib->Size << ", has " << stdlib->FileNames.size() << " files within." << std::endl;
-    std::cout << "File contains java/lang/Object: " << ((std::find(stdlib->FileNames.begin(), stdlib->FileNames.end(), std::string("java/lang/Object.class")) != stdlib->FileNames.end()) ? "true" : "false") << std::endl;
-    uint32_t idx;
-    mz_zip_reader_locate_file_v2(stdlib->File, "java/lang/Object.class", "", 0, &idx);
-    std::cout << "Object is index " << stdlib->Map.at(utf8Hash((unsigned char*) "java/lang/Object.class")) << ", file says " << idx << std::endl;
-    std::cout << "Ending.." << std::endl;
-
-    std::cout << "Reading files from zip test." << std::endl;
-    size_t ClassSize = 0;
-    char* FileData = GetFileInZip("java/lang/Object.class", stdlib, ClassSize);
-    std::cout << "Object class is " << ClassSize << " bytes long.";
-
-    Class Object;
-    Object.LoadFromMemory(FileData, ClassSize);
-
-    std::cout << "Class name is " << Object.GetClassName() << ", super class is " << Object.GetSuperName() << ", has " << Object.MethodCount << " methods." << std::endl;
-
-    return 0;
 
     // Parse command line arguments.
     // Stolen from Greek Tools' Erythro Compiler.

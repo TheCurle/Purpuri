@@ -5,12 +5,10 @@
 
 #include <vm/Class.hpp>
 
-#include <fstream>
-#include <iterator>
 #include <string>
-#include <list>
 #include <algorithm>
 #include <filesystem>
+#include "vm/ZipFile.hpp"
 
 /**
  * This file implements the ClassHeap class declared in Class.hpp.
@@ -73,10 +71,6 @@ Class* ClassHeap::GetClass(const std::string& Name) {
     auto classIter = ClassMap.find(Name);
     Class* Class = classIter->second;
 
-    // TODO: Why do we check the file?
-    std::ifstream File(Name.c_str(), std::ios::binary);
-    File.close();
-
     return Class;
 }
 
@@ -89,7 +83,54 @@ Class* ClassHeap::GetClass(const std::string& Name) {
  * These locations are searched in that order when trying to load classes.
  */
 void ClassHeap::AddToClassPath(std::string path) {
-    ClassPath.emplace_back(path + static_cast<char>(std::filesystem::path::preferred_separator));
+
+    if (path.ends_with(".jar")) {
+        ZipFile* bootstrapZip = ProcessArchive(path.c_str());
+        ZipsInUse.emplace_back(bootstrapZip);
+        for (const auto& name : bootstrapZip->FileNames) {
+            ClassLocation loc {};
+            loc.inZip = true;
+            loc.isValid = true;
+            loc.ZipPath = name;
+            loc.Zip = bootstrapZip;
+            ClassPath.emplace_back(loc);
+        }
+    } else {
+        ClassLocation fsloc {};
+        fsloc.inZip = false;
+        fsloc.isValid = true;
+        fsloc.FSPath = path + static_cast<char>(std::filesystem::path::preferred_separator);
+        ClassPath.emplace_back(fsloc);
+    }
+}
+
+/**
+ * The Bootstrap Classpath is the location of the Java Standard Library.
+ * By default, the Bootstrap Classpth contains:
+ *  - Working Directory
+ *  - Stdlib JAR.
+ * These locations are searched in that order when trying to load classes.
+ */
+void ClassHeap::AddToBootstrapClasspath(std::string path) {
+
+    if (path.ends_with(".jar")) {
+        ZipFile* bootstrapZip = ProcessArchive(path.c_str());
+        ZipsInUse.emplace_back(bootstrapZip);
+        for (const auto& name : bootstrapZip->FileNames) {
+            ClassLocation loc {};
+            loc.inZip = true;
+            loc.isValid = true;
+            loc.ZipPath = name;
+            loc.Zip = bootstrapZip;
+            BootstrapClasspath.emplace_back(loc);
+        }
+    } else {
+        ClassLocation fsloc {};
+        fsloc.inZip = false;
+        fsloc.isValid = true;
+        fsloc.FSPath = path + static_cast<char>(std::filesystem::path::preferred_separator);
+        BootstrapClasspath.emplace_back(fsloc);
+    }
 }
 
 /**
@@ -104,15 +145,44 @@ void ClassHeap::AddToClassPath(std::string path) {
  * @param classFile the class file to search for, with packages.
  * @return the filesystem location of the class file.
  */
-std::string ClassHeap::SearchClassPath(std::string& classFile) {
-    for (std::string path : ClassPath) {
-        std::string newPath = path.append(classFile).append(".class");
-        printf("Searching %s\r\n", newPath.c_str());
-        if (std::filesystem::exists(newPath))
-            return newPath;
+ClassLocation ClassHeap::SearchClassPath(std::string& ClassFile) {
+
+    ClassLocation final {};
+
+    std::string Name = ClassFile.append(".class");
+    printf("Searching for %s\r\n", Name.c_str());
+
+    for (ClassLocation file : BootstrapClasspath) {
+        //printf("Considering file %s, which is%s in zip %s.\r\n", file.inZip ? file.ZipPath.c_str() : file.FSPath.string().c_str(), file.inZip ? "" : " not", file.Zip->ZipName.c_str());
+        if (file.inZip) {
+            if (file.ZipPath == Name)
+                return file;
+        } else {
+            if (std::filesystem::exists(Name)) {
+                final.inZip = false;
+                final.isValid = true;
+                final.FSPath = std::filesystem::path(Name);
+                return final;
+            }
+        }
     }
 
-    return "INVALID";
+    for (ClassLocation file : ClassPath) {
+        //printf("Considering file %s, which is %s in a zip.", file.inZip ? file.Zip->ZipName.c_str() : file.FSPath.string().c_str(), file.inZip ? "" : "not");
+        if (file.inZip) {
+            if (file.ZipPath == Name)
+                return file;
+        } else {
+            if (std::filesystem::exists(Name)) {
+                final.inZip = false;
+                final.isValid = true;
+                final.FSPath = std::filesystem::path(Name);
+                return final;
+            }
+        }
+    }
+
+    return  {false, false,"INVALID", nullptr };
 }
 
 /**
@@ -134,12 +204,9 @@ bool ClassHeap::LoadClass(const char *ClassName, Class *Class) {
     // Ergo, we're going to be given something like "OtherClass", or "java/lang/OtherClass".
 
     std::string ClassNameStr(ClassName);
-    std::string ClassLoc = SearchClassPath(ClassNameStr);
-    if (ClassLoc == "INVALID")
+    ClassLocation ClassLoc = SearchClassPath(ClassNameStr);
+    if (!ClassLoc.isValid)
         return false;
-
-    // We need to transform it to a char* so that it can be read properly, so we do that here.
-    RelativePath = ClassLoc.c_str();
 
     // Since we're preparing the class for being loaded, we need to tell it which class heap it belongs to.
     // That's this one.
@@ -149,10 +216,24 @@ bool ClassHeap::LoadClass(const char *ClassName, Class *Class) {
     // This also prevents recursive classloading when the class evaluates all of its' references.
     ClassCache.emplace_back(ClassName);
 
-    // Now spin out to do the actual classloading.
-    // If it fails, it'll return here, so we check it.
-    if(!Class->LoadFromFile(RelativePath))
-        return false;
+    if (ClassLoc.inZip) {
+        size_t fileSize;
+        char* data = GetFileInZip((char*) ClassNameStr.c_str(), ClassLoc.Zip, fileSize);
+
+        if(!Class->LoadFromMemory(data, fileSize))
+            return false;
+    } else {
+
+        auto fsString = ClassLoc.FSPath.generic_u8string();
+
+        // We need to transform it to a char* so that it can be read properly, so we do that here.
+        RelativePath = reinterpret_cast<const char *>(fsString.c_str());
+
+        // Now spin out to do the actual classloading.
+        // If it fails, it'll return here, so we check it.
+        if(!Class->LoadFromFile(RelativePath))
+            return false;
+    }
 
     // With the class in the cache and loaded properly, we can add it to the Map and continue with what we were doing.
     return AddClass(Class);

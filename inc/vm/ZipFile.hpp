@@ -3,6 +3,8 @@
  *    PURPURI *
  **************/
 
+#pragma once
+
 #include <unordered_map>
 #include <fstream>
 #include <vector>
@@ -17,6 +19,7 @@
  */
 struct ZipFile {
     size_t Size;
+    std::string ZipName;
     mz_zip_archive* File;
     std::unordered_map<int, int> Map;
     std::vector<std::string> FileNames;
@@ -56,8 +59,6 @@ struct ZipFile {
 
 // Read the data of the ZIP/JAR/WAR file, decompose to a hash table of contents.
 ZipFile* ProcessArchive(const char* path);
-// Get a file offset for a file in the given archive.
-int FindZipFileOffset(char* folder, ZipFile* zip);
 // Get the raw data for a file in the given archive.
-char* GetFileInZip(char* file, ZipFile* zip, size_t& size);
+char* GetFileInZip(char* name, ZipFile* zip, size_t& size);
 int utf8Hash(unsigned char *utf8);
