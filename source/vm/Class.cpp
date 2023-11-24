@@ -36,6 +36,10 @@
  *
  * These macros are hard-coded to be little-endian.
  * A future improvement would be to move this whole system to a std container type.
+ *
+ *
+ * Something to look into: canonization of type names in return and parameter descriptors.
+ *  (interning the string)
  */
 
 // A safe default for when we try to request a class from the heap that is not loaded.

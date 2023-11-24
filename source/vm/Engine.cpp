@@ -1035,6 +1035,64 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     std::string MethodDesc = Stack->_Class->GetStringConstant(MethodToInvoke.Descriptor);
     printf("\tInvocation resolves to method %s%s\n", MethodName.c_str(), MethodDesc.c_str());
 
+    // Grab return type
+    std::string Substr;
+    // NAME(PARAMPARAM)RETURN
+    // Ljava/lang/String; [C B D L Z J I S F V
+    Substr = MethodDesc.substr(MethodDesc.find(")") + 1);
+    std::string ReturnType;
+    switch (Substr.at(0)) {
+        case 'L': {
+            int i = 1;
+            while (Substr.at(i) != ';') {
+                char byte = Substr.at(i);
+                ReturnType.append(&byte);
+                i++;
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    printf("Method returns a %s, type is %s\r\n", Substr.c_str(), ReturnType.c_str());
+    if (!ReturnType.empty() && !_ClassHeap->ClassExists(ReturnType.c_str())) {
+        printf("Classloading return type.\r\n");
+        Class* c = new Class();
+        _ClassHeap->LoadClass(ReturnType.c_str(), c);
+    }
+
+    // 5 -> (Ljava/lang/Object;Ljava/lang/String;)V
+
+    // Grab Parameter Types
+    Substr = MethodDesc.substr(MethodDesc.find("(") + 1);
+    std::vector<std::string> types;
+    int i = 0;
+    char c;
+    std::string type;
+    while ((c = Substr.at(i)) != ')') {
+        if (c == 'L') {
+            i++;
+            while (Substr.at(i) != ';') {
+                char byte = Substr.at(i);
+                type.append(&byte);
+                i++;
+            }
+            types.emplace_back(type);
+        }
+        i++;
+    }
+
+    for (std::string t : types) {
+        printf("Parameter has type %s\r\n", t.c_str());
+        if (!t.empty() && !_ClassHeap->ClassExists(t.c_str())) {
+            printf("Classloading parameter type.\r\n");
+            Class* c = new Class();
+            _ClassHeap->LoadClass(t.c_str(), c);
+        }
+    }
+
+
     // TODO: Grab parameters from descriptor.
     // Classload them.
     /*
