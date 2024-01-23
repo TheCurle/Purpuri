@@ -195,7 +195,7 @@ ClassLocation ClassHeap::SearchClassPath(std::string& ClassFile) {
  * @param Class the class instance to laod it into
  * @return whether the class was successfully loaded.
  */
-bool ClassHeap::LoadClass(const char *ClassName, Class *Class) {
+bool ClassHeap::LoadClass(const char *ClassName, Class *Class, StackFrame* frame, Engine* engine) {
     if(!Class) return false;
 
     const char* RelativePath;
@@ -233,6 +233,10 @@ bool ClassHeap::LoadClass(const char *ClassName, Class *Class) {
         // If it fails, it'll return here, so we check it.
         if(!Class->LoadFromFile(RelativePath))
             return false;
+    }
+
+    if (frame != nullptr && engine != nullptr) {
+        Class->RunClassloadInit(frame, engine);
     }
 
     // With the class in the cache and loaded properly, we can add it to the Map and continue with what we were doing.

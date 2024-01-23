@@ -47,7 +47,6 @@
 std::string ClassHeap::UnknownClass("Unknown Value");
 
 Class::Class() : ClassFile(), BytecodeLength(0), Code(nullptr), _ClassHeap(nullptr), FieldsCount(0) {
-    LoadedLocation = (size_t)(size_t*) this;
 }
 
 // TODO: Delete EVERYTHING
@@ -305,7 +304,7 @@ bool Class::ParseFullClass() {
     // This is extremely expensive, and wasteful!
     // However, I'm still unsure how to do it the "proper" way, so this remains as a permanently temporary hack.
 
-    ClassloadReferents();
+    // ClassloadReferents();
 
     return true;
 }
@@ -761,9 +760,6 @@ bool Class::ParseFields(const char* &ClassCode) {
         }
     }
 
-    // After all iteration is finished, we know of all static fields in this class.
-    StaticFieldCount = StaticFieldIndexes.size();
-
     return true;
 }
 
@@ -973,6 +969,43 @@ bool Class::CreateObjectArray(uint16_t Index, uint32_t Count, ObjectHeap ObjectH
     pObject = ObjectHeap.CreateObjectArray(newClass, Count);
 
     return true;
+}
+
+/**
+ * With all of the initialization handled, we need to move onto the next step of loading.
+ * That being, running the static initializers.
+ *
+ * In Java, when you have a block that contains static { }, or static Object THING = new xyz(), this inserts code into a special function called <clinit>.
+ *
+ * This stands for ClassLoading Initializer, and is intended to be run as soon as classloading happens.
+ * @param Stack The stack to be used to run the clinit function
+ * @param engine The engine to execute the code within the clinit.
+ */
+void Class::RunClassloadInit(StackFrame *Stack, Engine *engine) {
+    // We need to know the index of the method before we can invoke it.
+    Class* clazz = this;
+    uint32_t init = GetMethodFromDescriptor("<clinit>", "()V", GetClassName().c_str(), clazz);
+
+    // If there's no static initializer, skip this class.
+    if(init == std::numeric_limits<uint32_t>::max())
+        return;
+
+    // New execution context, so make this the 0th execution.
+    // From a regular debugger's perspective, this is the equivalent of the main() method.
+    int StartFrame = 0;
+
+    // Set some of the required metadata.
+    // The Execution Engine relies on this data being available before it can start interpreting bytecode.
+    Stack[StartFrame]._Class = this;
+    Stack[StartFrame]._Method = &Methods[init]; // This is why we needed the lookup.
+    Stack[StartFrame].Stack = StackFrame::MemberStack; // This is unclear to see, but it sets the stack to the base of the array, index 0.
+    Stack[StartFrame].StackPointer = Stack[StartFrame]._Method->Code->LocalsSize; // The stack grows down towards 0, which is what facilitates pop.
+
+    print("Running static initializer for class %s\n", GetClassName().c_str());
+
+    // Everything's ready; start executing bytecode!
+    engine->Ignite(&Stack[StartFrame]);
+    fflush(stdout);
 }
 
 /**

@@ -277,13 +277,3 @@ uint32_t Class::GetConstantsCount(const char* pCode) {
 
     return 0;
 }
-
-// TODO
-bool Engine::MethodClassMatches(uint16_t MethodInd, Class* pClass, const char* TestName) {
-    char* Data = (char*) pClass->Constants[MethodInd];
-    auto classInd = ReadShortFromStream(Data + 1);
-
-    std::string ClassName = pClass->GetStringConstant(classInd);
-
-    return ClassName == TestName;
-}

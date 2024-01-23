@@ -30,9 +30,6 @@ class Engine {
         void Invoke(StackFrame* Stack, uint16_t Type);
 
         void InvokeNative(const NativeContext& Context);
-        void HandleNativeReturn(NativeContext Context, Variable Value);
-
-        bool MethodClassMatches(uint16_t MethodInd, Class* pClass, const char* TestName);
 
         void PutStatic(StackFrame* Stack) const;
         void PutField(StackFrame* Stack);
@@ -42,14 +39,10 @@ class Engine {
         Variable GetConstant(Class* Class, uint8_t Index) const;
 
         uint16_t GetParameters(const char* Descriptor);
-        uint16_t GetParametersStack(const char* Descriptor);
 
         int New(StackFrame* Stack);
         void NewArray(StackFrame* Stack);
         void ANewArray(StackFrame* Stack);
-
-        Variable CreateObject(Class* Class);
-        Variable* CreateArray(uint8_t Type, int32_t Count);
         
         void DumpObject(Object Object);
 };
@@ -110,7 +103,7 @@ class ClassHeap {
         void AddToBootstrapClasspath(std::string);
         ClassLocation SearchClassPath(std::string&);
 
-        bool LoadClass(const char* ClassName, Class* pClass);
+        bool LoadClass(const char* ClassName, Class* pClass, StackFrame* frame = nullptr, Engine* engine = nullptr);
         bool AddClass(Class* pClass);
         bool ClassExists(const std::string& Name);
         Class* GetClass(const std::string& Name);
@@ -123,6 +116,33 @@ class ClassHeap {
             return list;
         }
         
+};
+
+class StackFrame {
+public:
+    static Variable* MemberStack;
+    [[maybe_unused]] static StackFrame* FrameBase;
+    Class* _Class;
+    Method* _Method;
+    uint32_t ProgramCounter;
+    uint16_t StackPointer;
+    Variable* Stack;
+
+    StackFrame() {
+        StackPointer = -1;
+        ProgramCounter = 0;
+        _Class = nullptr;
+        Stack = nullptr;
+        FrameBase = nullptr;
+        MemberStack = nullptr;
+    }
+
+    StackFrame(int16_t StackPointer) {
+        this->StackPointer = StackPointer;
+        _Class = nullptr;
+        Stack = nullptr;
+        ProgramCounter = 0;
+    }
 };
 
 class Class : public ClassFile {
@@ -143,7 +163,6 @@ class Class : public ClassFile {
 
         void ClassloadReferents();
 
-        bool GetConstants(uint16_t index, ConstantPoolEntry &Pool);
         std::string GetStringConstant(uint32_t index);
 
         std::string GetClassName();
@@ -152,7 +171,6 @@ class Class : public ClassFile {
         virtual uint32_t GetClassSize();
         virtual uint32_t GetClassFieldCount();
 
-        
         bool PutStatic(uint16_t Field, Variable Value);
         Variable GetStatic(uint16_t Field);
 
@@ -169,17 +187,17 @@ class Class : public ClassFile {
             this->_ClassHeap = p_ClassHeap;
         }
 
+        void RunClassloadInit(StackFrame* Stack, Engine* engine);
+
     private:
         size_t BytecodeLength;
-        size_t LoadedLocation;
         const char* Code;
 
         ClassHeap* _ClassHeap;
         uint16_t FieldsCount;
         std::vector<std::string> StringConstants;
-    
-        uint16_t StaticFieldCount{};
-        Variable* ClassStatics{};
+
+        Variable* ClassStatics {};
         std::vector<size_t> StaticFieldIndexes;
 
         bool ParseConstants(const char* &pCode);

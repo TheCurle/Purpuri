@@ -56,6 +56,44 @@ void StartVM(char* MainFile, char* Executable) {
     heap.AddToClassPath(ExecutablePath);
     heap.AddToClassPath(std::filesystem::current_path().string());
 
+    // -------------------------------------------------------------------------------------------------------------- //
+
+    // First, we initialize the Stack Frame.
+    // The Stack Frame is what handles calling methods and returning values.
+    // By default, it only has 20 frames, but this is merely a safe guard.
+    auto* Stack = new StackFrame[20];
+    StackFrame::FrameBase = Stack;
+
+    // The frames need to each be initialized, since we only declared the list.
+    for(size_t i = 0; i < 20; i++) {
+        Stack[i] = StackFrame();
+    }
+
+    // Next, the Object Stack.
+    // This is what is actually referred to as the "stack" in Java.
+    // When you perform a calculation like 2 + 2, the value 2 is pushed to the stack twice, and then calculated upon.
+    // This works similar to an internal Reverse Polish Notation; 2 2 ADD.
+
+    // The Object Stack is implemented as a 100-deep list, that can be traversed up and down while retaining values.
+    // This ability to pop and then recover the value with push is important, and is why this is not a traditional
+    // stack data structure. An array makes more sense here, just this once.
+    size_t StackSize = 100;
+    StackFrame::MemberStack = new Variable[StackSize];
+    // Like before, we only declared the list, we need to initialize the values.
+    for(size_t i = 0; i < StackSize; i++)
+        StackFrame::MemberStack[i] = 0;
+
+    // Now we create the Execution Engine itself.
+    // This is what actually interprets the bytecode.
+    // See Engine.cpp for how it works.
+    Engine engine;
+    // The Engine needs to know what classes it can access, so we provide the heap here.
+    engine._ClassHeap = &heap;
+
+    // -------------------------------------------------------------------------------------------------------------- //
+
+    // Here's where we start loading classes.
+
     // Initialize the Object class before anything else.
     auto* Object = new Class();
     Object->SetClassHeap(&heap);
@@ -98,97 +136,6 @@ void StartVM(char* MainFile, char* Executable) {
         return;
     }
 
-    // -------------------------------------------------------------------------------------------------------------- //
-
-    // With all of the preliminary classloading handled, we can begin to create and initialise the
-    // static fields that allow the Execution Engine to work.
-
-    // First, the Stack Frame.
-    // The Stack Frame is what handles calling methods and returning values.
-    // By default, it only has 20 frames, but this is merely a safe guard.
-    auto* Stack = new StackFrame[20];
-    StackFrame::FrameBase = Stack;
-
-    // The frames need to each be initialized, since we only declared the list.
-    for(size_t i = 0; i < 20; i++) {
-        Stack[i] = StackFrame();
-    }
-
-    // Next, the Object Stack.
-    // This is what is actually referred to as the "stack" in Java.
-    // When you perform a calculation like 2 + 2, the value 2 is pushed to the stack twice, and then calculated upon.
-    // This works similar to an internal Reverse Polish Notation; 2 2 ADD.
-
-    // The Object Stack is implemented as a 100-deep list, that can be traversed up and down while retaining values.
-    // This ability to pop and then recover the value with push is important, and is why this is not a traditional
-    // stack data structure. An array makes more sense here, just this once.
-    size_t StackSize = 100;
-    StackFrame::MemberStack = new Variable[StackSize];
-    // Like before, we only declared the list, we need to initialize the values.
-    for(size_t i = 0; i < StackSize; i++)
-        StackFrame::MemberStack[i] = 0;
-
-    // Now we create the Execution Engine itself.
-    // This is what actually interprets the bytecode.
-    // See Engine.cpp for how it works.
-    Engine engine;
-    // The Engine needs to know what classes it can access, so we provide the heap here.
-    engine._ClassHeap = &heap;
-
-
-    // -------------------------------------------------------------------------------------------------------------- //
-
-    // With all of the initialization handled, we need to move onto the next step of loading.
-    // That being, running the static initializers.
-
-    // In Java, when you have a block that contains static { }, or static Object THING = new xyz(), this inserts
-    // code into a special function called <clinit>.
-
-    // This stands for ClassLoading Initializer, and is intended to be run as soon as classloading happens.
-
-    // Purpuri goes against the Java spec for ease of implementation here; we run all static initializers early,
-    // rather than when the class is first referenced.
-
-    // This has disastrous consequences on programs that rely on the order of static initializers, and will be changed
-    // in the future.
-
-    bool quiet = Engine::QuietMode; // Save the current value of the quiet setting, so that we can override it temporarily
-    bool debug = Debugger::Enabled; // Save the current value of the debugger setting, so that we can override it temporarily
-    Engine::QuietMode = false; // Set quiet mode for static initializers; they get very spammy
-    Debugger::Enabled = false; // Disable the debugger; speeds things up considerably.
-
-    // As mentioned, we go against the Java spec here.
-    // This is not supposed to be done in one batch, but it's far far far easier to implement like this.
-    for(Class* clazz : heap.GetAllClasses()) {
-        // We need to know the index of the method before we can invoke it.
-        uint32_t init = clazz->GetMethodFromDescriptor("<clinit>", "()V", clazz->GetClassName().c_str(), clazz);
-
-        // If there's no static initializer, skip this class.
-        if(init == std::numeric_limits<uint32_t>::max())
-            continue;
-
-        // New execution context, so make this the 0th execution.
-        // From a regular debugger's perspective, this is the equivalent of the main() method.
-        int StartFrame = 0;
-
-        // Set some of the required metadata.
-        // The Execution Engine relies on this data being available before it can start interpreting bytecode.
-        Stack[StartFrame]._Class = clazz;
-        Stack[StartFrame]._Method = &clazz->Methods[init]; // This is why we needed the lookup.
-        Stack[StartFrame].Stack = StackFrame::MemberStack; // This is unclear to see, but it sets the stack to the base of the array, index 0.
-        Stack[StartFrame].StackPointer = Stack[StartFrame]._Method->Code->LocalsSize; // The stack grows down towards 0, which is what facilitates pop.
-
-        print("Running static initializer for class %s\n", clazz->GetClassName().c_str());
-
-
-        // Everything's ready; start executing bytecode!
-        engine.Ignite(&Stack[StartFrame]);
-        fflush(stdout);
-    }
-
-    // After all static initializers are executed, we can undo our temporary changes to these variables.
-    Engine::QuietMode = quiet;
-    Debugger::Enabled = debug;
 
     // -------------------------------------------------------------------------------------------------------------- //
 
@@ -218,7 +165,6 @@ void StartVM(char* MainFile, char* Executable) {
     // If the debugger is enabled, now is the time to start its' thread.
     // The Engine will prepare and wait for the Debugger before it will start executing.
     DEBUG(Debugger::SpinOff());
-
 
     // Set up the libnative library as a valid target for the Native module.
     Native::LoadLibrary(NATIVES_FILE);

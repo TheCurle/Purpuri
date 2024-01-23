@@ -701,8 +701,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 // Bytecode stores our destination, but just skip past it if we want to continue on our code path
                 if(NotEqual) {
-                    short Offset = (Code[CurrentFrame->ProgramCounter + 1] << 8) | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    int Offset = (Code[CurrentFrame->ProgramCounter + 1] << 8) | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%d + %d) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     PCPLUS Offset;
                     CurrentFrame->ProgramCounter += Offset;
                 } else {
@@ -721,8 +721,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 // Bytecode stores our destination, but just skip past it if we want to continue on our code path
                 if(Equal) {
-                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    int Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%d + %d) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     PCPLUS Offset;
                 } else {
                     PCPLUS 3;
@@ -740,8 +740,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 // Bytecode stores our destination, but just skip past it if we want to continue on our code path
                 if(NotEqual) {
-                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    int Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%d + %d) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     PCPLUS Offset;
                 } else {
                     PCPLUS 3;
@@ -759,8 +759,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 // Bytecode stores our destination, but just skip past it if we want to continue on our code path
                 if(GreaterThan) {
-                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    int Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%d + %d) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     PCPLUS Offset;
                 } else {
                     PCPLUS 3;
@@ -778,8 +778,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 // Bytecode stores our destination, but just skip past it if we want to continue on our code path
                 if(LessThan) {
-                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    int Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%d + %d) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     PCPLUS Offset;
                 } else {
                     PCPLUS 3;
@@ -797,8 +797,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 // Bytecode stores our destination, but just skip past it if we want to continue on our code path
                 if(GreaterEqual) {
-                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    int Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%d + %d) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     PCPLUS Offset;
                 } else {
                     PCPLUS 3;
@@ -816,8 +816,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
                 // Bytecode stores our destination, but just skip past it if we want to continue on our code path
                 if(LessEqual) {
-                    short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                    printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                    int Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                    printf("Jumping to (%d + %d) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                     PCPLUS Offset;
                 } else {
                     PCPLUS 3;
@@ -839,8 +839,8 @@ uint32_t Engine::Ignite(StackFrame* Stack) {
 
             // goto: jump to a specified location in bytecode and continue executing from there
             case Instruction::_goto: {
-                short Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
-                printf("Jumping to (%d + %hd) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
+                int Offset = (Code[CurrentFrame->ProgramCounter + 1]) << 8 | (Code[CurrentFrame->ProgramCounter + 2]);
+                printf("Jumping to (%d + %d) = %d\n", CurrentFrame->ProgramCounter, Offset, CurrentFrame->ProgramCounter + Offset);
                 PCPLUS Offset;
                 break;
             }
@@ -1039,7 +1039,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     std::string Substr;
     // NAME(PARAMPARAM)RETURN
     // Ljava/lang/String; [C B D L Z J I S F V
-    Substr = MethodDesc.substr(MethodDesc.find(")") + 1);
+    Substr = MethodDesc.substr(MethodDesc.find(')') + 1);
     std::string ReturnType;
     switch (Substr.at(0)) {
         case 'L': {
@@ -1056,16 +1056,16 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     }
 
     printf("Method returns a %s, type is %s\r\n", Substr.c_str(), ReturnType.c_str());
-    if (!ReturnType.empty() && !_ClassHeap->ClassExists(ReturnType.c_str())) {
+    if (!ReturnType.empty() && !_ClassHeap->ClassExists(ReturnType)) {
         printf("Classloading return type.\r\n");
-        Class* c = new Class();
+        auto* c = new Class();
         _ClassHeap->LoadClass(ReturnType.c_str(), c);
     }
 
     // 5 -> (Ljava/lang/Object;Ljava/lang/String;)V
 
     // Grab Parameter Types
-    Substr = MethodDesc.substr(MethodDesc.find("(") + 1);
+    Substr = MethodDesc.substr(MethodDesc.find('(') + 1);
     std::vector<std::string> types;
     int i = 0;
     char c;
@@ -1083,27 +1083,14 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
         i++;
     }
 
-    for (std::string t : types) {
+    for (const std::string& t : types) {
         printf("Parameter has type %s\r\n", t.c_str());
         if (!t.empty() && !_ClassHeap->ClassExists(t.c_str())) {
             printf("Classloading parameter type.\r\n");
-            Class* c = new Class();
-            _ClassHeap->LoadClass(t.c_str(), c);
+            auto* cl = new Class();
+            _ClassHeap->LoadClass(t.c_str(), cl);
         }
     }
-
-
-    // TODO: Grab parameters from descriptor.
-    // Classload them.
-    /*
-     *          auto* Class = new class Class();
-
-                // Note that this is potentially re-entrant; LoadClass calls LoadFromFile, which eventually calls ClassloadReferents.
-                if(!this->_ClassHeap->LoadClass(ClassName.c_str(), Class)) {
-                    printf("Classloading referenced class %s failed. Fatal error.\n", ClassName.c_str());
-                    exit(6);
-                }
-     */
 
     // The biggest pain here is that we need to synchronize parameters between the caller and callee.
     // Prepare now by counting the parameters in the descriptor.
