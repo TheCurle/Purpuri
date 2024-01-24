@@ -109,7 +109,7 @@ void Engine::GetStatic(StackFrame* Stack) {
     std::string ClassName = SearchClass->GetStringConstant(val);
 
     // Now, this class is the class (or interface) where the field actually lives.
-    SearchClass = _ClassHeap->GetClass(ClassName);
+    SearchClass = _ClassHeap->GetClass(ClassName, ClassloadingStack, this);
 
     // We can finally get the field location..
     uint32_t FieldIndex = SearchClass->GetFieldFromDescriptor(FieldName);

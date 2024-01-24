@@ -296,78 +296,7 @@ bool Class::ParseFullClass() {
     if(AttributeCount > 0)
         ParseAttribs(Code);
 
-    // This is a big no-no!
-    // Java's classloader normally only attempts to load a class when it is actually required.
-    // This way, it saves on class heap space in large programs.
-
-    // Purpuri chooses to search through all classes in this class' Constants Pool, and load them all.
-    // This is extremely expensive, and wasteful!
-    // However, I'm still unsure how to do it the "proper" way, so this remains as a permanently temporary hack.
-
-    // ClassloadReferents();
-
     return true;
-}
-
-/**
- * As mentioned directly above, we go against Java Specification here.
- * We should only be classloading as soon as they're referenced.
- * There's no easy way to do that, primarily because of interfaces.
- *
- * Instead, I iterate the constants pool and search for all references to another Class.
- * This is, as mentioned, extremely wasteful.
- *
- * This whole section should be refactored, ideally removed.
- */
-void Class::ClassloadReferents() {
-
-    printf("Searching for unloaded classes referenced by the current.\n");
-
-    // We need to make sure we load String if there are any interned strings stored in this class.
-    bool NeedsString = false;
-
-    // For each constant stored..
-    for(int i = 1; i < ConstantCount; i++) {
-        if(Constants == nullptr) return;
-        if(Constants[i] == nullptr) continue;
-
-        // Check if it's a string. If so, we need to classload the String class so that we can use it later.
-        if(Constants[i]->Tag == TypeString)
-            NeedsString = true;
-
-        // Check if it's a Class. If so, we need to check if it's loaded, and load it if it isn't already.
-        else if(Constants[i]->Tag == TypeClass) {
-            // There's no good way to read an int from a char*, so we need to temporarily store it and ReadShort.
-            auto ClassInd = ReadShortFromStream((char*)Constants[i] + 1);
-
-            // GetStringConstant is implemented in Constants.cpp.
-            std::string ClassName = GetStringConstant(ClassInd);
-
-            // We need to NOT try to classload, if we're looking at an array type.
-            if(ClassName.find_first_of('[') == 0) continue;
-
-            printf("\tName %s", ClassName.c_str());
-
-            // We can guarantee that the Super Class and This Class are already loaded.
-            // We also don't want to try to load classes twice, so we check the Class Cache in the Class Heap.
-            // The Class Cache isn't set while a class is loading, so if we find ourself in a dependency loop,
-            //  we need to also check the ClassHeap itself for nullptr values.
-            // If it's nullptr, we're in the process of loading it (through that class' ClassloadReferents) so skip it.
-            if(i != Super && i != This && (!this->_ClassHeap->ClassExists(ClassName) && this->_ClassHeap->GetClass(ClassName) == nullptr)) {
-                printf("\tClass is not loaded - deferring until invocation.\n");
-            } else {
-                printf(" - clear\n");
-            }
-        }
-    }
-
-    
-    if(NeedsString) {
-        if(!this->_ClassHeap->ClassExists("java/lang/String") && !this->_ClassHeap->LoadClass("java/lang/String", new Class)) {
-            printf("Classloading referenced class %s failed. Fatal error.\n", "java/lang/String");
-            exit(6);
-        }
-    }
 }
 
 /**
@@ -812,18 +741,12 @@ uint32_t Class::GetMethodFromDescriptor(const char *MethodName, const char *Desc
             }
         }
 
-        if(!InterfaceNames.empty()) {
-            printf("Class implements interfaces ");
-            PrintList(InterfaceNames);
-            printf("\n");
-        }
-
         // We can now search the methods in the class.
         for(int i = 0; i < CurrentClass->MethodCount; i++) {
             // Some quick debug printing
             std::string CurrentName = CurrentClass->GetStringConstant(CurrentClass->Methods[i].Name);
             std::string CurrentDescriptor = CurrentClass->GetStringConstant(CurrentClass->Methods[i].Descriptor);
-            printf("\t\tExamining class %s for %s%s, access %d\r\n", MethodClass.c_str(), CurrentName.c_str(), CurrentDescriptor.c_str(), CurrentClass->ClassAccess);
+            //printf("\t\tExamining class %s for %s%s, access %d\r\n", MethodClass.c_str(), CurrentName.c_str(), CurrentDescriptor.c_str(), CurrentClass->ClassAccess);
 
             // We have the method implementation if:
             //  - the method name and method descriptor match, in the class we expected to search
@@ -841,11 +764,12 @@ uint32_t Class::GetMethodFromDescriptor(const char *MethodName, const char *Desc
 
         // If all of that searching showed nothing, we need to try again with the method's super.
         // This while loop will terminate when pClass is null - like when we try to get java/lang/Object's super.
-        if(pClass != nullptr)
+        // It will also terminate immediately if we're classloading.
+        // TODO: would this break static access of the parent?
+        if(pClass != nullptr && strcmp(MethodName, "<clinit>") != 0)
             CurrentClass = CurrentClass->GetSuper();
         else
             break;
-
     }
 
     return std::numeric_limits<uint32_t>::max();
@@ -1004,7 +928,7 @@ void Class::RunClassloadInit(StackFrame *Stack, Engine *engine) {
     print("Running static initializer for class %s\n", GetClassName().c_str());
 
     // Everything's ready; start executing bytecode!
-    engine->Ignite(&Stack[StartFrame]);
+    engine->Ignite(&Stack[StartFrame], true);
     fflush(stdout);
 }
 

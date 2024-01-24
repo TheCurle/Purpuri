@@ -5,6 +5,7 @@
 
 #include <vm/ZipFile.hpp>
 #include <vm/Common.hpp>
+#include <vm/Class.hpp>
 #include <cstdint>
 #include <iostream>
 #include "Mapping.h"
@@ -104,6 +105,8 @@ ZipFile* ProcessArchive(const char* path) {
         ERROR("Unable to read ZIP file because " << mz_zip_get_error_string(zip->m_last_error));
     length = mz_zip_get_archive_size(zip);
 
+    printf("Caching contents of classpath file %s.\r\n", path);
+
     for (int i = 0; i < (int) mz_zip_reader_get_num_files(zip); i++) {
         mz_zip_archive_file_stat stat;
 
@@ -113,7 +116,7 @@ ZipFile* ProcessArchive(const char* path) {
         //std::cout << "Filename: " << stat.m_filename << ", Compressed Size: " << stat.m_comp_size << ", is folder: " << (stat.m_is_directory ? "true" : "false") << std::endl;
         int hash = utf8Hash((unsigned char*) stat.m_filename);
         if (!stat.m_is_directory) {
-            std::cout << "Emplacing file " << stat.m_filename << " with hash " << std::hex << hash << std::dec << " at index " << i << std::endl;
+            //std::cout << "Emplacing file " << stat.m_filename << " with hash " << std::hex << hash << std::dec << " at index " << i << std::endl;
             Names.emplace_back(std::string(stat.m_filename));
             Map.insert_or_assign(hash, i);
         }

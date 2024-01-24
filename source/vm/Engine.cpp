@@ -69,8 +69,7 @@
 // Thus, this needs to be carefully managed to ensure there is no underflow.
 Variable* StackFrame::MemberStack;
 
-// Originally intended to hold the root execution frame, but seems unused in recent refactors.
-[[maybe_unused]] StackFrame* StackFrame::FrameBase;
+Variable* StackFrame::ClassloadStack;
 
 // The Object Heap of everything in the VM. See Objects.cpp for the implementation.
 ObjectHeap Engine::_ObjectHeap;
@@ -80,6 +79,13 @@ bool Engine::QuietMode = false;
 
 Engine::Engine() {
     _ClassHeap = nullptr;
+    auto* Stack = new StackFrame[20];
+    ClassloadingStack = Stack;
+
+    // The frames need to each be initialized, since we only declared the list.
+    for(size_t i = 0; i < 20; i++) {
+        Stack[i] = StackFrame();
+    }
 }
 
 Engine::~Engine() = default;
@@ -126,10 +132,12 @@ void Engine::InvokeNative(const NativeContext& Context) {
  *
  * It does not detect unbounded recursion, this is a TODO.
  */
-uint32_t Engine::Ignite(StackFrame* Stack) {
+uint32_t Engine::Ignite(StackFrame* Stack, bool clinit) {
     // If we call a method, Stack is advanced and a new pointer passed, so we need to keep a reference of our base here.
     StackFrame* CurrentFrame = &Stack[0];
     printf("New execution frame generated.\n");
+
+    this->clinit = clinit;
 
     // We're going to be executing bytecode, so it's a good idea to fetch the current state of the code here.
     uint8_t* Code = CurrentFrame->_Method->Code->Code + CurrentFrame->ProgramCounter;
@@ -1059,7 +1067,7 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     if (!ReturnType.empty() && !_ClassHeap->ClassExists(ReturnType)) {
         printf("Classloading return type.\r\n");
         auto* c = new Class();
-        _ClassHeap->LoadClass(ReturnType.c_str(), c);
+        _ClassHeap->LoadClass(ReturnType.c_str(), c, ClassloadingStack, this);
     }
 
     // 5 -> (Ljava/lang/Object;Ljava/lang/String;)V
@@ -1203,7 +1211,9 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     // The first Stack (the one we're indexing [1] into) represents the Call Stack; the hierarchy of calls made by a given program.
     // The second Stack (the one we're setting) represents the Value Stack; the things that are pushed and popped by the Java program to carry data around.
     // The logic for calculating the new position is basically "the lowest possible with the ability to contain the parameters of the method".
-    Stack[1].Stack = &StackFrame::MemberStack[Stack->Stack - StackFrame::MemberStack + Stack->StackPointer - Parameters];
+    Stack[1].Stack = clinit ?
+            &StackFrame::ClassloadStack[Stack->Stack - StackFrame::ClassloadStack + Stack->StackPointer - Parameters] :
+            &StackFrame::MemberStack[Stack->Stack - StackFrame::MemberStack + Stack->StackPointer - Parameters];
 
     size_t ParameterCount = 0;
     printf("\tSetting locals..\r\n");

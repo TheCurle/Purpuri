@@ -22,10 +22,12 @@ class Engine {
         static ObjectHeap _ObjectHeap;
         static bool QuietMode;
         ClassHeap* _ClassHeap;
+        StackFrame* ClassloadingStack;
+        bool clinit;
 
         Engine();
         virtual ~Engine();
-        virtual uint32_t Ignite(StackFrame* Stack);
+        uint32_t Ignite(StackFrame* Stack, bool clinit = false);
 
         void Invoke(StackFrame* Stack, uint16_t Type);
 
@@ -106,7 +108,7 @@ class ClassHeap {
         bool LoadClass(const char* ClassName, Class* pClass, StackFrame* frame = nullptr, Engine* engine = nullptr);
         bool AddClass(Class* pClass);
         bool ClassExists(const std::string& Name);
-        Class* GetClass(const std::string& Name);
+        Class* GetClass(const std::string& Name, StackFrame* frame = nullptr, Engine* engine = nullptr);
 
         std::list<Class*> GetAllClasses() { 
             std::list<Class*> list;
@@ -121,7 +123,7 @@ class ClassHeap {
 class StackFrame {
 public:
     static Variable* MemberStack;
-    [[maybe_unused]] static StackFrame* FrameBase;
+    static Variable* ClassloadStack;
     Class* _Class;
     Method* _Method;
     uint32_t ProgramCounter;
@@ -133,8 +135,6 @@ public:
         ProgramCounter = 0;
         _Class = nullptr;
         Stack = nullptr;
-        FrameBase = nullptr;
-        MemberStack = nullptr;
     }
 
     StackFrame(int16_t StackPointer) {
@@ -160,8 +160,6 @@ class Class : public ClassFile {
         bool ParseMethods(const char* &ClassCode);
         bool ParseMethodCodePoints(int Method, CodePoint* MethodCode);
         bool ParseAttribs(const char* &ClassCode);
-
-        void ClassloadReferents();
 
         std::string GetStringConstant(uint32_t index);
 

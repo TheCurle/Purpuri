@@ -59,13 +59,20 @@ bool ClassHeap::ClassExists(const std::string& Name) {
 
 /**
  * A simple wrapper to fetch a class from the Class Map.
- * If the name is invalid, or the class is not in the Cache, null is returned.
+ * If the name is invalid, or the class is not in the Cache, it is attempted to be loaded.
+ * If it cannot be loaded, then null will be returned.
  * @param Name the Class to retrieve.
  * @return the class, or null if the above conditions are met.
  */
-Class* ClassHeap::GetClass(const std::string& Name) {
+Class* ClassHeap::GetClass(const std::string& Name, StackFrame* frame, Engine* engine) {
     if (Name.empty()) return nullptr;
-    if (!ClassExists(Name)) return nullptr;
+    if (!ClassExists(Name)) {
+        auto* newClass = new Class();
+        if (LoadClass(Name.c_str(), newClass, frame, engine))
+            return newClass;
+        else
+            return nullptr;
+    }
 
     // Because the ClassExists call passed, and we can guarantee the Cache is synced to the Map, this is safe.
     auto classIter = ClassMap.find(Name);

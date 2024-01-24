@@ -56,13 +56,15 @@ void StartVM(char* MainFile, char* Executable) {
     heap.AddToClassPath(ExecutablePath);
     heap.AddToClassPath(std::filesystem::current_path().string());
 
+    // Set up the libnative library as a valid target for the Native module.
+    Native::LoadLibrary(NATIVES_FILE);
+
     // -------------------------------------------------------------------------------------------------------------- //
 
     // First, we initialize the Stack Frame.
     // The Stack Frame is what handles calling methods and returning values.
     // By default, it only has 20 frames, but this is merely a safe guard.
     auto* Stack = new StackFrame[20];
-    StackFrame::FrameBase = Stack;
 
     // The frames need to each be initialized, since we only declared the list.
     for(size_t i = 0; i < 20; i++) {
@@ -83,6 +85,11 @@ void StartVM(char* MainFile, char* Executable) {
     for(size_t i = 0; i < StackSize; i++)
         StackFrame::MemberStack[i] = 0;
 
+    StackFrame::ClassloadStack = new Variable[StackSize];
+    // Like before, we only declared the list, we need to initialize the values.
+    for(size_t i = 0; i < StackSize; i++)
+        StackFrame::ClassloadStack[i] = 0;
+
     // Now we create the Execution Engine itself.
     // This is what actually interprets the bytecode.
     // See Engine.cpp for how it works.
@@ -98,7 +105,7 @@ void StartVM(char* MainFile, char* Executable) {
     auto* Object = new Class();
     Object->SetClassHeap(&heap);
 
-    if(!heap.LoadClass((char*)"java/lang/Object", Object)) {
+    if(!heap.LoadClass((char*)"java/lang/Object", Object, engine.ClassloadingStack, &engine)) {
         printf("Unable to load Object class. Fatal error.\n");
         exit(6);
     }
@@ -117,7 +124,7 @@ void StartVM(char* MainFile, char* Executable) {
         heap.ClassPrefix = GivenPath.substr(0, LastInd + 1);
 
     // With the prefix handled, classload the requested class file.
-    if(!heap.LoadClass(MainFile, GivenClass)) {
+    if(!heap.LoadClass(MainFile, GivenClass, engine.ClassloadingStack, &engine)) {
         printf("Loading given class failed. Fatal error.\n");
         exit(6);
     }
@@ -135,7 +142,6 @@ void StartVM(char* MainFile, char* Executable) {
         printf("%s does not have an EntryPoint function, unable to execute.\n", MainFile);
         return;
     }
-
 
     // -------------------------------------------------------------------------------------------------------------- //
 
@@ -165,9 +171,6 @@ void StartVM(char* MainFile, char* Executable) {
     // If the debugger is enabled, now is the time to start its' thread.
     // The Engine will prepare and wait for the Debugger before it will start executing.
     DEBUG(Debugger::SpinOff());
-
-    // Set up the libnative library as a valid target for the Native module.
-    Native::LoadLibrary(NATIVES_FILE);
 
     // -------------------------------------------------------------------------------------------------------------- //
 

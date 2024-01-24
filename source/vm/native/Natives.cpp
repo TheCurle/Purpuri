@@ -89,9 +89,8 @@ void* Native::LoadLibrary(std::string LibraryName) {
         void* Handle = dlopen(LibraryName.c_str(), RTLD_NOW | RTLD_LOCAL);
     #endif
 
-        LibraryHandleMap.emplace(LibraryName, Handle);
-        return Handle;
-
+    LibraryHandleMap.emplace(LibraryName, Handle);
+    return Handle;
 }
 
 function_t Native::LoadSymbol(std::string LibraryName, std::string SymbolName) {
