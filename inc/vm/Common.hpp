@@ -86,6 +86,12 @@ class ObjectHeap;
     if(Debugger::Enabled) \
         x
 
+#define QUIET(x) \
+    Engine::QuietFlag = Engine::QuietMode; \
+    Engine::QuietMode = true; \
+    x \
+    Engine::QuietMode = Engine::QuietFlag;
+
 #define DEBUG_LOCKED(x) \
     if(Debugger::Enabled) \
         Debugger::Synchronize(x);

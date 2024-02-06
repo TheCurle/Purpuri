@@ -67,11 +67,17 @@ bool ClassHeap::ClassExists(const std::string& Name) {
 Class* ClassHeap::GetClass(const std::string& Name, StackFrame* frame, Engine* engine) {
     if (Name.empty()) return nullptr;
     if (!ClassExists(Name)) {
-        auto* newClass = new Class();
-        if (LoadClass(Name.c_str(), newClass, frame, engine))
+        auto *newClass = new Class();
+
+        bool flag = Engine::QuietMode;
+        Engine::QuietMode = true;
+        if (LoadClass(Name.c_str(), newClass, frame, engine)) {
+            Engine::QuietMode = flag;
             return newClass;
-        else
+        } else {
+            Engine::QuietMode = flag;
             return nullptr;
+        }
     }
 
     // Because the ClassExists call passed, and we can guarantee the Cache is synced to the Map, this is safe.
@@ -242,9 +248,12 @@ bool ClassHeap::LoadClass(const char *ClassName, Class *Class, StackFrame* frame
             return false;
     }
 
+    bool flag = Engine::QuietMode;
+    Engine::QuietMode = false;
     if (frame != nullptr && engine != nullptr) {
         Class->RunClassloadInit(frame, engine);
     }
+    Engine::QuietMode = flag;
 
     // With the class in the cache and loaded properly, we can add it to the Map and continue with what we were doing.
     return AddClass(Class);

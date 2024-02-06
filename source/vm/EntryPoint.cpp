@@ -105,10 +105,12 @@ void StartVM(char* MainFile, char* Executable) {
     auto* Object = new Class();
     Object->SetClassHeap(&heap);
 
-    if(!heap.LoadClass((char*)"java/lang/Object", Object, engine.ClassloadingStack, &engine)) {
-        printf("Unable to load Object class. Fatal error.\n");
-        exit(6);
-    }
+    QUIET(
+        if(!heap.LoadClass((char*)"java/lang/Object", Object, engine.ClassloadingStack, &engine)) {
+            print("Unable to load Object class. Fatal error.\n");
+            exit(6);
+        }
+    )
 
     // Initialize the class we were asked to
     auto* GivenClass = new Class();
@@ -123,11 +125,13 @@ void StartVM(char* MainFile, char* Executable) {
     if(LastInd != GivenPath.size())
         heap.ClassPrefix = GivenPath.substr(0, LastInd + 1);
 
-    // With the prefix handled, classload the requested class file.
-    if(!heap.LoadClass(MainFile, GivenClass, engine.ClassloadingStack, &engine)) {
-        printf("Loading given class failed. Fatal error.\n");
-        exit(6);
-    }
+    QUIET(
+        // With the prefix handled, classload the requested class file.
+        if(!heap.LoadClass(MainFile, GivenClass, engine.ClassloadingStack, &engine)) {
+            print("Loading given class failed. Fatal error.\n");
+            exit(6);
+        }
+    )
 
     // Here we search for the index of the EntryPoint method.
     // The reason we use EntryPoint rather than main will be explained later, but we need to check this NOW,

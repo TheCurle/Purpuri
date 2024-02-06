@@ -6,7 +6,6 @@
 #include <vm/Class.hpp>
 
 #include <iostream>
-#include <fstream>
 #include <list>
 #include <algorithm>
 #include <string>
@@ -478,6 +477,13 @@ bool Class::ParseMethods(const char *&ClassCode) {
                     std::string AttrName = GetStringConstant(AttrNameInd);
                     printf("\tAttribute has name %s, length " PrtSizeT "\n", AttrName.c_str(), AttrLength);
                 }
+            else {
+                for(int j = 0; j < Methods[i].AttributeCount; j++) {
+                    auto AttrNameInd = ReadShortFromStream(ClassCode); ClassCode += 2;
+                    size_t AttrLength = ReadIntFromStream(ClassCode); ClassCode += 4;
+                    ClassCode += AttrLength; // Skip to the next Attribute for the next loop
+                }
+            }
 
             // We need to spin out to another method to parse the Code Point,
             // in the sake of code cleanliness and linearity.
@@ -554,6 +560,8 @@ bool Class::ParseMethods(const char *&ClassCode) {
 bool Class::ParseMethodCodePoints(int Method, CodePoint *MethodCode) {
     if(Methods == nullptr || Method > MethodCount) return false;
 
+    std::string className = GetClassName();
+
     // We've already scanned the Class code past all of this, so we return with the Data pointer we saved earlier.
     char* CodeBase = (char*)Methods[Method].Data;
     CodeBase += 6; // Skip Access, Name, Descriptor
@@ -597,6 +605,8 @@ bool Class::ParseMethodCodePoints(int Method, CodePoint *MethodCode) {
             }
 
             AttribCode += MethodCode->CodeLength;
+
+            // TODO: attribcount parsing as 31744 with quiet mode false... why? side effect on printf? figure it out
 
             // Exceptions are not currently handled in Purpuri, but they're easy to parse so we do it anyway.
             // Once we use them, this will be moved into yet another function and explained in detail.

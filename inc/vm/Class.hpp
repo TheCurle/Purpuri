@@ -21,6 +21,7 @@ class Engine {
     public:
         static ObjectHeap _ObjectHeap;
         static bool QuietMode;
+        static bool QuietFlag;
         ClassHeap* _ClassHeap;
         StackFrame* ClassloadingStack;
         bool clinit;

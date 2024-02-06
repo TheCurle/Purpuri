@@ -76,6 +76,7 @@ ObjectHeap Engine::_ObjectHeap;
 
 // The static boolean flag that controls the print output level. If true, printf and puts across the code base will be passed to stdout.
 bool Engine::QuietMode = false;
+bool Engine::QuietFlag = false;
 
 Engine::Engine() {
     _ClassHeap = nullptr;
@@ -1067,7 +1068,9 @@ void Engine::Invoke(StackFrame *Stack, uint16_t Type) {
     if (!ReturnType.empty() && !_ClassHeap->ClassExists(ReturnType)) {
         printf("Classloading return type.\r\n");
         auto* c = new Class();
-        _ClassHeap->LoadClass(ReturnType.c_str(), c, ClassloadingStack, this);
+        QUIET(
+            _ClassHeap->LoadClass(ReturnType.c_str(), c, ClassloadingStack, this);
+        )
     }
 
     // 5 -> (Ljava/lang/Object;Ljava/lang/String;)V
