@@ -70,7 +70,7 @@ Class* ClassHeap::GetClass(const std::string& Name, StackFrame* frame, Engine* e
         auto *newClass = new Class();
 
         bool flag = Engine::QuietMode;
-        Engine::QuietMode = true;
+        //Engine::QuietMode = true;
         if (LoadClass(Name.c_str(), newClass, frame, engine)) {
             Engine::QuietMode = flag;
             return newClass;
@@ -109,10 +109,11 @@ void ClassHeap::AddToClassPath(std::string path) {
             ClassPath.emplace_back(loc);
         }
     } else {
-        ClassLocation fsloc {};
-        fsloc.inZip = false;
-        fsloc.isValid = true;
-        fsloc.FSPath = path + static_cast<char>(std::filesystem::path::preferred_separator);
+        ClassLocation fsloc {
+                .inZip = false,
+                .isValid = true,
+                .FSPath = path + static_cast<char>(std::filesystem::path::preferred_separator)
+        };
         ClassPath.emplace_back(fsloc);
     }
 }
@@ -130,19 +131,21 @@ void ClassHeap::AddToBootstrapClasspath(std::string path) {
         ZipFile* bootstrapZip = ProcessArchive(path.c_str());
         ZipsInUse.emplace_back(bootstrapZip);
         for (const auto& name : bootstrapZip->FileNames) {
-            ClassLocation loc {};
-            loc.inZip = true;
-            loc.isValid = true;
-            loc.ZipPath = name;
-            loc.Zip = bootstrapZip;
+            ClassLocation loc {
+                .inZip = true,
+                .isValid = true,
+                .ZipPath = name,
+                .Zip = bootstrapZip
+            };
             BootstrapClasspath.emplace_back(loc);
         }
     } else {
-        ClassLocation fsloc {};
-        fsloc.inZip = false;
-        fsloc.isValid = true;
-        fsloc.FSPath = path + static_cast<char>(std::filesystem::path::preferred_separator);
-        BootstrapClasspath.emplace_back(fsloc);
+        ClassLocation fsloc {
+            .inZip = false,
+            .isValid = true,
+            .FSPath = path + static_cast<char>(std::filesystem::path::preferred_separator)
+        };
+        ClassPath.emplace_back(fsloc);
     }
 }
 
@@ -171,10 +174,9 @@ ClassLocation ClassHeap::SearchClassPath(std::string& ClassFile) {
             if (file.ZipPath == Name)
                 return file;
         } else {
-            if (std::filesystem::exists(Name)) {
-                final.inZip = false;
-                final.isValid = true;
-                final.FSPath = std::filesystem::path(Name);
+            if (std::filesystem::exists(file.FSPath / Name)) {
+                final = file;
+                final.FSPath = file.FSPath / Name;
                 return final;
             }
         }
@@ -186,16 +188,15 @@ ClassLocation ClassHeap::SearchClassPath(std::string& ClassFile) {
             if (file.ZipPath == Name)
                 return file;
         } else {
-            if (std::filesystem::exists(Name)) {
-                final.inZip = false;
-                final.isValid = true;
-                final.FSPath = std::filesystem::path(Name);
+            if (std::filesystem::exists(file.FSPath / Name)) {
+                final = file;
+                final.FSPath = file.FSPath / Name;
                 return final;
             }
         }
     }
 
-    return  {false, false,"INVALID", nullptr };
+    return  {false, false,"INVALID", "INVALID" };
 }
 
 /**

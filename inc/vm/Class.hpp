@@ -100,7 +100,6 @@ class ClassHeap {
         ClassHeap();
         
         static std::string UnknownClass;
-        std::string ClassPrefix;
 
         void AddToClassPath(std::string);
         void AddToBootstrapClasspath(std::string);

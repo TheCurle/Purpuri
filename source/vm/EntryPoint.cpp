@@ -54,6 +54,15 @@ void StartVM(char* MainFile, char* Executable) {
     ClassHeap heap;
     heap.AddToBootstrapClasspath(std::filesystem::current_path().append("stdlib.jar").string());
     heap.AddToClassPath(ExecutablePath);
+
+    std::string GivenPath(MainFile);
+    // We need to figure out where the specified file is, relative to the current working directory.
+    // With this, we can load relative classes (ie. src/GivenClass loads OtherClass, we must append "src/" to the
+    // file path to be able to load it properly.
+    size_t LastInd = GivenPath.find_last_of('/');
+    if(LastInd != GivenPath.size())
+        heap.AddToClassPath(std::filesystem::current_path().string() + "/" + GivenPath.substr(0, LastInd + 1));
+
     heap.AddToClassPath(std::filesystem::current_path().string());
 
     // Set up the libnative library as a valid target for the Native module.
@@ -115,15 +124,6 @@ void StartVM(char* MainFile, char* Executable) {
     // Initialize the class we were asked to
     auto* GivenClass = new Class();
     GivenClass->SetClassHeap(&heap);
-
-    std::string GivenPath(MainFile);
-
-    // We need to figure out where the specified file is, relative to the current working directory.
-    // With this, we can load relative classes (ie. src/GivenClass loads OtherClass, we must append "src/" to the
-    // file path to be able to load it properly.
-    size_t LastInd = GivenPath.find_last_of('/');
-    if(LastInd != GivenPath.size())
-        heap.ClassPrefix = GivenPath.substr(0, LastInd + 1);
 
     QUIET(
         // With the prefix handled, classload the requested class file.

@@ -88,7 +88,6 @@ class ObjectHeap;
 
 #define QUIET(x) \
     Engine::QuietFlag = Engine::QuietMode; \
-    Engine::QuietMode = true; \
     x \
     Engine::QuietMode = Engine::QuietFlag;
 
